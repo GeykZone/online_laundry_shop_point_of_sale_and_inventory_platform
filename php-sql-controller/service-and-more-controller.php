@@ -70,4 +70,43 @@ if (isset($inputData['queryProducts']) && $inputData['queryProducts'] == true) {
     ]);
 }
 
+if (isset($inputData['queryDiscounts']) && $inputData['queryDiscounts'] === true) {
+    global $conn;
+
+    $limit = 5; // Number of discounts to fetch per request
+    $page = isset($inputData['page']) ? (int)$inputData['page'] : 1; // Page number from JS
+    $offset = ($page - 1) * $limit; // Calculate the offset
+    
+    // Retrieve shop_id from session storage
+    $shop_id = isset($inputData['shop_id']) ? (int)$inputData['shop_id'] : 0;
+    
+    if ($shop_id > 0) {
+        // SQL query to fetch discounts for the specified shop_id
+        $sql = "SELECT d.discount_id AS discount_id,
+                       d.discount_name AS discount_name, 
+                       d.discount_percent AS discount_percent, 
+                       d.discount_description AS discount_description, 
+                       d.discount_status AS discount_status,
+                       d.shop_id AS shop_id
+                FROM discount AS d
+                WHERE d.shop_id = ? AND d.discount_status = 'active'
+                LIMIT ? OFFSET ?";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iii", $shop_id, $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        // Fetch the results as an associative array
+        $discounts = $result->fetch_all(MYSQLI_ASSOC);
+    
+        // Send the result as JSON
+        echo json_encode($discounts);
+    } else {
+        echo json_encode(["error" => "Invalid shop ID"]);
+    }
+    
+}
+
+
 ?>

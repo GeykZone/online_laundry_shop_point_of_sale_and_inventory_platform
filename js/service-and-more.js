@@ -19,6 +19,17 @@ let productPaginationElement = document.getElementById('product-pagination');
 let noProductsMessage = document.getElementById('empty-product-identifier');
 let productListContainer = document.getElementById('order-process-container');
 let selectedProductIds = [];
+let productServiceName = document.getElementById('product-service-name')
+let selectedServiceGlobalVar;
+let checkoutButton = document.getElementById('checkout');
+let backToProductModalBtn = document.getElementById('back-to-product-modal-btn');
+let selectedProductsContainer = document.getElementById('selected-products-container');
+let discountPage = 1; // Start with the first page for discounts
+let discountContainer = document.getElementById('checkout-discount-container');
+let emptyDiscountIdentifier = document.getElementById('empty-discount-identifier');
+let selectedDiscounts = JSON.parse(sessionStorage.getItem('selectedDiscounts')) || [];
+let clothesWeightInput = document.getElementById('clothes-weight-input');
+let finalizeTransactionBtn = document.getElementById('finalize-transaction-btn');
 
 
 // // an event listener for rating input field
@@ -79,6 +90,186 @@ openTransactionCreationModal.addEventListener('click', function(){
     loadServicesForPage(page);
 })
 
+// event listener for checkout
+checkoutButton.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent the default action of the button
+
+    if (selectedProductIds.length === 0) {
+        dynamicAlertMessage('Please select at least one product before proceeding to checkout.', 'warning', 3000)
+    } else {
+
+
+        if (selectedProductIds.some(product => parseInt(product.quantity, 10) === 0)) {
+            dynamicAlertMessage("One or more selected products have a quantity of 0.", 'error', 3000);
+        } else {
+        
+            console.log('Proceeding to checkout with selected products:', selectedProductIds);
+            $('#selectOrderProductModal').modal('hide')
+            $('#transactionFinalization').modal('show')
+    
+            // id
+            // quantity
+            // product_name
+            // product_image
+    
+            
+            if(Object.keys(selectedProductIds).length > 0){
+    
+                if(Object.keys(selectedProductIds).length > 1 ){
+                    document.getElementById('selected-product-container-label').textContent = 'Selected Products';
+                }
+                else{
+                    document.getElementById('selected-product-container-label').textContent = 'Selected Product';
+                }
+    
+                selectedProductsContainer.innerHTML = '';
+                selectedProductIds.forEach((product) => {
+    
+                    const productId = product.id;
+                    const productPrice = product.price;
+                    const productBrand = product.product_brand;
+                    const productImage = product.product_image;
+                    const productName = product.product_name;
+                    const productQuantity = product.quantity;
+    
+                    // Create the card HTML dynamically
+                    const productCardHTML = `
+                    <div class=" col-12 col-md-6">
+                        <div class="card">
+                        <div class="card-header">
+                            ${productName}
+                        </div>
+                        <div class="card-body d-flex gap-3">
+                            <div class="rounded-3 overflow-hidden shadow" style="width: 100px;">
+                            <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+                            </div>
+                            <div>
+                            <p>Brand: ${productBrand}</p>
+                            <p>Price: ${formatToCurrency(productPrice)}</p>
+                            <p>Selected Quantity: ${productQuantity}</p> <!-- You can replace 1 with a dynamic value if needed -->
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    `;
+    
+                    // Insert the card into the selectedProductsContainer
+                    selectedProductsContainer.innerHTML += productCardHTML;
+    
+                }) 
+    
+                document.getElementById('check-out-selected-service').textContent = selectedServiceGlobalVar.service_name
+                document.getElementById('check-out-selected-service-description').textContent = selectedServiceGlobalVar.description
+                document.getElementById('check-out-selected-service-price').textContent =  formatToCurrency(selectedServiceGlobalVar.price)
+    
+            }
+    
+            discountPage = 1; 
+            discountContainer.innerHTML = ''; // Clear previous content if needed
+            discountContainer.innerHTML = `
+            <div class="d-flex justify-content-flex-start" id="empty-discount-identifier">
+                <p>Shop does not have any discount yet.</p>
+            </div>`;
+            loadDiscounts();
+        }
+
+    }
+});
+
+// event listener to go back to product modal
+backToProductModalBtn.addEventListener('click', (e) => {
+    $('#selectOrderProductModal').modal('show')
+    $('#transactionFinalization').modal('hide')
+});
+
+// event listener to check finalization of checkout
+finalizeTransactionBtn.addEventListener('click', function(){
+
+    if(transactionFinalizationValidation()){
+        
+        console.log(`service : `,selectedServiceGlobalVar,` \n product: `,selectedProductIds,` \n discounts: `,selectedDiscounts,``)
+
+        // Define initial prices
+        const singleItemPrice = parseFloat(selectedServiceGlobalVar.price);
+        console.log('singleItemPrice = '+singleItemPrice)
+
+        const totalProductPrice = selectedProductIds.reduce((total, product) => {
+            return total + parseFloat(product.price) * parseInt(product.quantity, 10);
+        }, 0);
+        console.log('totalProductPrice = '+totalProductPrice)
+
+        // Calculate subtotal
+        let subtotal = singleItemPrice + totalProductPrice;
+        console.log('singleItemPrice + totalProductPrice = '+ subtotal)
+
+        // Initialize discount variables
+        let discount1 = selectedDiscounts[0] ? parseFloat(selectedDiscounts[0].discount_percent) / 100 : null;
+        let discount2 = selectedDiscounts[1] ? parseFloat(selectedDiscounts[1].discount_percent) / 100 : null;
+
+        console.log('discount1 = ' +discount1);
+        console.log('discount2 = ' +discount2);
+
+        // Check if the first discount is present, else alert and stop
+        if (discount1 !== null) {
+            // Apply the first discount
+            let afterFirstDiscount = subtotal * (1 - discount1);
+            console.log('afterFirstDiscount = ' +afterFirstDiscount)
+            subtotal = afterFirstDiscount
+
+            // Check if the second discount is present
+            if (discount2 !== null) {
+                // Apply the second discount to the result of the first discount
+                let finalPrice = afterFirstDiscount * (1 - discount2);
+                console.log('afterFirstDiscount = ' +finalPrice)
+                subtotal = finalPrice
+            }
+        }
+
+        console.log('Toatal = ' + subtotal); 
+    }
+
+})
+
+// Add event listeners for 'keydown' (for typing) and 'paste' events
+clothesWeightInput.addEventListener('keydown', function(event) {
+    // Allow backspace, delete, tab, escape, and enter
+    if (
+        event.key === 'Backspace' || 
+        event.key === 'Delete' || 
+        event.key === 'Tab' || 
+        event.key === 'Escape' || 
+        event.key === 'Enter'
+    ) {
+        return;
+    }
+
+    // Allow navigation keys like arrows
+    if (event.key.startsWith('Arrow')) {
+        return;
+    }
+
+    // Allow digits (0-9), spaces, dashes, parentheses
+    const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
+
+    if (!allowedCharacters.test(event.key)) {
+        event.preventDefault(); // Prevent any other character from being input
+    }
+});
+
+// Prevent non-numeric characters when pasting
+clothesWeightInput.addEventListener('paste', function(event) {
+    // Get the pasted data
+    const pasteData = event.clipboardData.getData('text');
+
+    // Allow only numbers, spaces, dashes, parentheses, and decimal points in the pasted data
+    const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
+
+
+    if (!allowedCharacters.test(pasteData)) {
+        event.preventDefault(); // Prevent the paste if invalid characters are found
+    }
+});
+
 // function to load all services from a shop
 function loadServicesForPage(pageNumber) {
     const data = { queryServices: true, page: pageNumber, shop_id:sessionStorage.getItem('service_more_shop_id') };
@@ -99,7 +290,7 @@ function loadServicesForPage(pageNumber) {
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title" id="service_name_${service.service_id}">${service.service_name}</h5>
                         <p class="card-text opacity-75" id="service_description_${service.service_id}">Description: ${service.description || 'No description available'}</p>
-                        <p class="card-text opacity-75" id="service_price_${service.service_id}">Price: $${service.price}</p>
+                        <p class="card-text opacity-75" id="service_price_${service.service_id}">Price: ${formatToCurrency(service.price)}</p>
                         <div class="d-grid gap-2">
                             <button class="btn btn-primary" id="select-service-btn-${service.service_id}" type="button">Select Service</button>
                         </div>
@@ -111,7 +302,7 @@ function loadServicesForPage(pageNumber) {
             // Add event listener to "Select Service" button
             document.getElementById(`select-service-btn-${service.service_id}`).addEventListener('click', () => {
 
-                loadAndSelectProduct(service.service_id)
+                loadAndSelectProduct(service)
                 
             });
         });
@@ -203,6 +394,7 @@ function loadAndSelectProduct(service){
     $('#selectOrderProductModal').modal('show')
     productPage = 1; 
     productListContainer.innerHTML = '';
+    selectedServiceGlobalVar = service;
 
     loadProductsForCurrentPage(productPage)
 
@@ -236,12 +428,13 @@ function loadProductsForCurrentPage(pageNumber) {
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">${product.product_name}</h5>
                         <p class="card-text opacity-75">Brand: ${product.product_brand}</p>
-                        <p class="card-text opacity-75">Price: $${product.price}</p>
+                        <p class="card-text opacity-75">Price: ${formatToCurrency(product.price)}</p>
                         <p class="card-text opacity-75">Quantity: ${product.quantity}</p>
-                        <div class="d-grid col-6">
-                            <label style="min-width:50px; width:auto; max-width:500px;" type="button" class=" btn btn-info d-flex justify-content-center flex-row-reverse gap-2 text-white" for="productSelect${product.product_id}">
-                                <input class="form-check-input " type="checkbox" value="${product.product_id}" id="productSelect${product.product_id}" ${selectedProductIds.includes(product.product_id) ? 'checked' : ''}>
-                                <span id="product-check-label${product.product_id}">${selectedProductIds.includes(product.product_id) ? 'Selected' : 'Select'}</span>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control me-2" id="quantityInput${product.product_id}" value="1" min="1" style="width: 70px;">
+                            <label style="min-width:50px; width:auto; max-width:500px;" type="button" class="btn btn-info d-flex justify-content-center flex-row-reverse gap-2 text-white" for="productSelect${product.product_id}">
+                                <input class="form-check-input" type="checkbox" value="${product.product_id}" id="productSelect${product.product_id}" ${selectedProductIds.some(item => item.id === product.product_id) ? 'checked' : ''}>
+                                <span id="product-check-label${product.product_id}">${selectedProductIds.some(item => item.id === product.product_id) ? 'Selected' : 'Select'}</span>
                             </label>
                         </div>
                     </div>
@@ -249,20 +442,52 @@ function loadProductsForCurrentPage(pageNumber) {
 
             productListContainer.appendChild(productCard);
 
+            productServiceName.textContent = selectedServiceGlobalVar.service_name;
+
             // Add event listener for the checkbox to track selections
             const checkbox = document.getElementById(`productSelect${product.product_id}`);
+            const quantityInput = document.getElementById(`quantityInput${product.product_id}`);
+
+            // Restore quantity if the product is already selected
+            const selectedProduct = selectedProductIds.find(item => item.id === product.product_id);
+            if (selectedProduct) {
+                quantityInput.value = selectedProduct.quantity; // Restore previous quantity
+            }
+
+            // Update selection when checkbox is changed
             checkbox.addEventListener('change', (e) => {
                 if (e.target.checked) {
-                    selectedProductIds.push(product.product_id);
-                    document.getElementById(`product-check-label${product.product_id}`).textContent = 'Selected'
+                    const quantity = quantityInput.value; // Get quantity from input
+                    selectedProductIds.push(
+                        { id: product.product_id,
+                          quantity: quantity,
+                          product_name: product.product_name, 
+                          product_image: product.image_link,
+                          product_brand: product.product_brand,
+                          price: product.price
+                        }); // Store product ID and quantity
+                    document.getElementById(`product-check-label${product.product_id}`).textContent = 'Selected';
                 } else {
-                    selectedProductIds = selectedProductIds.filter(id => id !== product.product_id);
-                    document.getElementById(`product-check-label${product.product_id}`).textContent = 'Select'
+                    selectedProductIds = selectedProductIds.filter(item => item.id !== product.product_id); // Remove product from selection
+                    document.getElementById(`product-check-label${product.product_id}`).textContent = 'Select';
                 }
 
-                // console.log('selectedProductIds => ' + selectedProductIds)
+                // Log selectedProductIds for debugging
+                // console.log('selectedProductIds => ' + JSON.stringify(selectedProductIds));
             });
 
+            // Add event listener to update quantity when input value changes
+            quantityInput.addEventListener('input', () => {
+                const quantity = quantityInput.value; // Get the updated quantity
+                const selectedProduct = selectedProductIds.find(item => item.id === product.product_id); // Find the selected product
+
+                if (selectedProduct) {
+                    selectedProduct.quantity = quantity; // Update the quantity in the selectedProductIds array
+                }
+                
+                // Log selectedProductIds for debugging
+                // console.log('selectedProductIds => ' + JSON.stringify(selectedProductIds));
+            });
         });
     } else {
         // No products found for this page
@@ -345,6 +570,101 @@ function updateProductPagination(currentProductPage, totalProductPages) {
     nextProductItem.appendChild(nextProductLink);
     paginationContainer.appendChild(nextProductItem);
 }
+
+// Function to load discounts
+function loadDiscounts() {
+    const shopId = sessionStorage.getItem('service_more_shop_id');
+    const data = { queryDiscounts: true, page: discountPage, shop_id: shopId };
+    const response = dynamicSynchronousPostRequest('php-sql-controller/service-and-more-controller.php', data);
+
+    if (isValidJSON(response)) {
+        const discounts = JSON.parse(response);
+
+        discounts.forEach(discount => {
+            const discountCardHTML = `
+                <div class="card mb-3 responsive-card">
+                    <div class="row g-0">
+                        <div class="col img-container bg-info">
+                            <img src="https://cdn-icons-png.flaticon.com/512/9528/9528844.png" alt="Discount Image" class="product-image">
+                        </div>
+                        <div class="col content-container d-flex flex-wrap flex-column">
+                            <div class="card-body">
+                                <h5 class="card-title">${discount.discount_name}</h5>
+                                <p class="card-text">${discount.discount_description}</p>
+                                <p class="card-text">${discount.discount_percent}%</p>
+                                <label class="btn btn-info d-flex justify-content-center gap-2 text-white">
+                                    <input class="form-check-input" type="checkbox" value="${discount.discount_id}" 
+                                        id="selectedDiscountInput${discount.discount_id}" 
+                                        onclick='toggleDiscountSelection(${JSON.stringify(discount)})'>
+                                    <span>Select</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            discountContainer.insertAdjacentHTML('beforeend', discountCardHTML);
+
+            // Restore selection state from sessionStorage
+            if (selectedDiscounts.some(d => d.discount_id === discount.discount_id)) {
+                document.getElementById(`selectedDiscountInput${discount.discount_id}`).checked = true;
+            }
+        });
+
+        discountPage++;
+    } else {
+        console.error(response);
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+    }
+}
+
+// Function to toggle discount selection
+function toggleDiscountSelection(discount) {
+    const existingIndex = selectedDiscounts.findIndex(d => d.discount_id === discount.discount_id);
+
+    if (existingIndex > -1) {
+        selectedDiscounts.splice(existingIndex, 1);
+    } else {
+        if (selectedDiscounts.length >= 2) {
+            dynamicAlertMessage('You can only select up to two discounts.', 'warning', 3000);
+            document.getElementById(`selectedDiscountInput${discount.discount_id}`).checked = false;
+            return;
+        }
+        selectedDiscounts.push(discount);
+    }
+
+    // Store updated selectedDiscounts in sessionStorage
+    sessionStorage.setItem('selectedDiscounts', JSON.stringify(selectedDiscounts));
+    console.log('Selected Discounts:', selectedDiscounts);
+}
+
+// Scroll event listener for infinite scroll
+discountContainer.addEventListener('scroll', () => {
+    if (discountContainer.scrollTop + discountContainer.clientHeight >= discountContainer.scrollHeight - 50) {
+        loadDiscounts();
+    }
+});
+
+function transactionFinalizationValidation(){
+    let isValid = true;
+
+    // validation using dynamic error message
+    if(clothesWeightInput.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(clothesWeightInput.id, 'Please input a valid Laundry Shop Service Name.');
+    }
+    else {
+        dynamicFieldErrorMessage(clothesWeightInput.id, '');
+    }
+
+    if(!isValid){
+        dynamicAlertMessage('Please complete additional requirements before finalizing checkout.', 'warning', 3000);
+    }
+
+    return isValid;
+}
+
 
 
 

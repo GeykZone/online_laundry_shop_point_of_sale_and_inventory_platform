@@ -52,37 +52,155 @@
 
         <!-- product -->
         <div class="modal fade" id="selectOrderProductModal" data-coreui-backdrop="static" data-coreui-keyboard="false" tabindex="-1" aria-labelledby="selectOrderProductModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="selectOrderProductModalLabel">Order Process</h5>
-              <button type="button" id="laundry-form-close-btn" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-
-              <div class="container">
-                <div class="row g-4 mb-4" id="order-process-container">
-                </div>
-
-                <nav aria-label="Page navigation" id="product-pagination">
-                  <ul class="pagination pagination" id="product-pagination-ui"></ul>
-                </nav>
-                <div class="d-flex justify-content-center d-none" id="empty-product-identifier">
-                  <p>Shop does not have any products yet.</p>
-                </div>
+          <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="selectOrderProductModalLabel"><h6>Please select a product for <span id="product-service-name"></span> Laundry Service.</h6></h5>
+                <button type="button" id="laundry-form-close-btn" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
               </div>
+              <div class="modal-body">
 
+                <div class="container">
+
+                  <div class="row g-4 mb-4 " id="order-process-container">
+                  </div>
+
+                  <nav aria-label="Page navigation" id="product-pagination">
+                    <ul class="pagination pagination" id="product-pagination-ui"></ul>
+                  </nav>
+                  <div class="d-flex justify-content-center d-none" id="empty-product-identifier">
+                    <p>Shop does not have any products yet.</p>
+                  </div>
+                </div>
+
+                
+              </div>
               
-            </div>
-            
 
-            <div class="modal-footer">
-              <button id="submit-laundry-shop-service-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Submit Service</button>
-              <div id="submit-laundry-shop-service-update-container"></div>
+              <div class="modal-footer">
+                <button id="checkout" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Checkout <i class="fa-solid fa-cart-arrow-down"></i></button>
+                <div id="submit-laundry-shop-service-update-container"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- Transaction Finalization -->
+        <div class="modal fade" id="transactionFinalization" data-coreui-backdrop="static" data-coreui-keyboard="false" tabindex="-1" aria-labelledby="transactionFinalizationLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="transactionFinalizationLabel">Transaction Finalization</h5>
+                <button type="button" id="laundry-form-close-btn" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body mb-3">
+
+                <h4>Selected Service</h4>
+                <div class="card mb-3 responsive-card">
+                  <div class="row g-0">
+                    <div class="col img-container bg-dark-subtle">
+                      <img src="https://cdn-icons-png.flaticon.com/512/4727/4727225.png" alt="User" class="product-image">
+                    </div>
+                    <div class="col content-container d-flex flex-wrap flex-column">
+                      <div class="card-body">
+                        <h5 class="card-title" id="check-out-selected-service">Decolor Clothes</h5>
+                        <p class="card-text" id="check-out-selected-service-description">Minimum 1kg to 5kg</p>
+                        <p class="card-text" id="check-out-selected-service-price">40</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="add-laundry-shop-requirements-form-container" class="row g-3 mb-3 needs-validation">
+                  <!-- Clothes Weight -->
+                  <div class="col-12">
+                    <label for="clothes-weight-input" class="form-label">Clothes Weight (Kg)</label>
+                    <input type="text" placeholder="Clothes Weight" maxlength="50" class="form-control" id="clothes-weight-input" required>
+                    <div id="clothes-weight-input-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+                </div>
+
+                <style>
+                 /* General card styling */
+                  .responsive-card {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                  }
+
+                  /* Default image size */
+                  .product-image {
+                    width: 200px;
+                    height: 200px;
+                    object-fit: cover;
+                    margin: auto;
+                  }
+
+                  /* Media Query for screen widths of 1199px or smaller */
+                  @media (max-width: 1199px) {
+                    .responsive-card {
+                      flex-direction: column;
+                      text-align: center;
+                    }
+
+                    .img-container, .content-container {
+                      width: 100%;
+                    }
+
+                    .product-image {
+                      width: 150px;
+                      height: 150px;
+                    }
+                  }
+
+                </style>
+
+ 
+                <h4 id="selected-product-container-label">Selected Product</h4>
+                <div  class=" overflow-y-hidden rounded-3 mt-3 mb-3 px-3" >
+                  <div id="selected-products-container" class="row overflow-y-scroll g-3" style="max-height: 500px;">
+
+                  </div>
+                </div>
+
+                <h4 id="selected-product-container-label">Discount List</h4>
+                <div  class=" overflow-y-hidden rounded-3 mt-3 mb-3 px-3" >
+                  <div id="checkout-discount-container" class=" overflow-y-scroll g-3" style="max-height: 500px;">
+
+                  <!-- <div class="card mb-3 responsive-card">
+                    <div class="row g-0">
+                      <div class="col img-container bg-info">
+                        <img src="https://cdn-icons-png.flaticon.com/512/9528/9528844.png" alt="User" class="product-image">
+                      </div>
+                      <div class="col content-container d-flex flex-wrap flex-column">
+                        <div class="card-body ">
+                          <h5 class="card-title">Discount Name here</h5>
+                          <p class="card-text">Discount Description here</p>
+                          <p class="card-text">Discount percent here</p>
+                          <labe type="button" class="btn btn-info d-flex justify-content-center gap-2 text-white" for="productSelect${product.product_id}">
+                              <input class="form-check-input" type="checkbox" value="${product.product_id}" id="selectedDisountInput">
+                              <span id="selectedDisountInputText">Select</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div> -->
+  
+                  
+                  </div>
+                </div>             
+                
+              </div>
+              
+
+              <div class="modal-footer">
+                <button id="back-to-product-modal-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Back to Products</button>
+                <button id="finalize-transaction-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Finalize Transaction</button>
+              </div>
+            </div>
+          </div>
+        </div>
     <!-- Modal Area -->
     <!-- Side Bar Area -->
     <?php include ("sidebar.php"); ?>
