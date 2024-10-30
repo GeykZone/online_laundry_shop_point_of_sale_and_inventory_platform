@@ -33,4 +33,4 @@ tas if approve sa discount kay ma kaltasan ang total bayaronon
 # online_laundry_shop_point_of_sale_and_inventory_platform
 
 to do
-- before mo checkout checkon sa nako if ang selected quantity ba sa product is lesser or equal sa overall product quantity
+- e pa display ang mga transactions

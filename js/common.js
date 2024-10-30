@@ -830,6 +830,7 @@ function showHideFunctions() {
 
     let adminClass = document.querySelectorAll('.admin')
     let customerClass = document.querySelectorAll('.costumer')
+    let laundryOwnerAndStaffCustomer = document.querySelectorAll('.laundry-owner-and-staff-customer');
     let laundryOwner = document.querySelectorAll('.laundry-owner')
     let adminAndLaundryOwner =  document.querySelectorAll('.admin-and-laundry-owner');
     let laundryStaffLaundryOwner = document.querySelectorAll('.laundry-owner-and-staff');
@@ -883,7 +884,6 @@ function showHideFunctions() {
     }
 
 
-
     if(userPosition == 'Costumer'){
         customerClass.forEach(adcls => {
             if(adcls.classList.contains('d-none')){
@@ -891,10 +891,14 @@ function showHideFunctions() {
             }
 
         })
+
+        laundryOwnerAndStaffCustomer.forEach(adcls => {
+            if(adcls.classList.contains('d-none')){
+                adcls.classList.remove('d-none');
+            }
+
+        })
     }
-
-
-    
 
 
     if(sessionStorage.getItem('viewAsLaundryShop') && sessionStorage.getItem('viewAsLaundryShop') == 'true'){
@@ -935,6 +939,15 @@ function showHideFunctions() {
                 }
     
             })
+
+            laundryOwnerAndStaffCustomer.forEach(adcls => {
+                if(adcls.classList.contains('d-none') && adcls.classList.contains('is-shop')){
+                    adcls.classList.remove('d-none');
+                }
+                else if(!adcls.classList.contains('d-none') && !adcls.classList.contains('is-shop')){
+                    adcls.classList.add('d-none');
+                }
+            })
         }
 
         if(userPosition == 'Laundry Staff'){
@@ -947,6 +960,15 @@ function showHideFunctions() {
                     adcls.classList.add('d-none');
                 }
     
+            })
+
+            laundryOwnerAndStaffCustomer.forEach(adcls => {
+                if(adcls.classList.contains('d-none') && adcls.classList.contains('is-shop')){
+                    adcls.classList.remove('d-none');
+                }
+                else if(!adcls.classList.contains('d-none') && !adcls.classList.contains('is-shop')){
+                    adcls.classList.add('d-none');
+                }
             })
         }
 
@@ -1674,7 +1696,24 @@ function manageServiceMoreSessionStorage(shop, shouldStore) {
     }
 }
 
+// function to return datetime in ph timezone
+function getPhilippineDateTime() {
+    // Create a new Date object for the current date and time
+    const now = new Date();
 
+    // Set the timezone offset to Philippines time (UTC+8)
+    const phTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+
+    // Format the date and time in SQL DATETIME format (YYYY-MM-DD HH:MM:SS)
+    const year = phTime.getFullYear();
+    const month = String(phTime.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(phTime.getDate()).padStart(2, '0');
+    const hours = String(phTime.getHours()).padStart(2, '0');
+    const minutes = String(phTime.getMinutes()).padStart(2, '0');
+    const seconds = String(phTime.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 
 

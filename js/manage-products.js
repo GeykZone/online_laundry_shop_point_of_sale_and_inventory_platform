@@ -319,7 +319,7 @@ if(productListTable){
                 
               },
               {
-                "targets": 0,
+                "targets": 1,
                 "render": function ( data, type, row, meta ) {
 
                     let actionButton;
@@ -333,7 +333,25 @@ if(productListTable){
               },
               null,
               null,
-              null,
+              {
+                "targets": 4,
+                "render": function ( data, type, row, meta ) {
+
+                    let actionButton;
+                    let bgColor = 'success';
+
+                    if(parseInt(data) <= 20){
+                        bgColor = 'warning';
+                    }
+
+                    if(parseInt(data) <= 10){
+                        bgColor = 'danger';
+                    }
+                    actionButton = `<h6 class=" text-${bgColor}">${data}</h6>`
+                    return actionButton;
+                            
+                },
+              },
               null,
               null
             ],

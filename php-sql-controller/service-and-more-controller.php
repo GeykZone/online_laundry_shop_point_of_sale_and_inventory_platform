@@ -2,6 +2,7 @@
 
 include ('../connection/connect.php');
 
+// query  services with pagination
 if (isset($inputData['queryServices']) && $inputData['queryServices'] == true) {
     $page = isset($inputData['page']) ? intval($inputData['page']) : 1;
     $limit = 5; // Number of services per page
@@ -36,6 +37,7 @@ if (isset($inputData['queryServices']) && $inputData['queryServices'] == true) {
     ]);
 }
 
+// query  products with pagination
 if (isset($inputData['queryProducts']) && $inputData['queryProducts'] == true) {
     $page = isset($inputData['currentPage']) ? intval($inputData['currentPage']) : 1;
     $limit = 5; // Number of products per page
@@ -70,6 +72,7 @@ if (isset($inputData['queryProducts']) && $inputData['queryProducts'] == true) {
     ]);
 }
 
+// query  discounts with pagination
 if (isset($inputData['queryDiscounts']) && $inputData['queryDiscounts'] === true) {
     global $conn;
 
@@ -108,5 +111,192 @@ if (isset($inputData['queryDiscounts']) && $inputData['queryDiscounts'] === true
     
 }
 
+// Check if verifyQuantity exists in $inputData and is set to true
+if (isset($inputData['verifyQuantity']) && $inputData['verifyQuantity'] === true) {
+    $productId = $inputData['productId'];
+    $productQuantity = $inputData['productQuantity'];
+
+    // Prepare SQL query to get the product details for the given productId
+    $query = "SELECT `product_id`, `quantity` FROM `product` WHERE `product_id` = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $productId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $product = $result->fetch_assoc();
+        
+        // Respond with product details in JSON format
+        echo json_encode([
+            "product_id" => $product['product_id'],
+            "quantity" => $product['quantity']
+        ]);
+    } else {
+        // Respond with an error message if the product was not found
+        echo json_encode([
+            "error" => "Product not found"
+        ]);
+    }
+
+    // Close the statement and connection
+    $stmt->close();
+    $conn->close();
+}
+
+// insert new transaction
+if(isset($inputData['insertTransaction']) ){
+    $response = []; // Initialize response
+
+    if (isset($inputData['transaction_id']) && !empty($inputData['transaction_id'])) {
+        // If transaction_id is provided, prepare an UPDATE statement
+        $transactionId = $inputData['transaction_id'];
+        
+        // Initialize an array for the fields to be updated
+        $fieldsToUpdate = [];
+        if (isset($inputData['shop_id'])) $fieldsToUpdate[] = "shop_id = '{$inputData['shop_id']}'";
+        if (isset($inputData['service_id'])) $fieldsToUpdate[] = "service_id = '{$inputData['service_id']}'";
+        if (isset($inputData['user_id'])) $fieldsToUpdate[] = "user_id = '{$inputData['user_id']}'";
+        if (isset($inputData['transaction_name'])) $fieldsToUpdate[] = "transaction_name = '{$inputData['transaction_name']}'";
+        if (isset($inputData['transaction_date'])) $fieldsToUpdate[] = "transaction_date = '{$inputData['transaction_date']}'";
+        if (isset($inputData['pick_up_date'])) $fieldsToUpdate[] = "pick_up_date = '{$inputData['pick_up_date']}'";
+        if (isset($inputData['total'])) $fieldsToUpdate[] = "total = '{$inputData['total']}'";
+        if (isset($inputData['transaction_status'])) $fieldsToUpdate[] = "transaction_status = '{$inputData['transaction_status']}'";
+        if (isset($inputData['clothes_weight'])) $fieldsToUpdate[] = "clothes_weight = '{$inputData['clothes_weight']}'";
+    
+        // Join fields to update in SQL query
+        $updateQuery = "UPDATE transactions SET " . implode(", ", $fieldsToUpdate) . " WHERE transaction_id = '$transactionId'";
+        
+        if (mysqli_query($conn, $updateQuery)) {
+            $response['status'] = 'success';
+            $response['message'] = 'Transaction updated successfully.';
+        } else {
+            $response['status'] = 'error';
+            $response['message'] = 'Update failed: ' . mysqli_error($conn);
+        }
+    } else {
+        // If no transaction_id, prepare an INSERT statement
+        $shopId = $inputData['shop_id'] ?? null;
+        $userId = $inputData['user_id'] ?? null;
+        $transactionName = $inputData['transaction_name'] ?? null;
+        $transactionDate = $inputData['transaction_date'] ?? null;
+        $pickUpDate = $inputData['pick_up_date'] ?? null;
+        $total = $inputData['total'] ?? null;
+        $transactionStatus = $inputData['transaction_status'] ?? null;
+        $clothesWeight = $inputData['clothes_weight'] ?? null;
+        $serviceId = $inputData['service_id'] ?? null;
+    
+        $insertQuery = "INSERT INTO transactions (service_id, shop_id, user_id, transaction_name, transaction_date, pick_up_date, total, transaction_status, clothes_weight) 
+                        VALUES ('$serviceId', '$shopId', '$userId', '$transactionName', '$transactionDate', '$pickUpDate', '$total', '$transactionStatus', '$clothesWeight')";
+    
+        if (mysqli_query($conn, $insertQuery)) {
+            $response['status'] = 'success';
+            $response['transaction_id'] = mysqli_insert_id($conn); // Return the newly inserted ID
+        } else {
+            $response['status'] = 'error';
+            $response['message'] = 'Insertion failed: ' . mysqli_error($conn);
+        }
+    }
+    
+    // Return response as JSON
+    echo json_encode($response);
+}
+
+// insert new order product
+if (isset($inputData['insertOrderProduct']) && $inputData['insertOrderProduct'] === true) {
+    // Prepare and bind parameters for insert
+    $orderName = $inputData['order_name'] ?? null;
+    $transactionId = $inputData['transaction_id'] ?? null;
+    $productId = $inputData['product_id'] ?? null;
+    $orderDate = $inputData['order_date'] ?? null;
+    $itemQuantity = $inputData['item_quantity'] ?? null;
+
+    // Insert statement for order_products table
+    $sql = "INSERT INTO `order_products` (`order_name`, `transaction_id`, `product_id`, `order_date`, `item_quantity`) 
+            VALUES ('$orderName', '$transactionId', '$productId', '$orderDate', '$itemQuantity')";
+
+    if ($conn->query($sql) === TRUE) {
+        $newOrderProductId = $conn->insert_id; // Capture the ID of the newly inserted record
+
+        // Update the product quantity in the product table
+        $updateQuantitySql = "UPDATE `product` 
+                              SET `quantity` = `quantity` - $itemQuantity 
+                              WHERE `product_id` = '$productId' ";
+
+        if ($conn->query($updateQuantitySql) === TRUE) {
+            $response = [
+                'status' => 'success',
+                'order_products_id' => $newOrderProductId
+            ];
+        } else {
+            // Handle update quantity error
+            $response = [
+                'status' => 'error',
+                'message' => 'Quantity update failed: ' . $conn->error
+            ];
+        }
+    } else {
+        // Handle insert order error
+        $response = [
+            'status' => 'error',
+            'message' => 'Insertion failed: ' . $conn->error
+        ];
+    }
+
+    // Output response as JSON
+    echo json_encode($response);
+}
+
+// insert new discounted transaction
+if (isset($inputData['insertDiscountedTransaction']) && $inputData['insertDiscountedTransaction'] === true) {
+    // Capture input data
+    $transactionId = $inputData['transaction_id'] ?? null;
+    $discountId = $inputData['discount_id'] ?? null;
+    $status = $inputData['discounted_transaction_status'] ?? null;
+    $discountedTransactionId = $inputData['discounted_transaction_id'] ?? null;
+
+    // Check if we're updating an existing discounted transaction
+    if ($discountedTransactionId) {
+        // Update statement
+        $updateFields = [];
+        if (isset($transactionId)) $updateFields[] = "transaction_id = '$transactionId'";
+        if (isset($discountId)) $updateFields[] = "discount_id = '$discountId'";
+        if (isset($status)) $updateFields[] = "discounted_transaction_status = '$status'";
+
+        $sql = "UPDATE `discounted_transactions` SET " . implode(", ", $updateFields) . " WHERE `discounted_transaction_id` = '$discountedTransactionId'";
+
+        if ($conn->query($sql) === TRUE) {
+            $response = [
+                'status' => 'success',
+                'message' => 'Discounted transaction updated successfully',
+                'discounted_transaction_id' => $discountedTransactionId
+            ];
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'Update failed: ' . $conn->error
+            ];
+        }
+    } else {
+        // Insert statement
+        $sql = "INSERT INTO `discounted_transactions` (`transaction_id`, `discount_id`, `discounted_transaction_status`) 
+                VALUES ('$transactionId', '$discountId', '$status')";
+
+        if ($conn->query($sql) === TRUE) {
+            $newDiscountedTransactionId = $conn->insert_id; // Capture the ID of the newly inserted record
+            $response = [
+                'status' => 'success',
+                'discounted_transaction_id' => $newDiscountedTransactionId,
+            ];
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'Insertion failed: ' . $conn->error
+            ];
+        }
+    }
+
+    // Output response as JSON
+    echo json_encode($response);
+}
 
 ?>

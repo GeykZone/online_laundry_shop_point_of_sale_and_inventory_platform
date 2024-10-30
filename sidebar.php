@@ -37,7 +37,7 @@
         <span class="fa-solid fa-box-open nav-icon"></span>  Manage Products</a>
     </li>
 
-    <li class="nav-item laundry-owner-and-staff is-shop d-none"><a class="nav-link" href="manage-transactions.php">
+    <li class="nav-item laundry-owner-and-staff-customer is-shop d-none"><a class="nav-link" href="manage-transactions.php">
         <span class="fa-solid fa-cart-flatbed nav-icon"></span>  Manage Transactions</a>
     </li>
     

@@ -30,7 +30,22 @@ let emptyDiscountIdentifier = document.getElementById('empty-discount-identifier
 let selectedDiscounts = JSON.parse(sessionStorage.getItem('selectedDiscounts')) || [];
 let clothesWeightInput = document.getElementById('clothes-weight-input');
 let finalizeTransactionBtn = document.getElementById('finalize-transaction-btn');
+let estimatedPayable;
 
+// confirm transaction
+dynamicConfirmationMessage( 
+    {
+        modalId : 'finalize-transaction-confirm-modal',
+        modalText : '<span class="fa-solid fa-right-from-bracket"></span> Transaction Confirmation',
+        otherButtonId : 'confirm-transaction-now',
+        otherButtonText : 'Confirm Transaction',
+        customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
+        
+        <h5> Your estimated payable amount is <span id="confirmMessagePayblleAmount"></span>. Please note that this amount may change based on staff review of your eligibility for payment criteria. </h5>
+
+        </div>`
+    }
+)
 
 // // an event listener for rating input field
 // ratingInput.addEventListener('input', function () {
@@ -92,85 +107,130 @@ openTransactionCreationModal.addEventListener('click', function(){
 
 // event listener for checkout
 checkoutButton.addEventListener('click', (e) => {
+    WaitigLoader(true)
     e.preventDefault(); // Prevent the default action of the button
 
     if (selectedProductIds.length === 0) {
+        WaitigLoader(false)
         dynamicAlertMessage('Please select at least one product before proceeding to checkout.', 'warning', 3000)
     } else {
 
 
         if (selectedProductIds.some(product => parseInt(product.quantity, 10) === 0)) {
             dynamicAlertMessage("One or more selected products have a quantity of 0.", 'error', 3000);
+            WaitigLoader(false)
         } else {
+
+            let isValid = true;
+            let errorMessage;
+
+            selectedProductIds.forEach((product) => {
+                const productId = product.id;
+                const productQuantity = product.quantity;
+
+                const url = "php-sql-controller/service-and-more-controller.php";
+                const data = {
+                    productId: productId,
+                    productQuantity: productQuantity,
+                    verifyQuantity: true,
+                };
+
+                // Synchronous request to check quantity from the database
+                const detailsList = dynamicSynchronousPostRequest(url, data);
+
+                if (isValidJSON(detailsList)) {
+                    const details = JSON.parse(detailsList);
+
+                    // Check if the queried quantity is less than the requested productQuantity
+                    if (details.quantity < productQuantity) {
+                        isValid = false;
+                        errorMessage = `Insufficient stock for Product ID ${productId}. Requested: ${productQuantity}, Available: ${details.quantity}`;
+                    }
+                } else {
+                    isValid = false;
+                    console.error(detailsList);
+                    errorMessage = 'Something went wrong. Please see the error logs for additional information.';
+                }
+            });
+
+            // Final validation check
+            if (isValid) {
+                
+                console.log('Proceeding to checkout with selected products:', selectedProductIds);
+                $('#selectOrderProductModal').modal('hide')
+                $('#transactionFinalization').modal('show')
         
-            console.log('Proceeding to checkout with selected products:', selectedProductIds);
-            $('#selectOrderProductModal').modal('hide')
-            $('#transactionFinalization').modal('show')
-    
-            // id
-            // quantity
-            // product_name
-            // product_image
-    
-            
-            if(Object.keys(selectedProductIds).length > 0){
-    
-                if(Object.keys(selectedProductIds).length > 1 ){
-                    document.getElementById('selected-product-container-label').textContent = 'Selected Products';
-                }
-                else{
-                    document.getElementById('selected-product-container-label').textContent = 'Selected Product';
-                }
-    
-                selectedProductsContainer.innerHTML = '';
-                selectedProductIds.forEach((product) => {
-    
-                    const productId = product.id;
-                    const productPrice = product.price;
-                    const productBrand = product.product_brand;
-                    const productImage = product.product_image;
-                    const productName = product.product_name;
-                    const productQuantity = product.quantity;
-    
-                    // Create the card HTML dynamically
-                    const productCardHTML = `
-                    <div class=" col-12 col-md-6">
-                        <div class="card">
-                        <div class="card-header">
-                            ${productName}
-                        </div>
-                        <div class="card-body d-flex gap-3">
-                            <div class="rounded-3 overflow-hidden shadow" style="width: 100px;">
-                            <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+                // id
+                // quantity
+                // product_name
+                // product_image
+        
+                
+                if(Object.keys(selectedProductIds).length > 0){
+                    WaitigLoader(false)
+        
+                    if(Object.keys(selectedProductIds).length > 1 ){
+                        document.getElementById('selected-product-container-label').textContent = 'Selected Products';
+                    }
+                    else{
+                        document.getElementById('selected-product-container-label').textContent = 'Selected Product';
+                    }
+        
+                    selectedProductsContainer.innerHTML = '';
+                    selectedProductIds.forEach((product) => {
+        
+                        const productPrice = product.price;
+                        const productBrand = product.product_brand;
+                        const productImage = product.product_image;
+                        const productName = product.product_name;
+                        const productQuantity = product.quantity;
+        
+                        // Create the card HTML dynamically
+                        const productCardHTML = `
+                        <div class=" col-12 col-md-6">
+                            <div class="card">
+                            <div class="card-header">
+                                ${productName}
                             </div>
-                            <div>
-                            <p>Brand: ${productBrand}</p>
-                            <p>Price: ${formatToCurrency(productPrice)}</p>
-                            <p>Selected Quantity: ${productQuantity}</p> <!-- You can replace 1 with a dynamic value if needed -->
+                            <div class="card-body d-flex gap-3">
+                                <div class="rounded-3 overflow-hidden shadow" style="width: 100px;">
+                                <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+                                </div>
+                                <div>
+                                <p>Brand: ${productBrand}</p>
+                                <p>Price: ${formatToCurrency(productPrice)}</p>
+                                <p>Selected Quantity: ${productQuantity}</p> <!-- You can replace 1 with a dynamic value if needed -->
+                                </div>
+                            </div>
                             </div>
                         </div>
-                        </div>
-                    </div>
-                    `;
-    
-                    // Insert the card into the selectedProductsContainer
-                    selectedProductsContainer.innerHTML += productCardHTML;
-    
-                }) 
-    
-                document.getElementById('check-out-selected-service').textContent = selectedServiceGlobalVar.service_name
-                document.getElementById('check-out-selected-service-description').textContent = selectedServiceGlobalVar.description
-                document.getElementById('check-out-selected-service-price').textContent =  formatToCurrency(selectedServiceGlobalVar.price)
-    
+                        `;
+        
+                        // Insert the card into the selectedProductsContainer
+                        selectedProductsContainer.innerHTML += productCardHTML;
+        
+                    }) 
+        
+                    document.getElementById('check-out-selected-service').textContent = selectedServiceGlobalVar.service_name
+                    document.getElementById('check-out-selected-service-description').textContent = selectedServiceGlobalVar.description
+                    document.getElementById('check-out-selected-service-price').textContent =  formatToCurrency(selectedServiceGlobalVar.price)
+        
+                }
+        
+                discountPage = 1; 
+                discountContainer.innerHTML = ''; // Clear previous content if needed
+                discountContainer.innerHTML = `
+                <div class="d-flex justify-content-flex-start" id="empty-discount-identifier">
+                    <p>Shop does not have any discount yet.</p>
+                </div>`;
+                loadDiscounts();
+
             }
-    
-            discountPage = 1; 
-            discountContainer.innerHTML = ''; // Clear previous content if needed
-            discountContainer.innerHTML = `
-            <div class="d-flex justify-content-flex-start" id="empty-discount-identifier">
-                <p>Shop does not have any discount yet.</p>
-            </div>`;
-            loadDiscounts();
+            else{
+                WaitigLoader(false)
+                dynamicAlertMessage(errorMessage, 'error', 3000); 
+            }
+
         }
 
     }
@@ -187,27 +247,27 @@ finalizeTransactionBtn.addEventListener('click', function(){
 
     if(transactionFinalizationValidation()){
         
-        console.log(`service : `,selectedServiceGlobalVar,` \n product: `,selectedProductIds,` \n discounts: `,selectedDiscounts,``)
+        // console.log(`service : `,selectedServiceGlobalVar,` \n product: `,selectedProductIds,` \n discounts: `,selectedDiscounts,``)
 
         // Define initial prices
         const singleItemPrice = parseFloat(selectedServiceGlobalVar.price);
-        console.log('singleItemPrice = '+singleItemPrice)
+        // console.log('singleItemPrice = '+singleItemPrice)
 
         const totalProductPrice = selectedProductIds.reduce((total, product) => {
             return total + parseFloat(product.price) * parseInt(product.quantity, 10);
         }, 0);
-        console.log('totalProductPrice = '+totalProductPrice)
+        // console.log('totalProductPrice = '+totalProductPrice)
 
         // Calculate subtotal
         let subtotal = singleItemPrice + totalProductPrice;
-        console.log('singleItemPrice + totalProductPrice = '+ subtotal)
+        // console.log('singleItemPrice + totalProductPrice = '+ subtotal)
 
         // Initialize discount variables
         let discount1 = selectedDiscounts[0] ? parseFloat(selectedDiscounts[0].discount_percent) / 100 : null;
         let discount2 = selectedDiscounts[1] ? parseFloat(selectedDiscounts[1].discount_percent) / 100 : null;
 
-        console.log('discount1 = ' +discount1);
-        console.log('discount2 = ' +discount2);
+        // console.log('discount1 = ' +discount1);
+        // console.log('discount2 = ' +discount2);
 
         // Check if the first discount is present, else alert and stop
         if (discount1 !== null) {
@@ -225,6 +285,10 @@ finalizeTransactionBtn.addEventListener('click', function(){
             }
         }
 
+        document.getElementById('confirmMessagePayblleAmount').textContent = formatToCurrency(`${subtotal}`)
+        estimatedPayable = subtotal;
+        $('#finalize-transaction-confirm-modal').modal('show');
+        $('#transactionFinalization').modal('hide')
         console.log('Toatal = ' + subtotal); 
     }
 
@@ -255,6 +319,181 @@ clothesWeightInput.addEventListener('keydown', function(event) {
         event.preventDefault(); // Prevent any other character from being input
     }
 });
+
+// event listener to confirm transaction 
+const confirmTransactionCheck = setInterval(() => {
+    let confirmTransaction = document.getElementById('confirm-transaction-now');
+    
+    if (confirmTransaction) {
+        // Element exists, stop the interval
+        clearInterval(confirmTransactionCheck);
+
+        confirmTransaction.addEventListener('click', (e) => {
+            WaitigLoader(true)
+
+            const products = selectedProductIds;
+            const discount = selectedDiscounts;
+            let transactionId;
+            let orderProductId;
+
+            const service = selectedServiceGlobalVar;
+            const clothsWeight = clothesWeightInput.value;
+            const payable = estimatedPayable;
+            const shop_id = sessionStorage.getItem('service_more_shop_id');
+            const user_id = userId;
+            const transaction_name = `${userUserName} - ${service.service_name} - Transaction`;
+
+            // insert transaction
+            const url = "php-sql-controller/service-and-more-controller.php";
+            const data = {
+                insertTransaction: true,
+                shop_id: shop_id,
+                user_id: user_id,
+                service_id: service.service_id,
+                transaction_date: getPhilippineDateTime(),
+                transaction_name: transaction_name,
+                clothes_weight: clothsWeight,
+                total: payable,
+                transaction_status: 'Pending'
+            };
+
+            const detailsList = dynamicSynchronousPostRequest(url, data);
+
+            if(isValidJSON(detailsList)){
+                const details = JSON.parse(detailsList);
+                // console.log('transaction => ', details)
+                let status = details.status;
+                if(status == 'success'){
+                    transactionId = details.transaction_id
+                }
+                else{
+                    let message = details.message
+                    WaitigLoader(false)
+                    dynamicAlertMessage(message, 'error', 3000);
+                }
+            }
+            else{
+                console.error(detailsList);
+                WaitigLoader(false)
+                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+            }
+
+
+            //insert order product
+            if(transactionId){
+
+                products.forEach((product) => {
+                    const productId = product.id;
+                    const orderName = product.product_name + ' - ' + product.product_brand;
+
+                    const url = "php-sql-controller/service-and-more-controller.php";
+                    const data = {
+                        insertOrderProduct: true,
+                        order_name: orderName,
+                        transaction_id: transactionId,
+                        product_id: productId,
+                        order_date: getPhilippineDateTime(),
+                        item_quantity: product.quantity
+                    };
+        
+                    const detailsList = dynamicSynchronousPostRequest(url, data);
+        
+                    if(isValidJSON(detailsList)){
+                        const details = JSON.parse(detailsList);
+                        // console.log('order => ', details)
+                        let status = details.status;
+                        if(status == 'success'){
+                            orderProductId = details.order_products_id
+                        }
+                        else{
+                            let message = details.message
+                            dynamicAlertMessage(message, 'error', 3000);
+                            WaitigLoader(false)
+                        }
+                    }
+                    else{
+                        console.error(detailsList);
+                        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                        WaitigLoader(false)
+                    }
+
+
+                })
+
+            }
+
+
+            //insert discount if exist
+            if(orderProductId){
+
+                if (Object.keys(selectedDiscounts).length > 0) {
+
+                    let discountInserted = true;
+                    let message;
+
+                    discount.forEach((discount) => {
+                        const discountId = discount.discount_id;
+
+                        console.log(discountId)
+    
+                        const url = "php-sql-controller/service-and-more-controller.php";
+                        const data = {
+                            insertDiscountedTransaction: true,
+                            transaction_id: transactionId,
+                            discount_id: discountId,
+                            discounted_transaction_status: 'Pending'
+                        };
+            
+                        const detailsList = dynamicSynchronousPostRequest(url, data);
+            
+                        if(isValidJSON(detailsList)){
+                            const details = JSON.parse(detailsList);
+                            console.log('discounted transaction => ', details)
+                            let status = details.status;
+                            if(status != 'success'){
+                                discountInserted = false;
+                                message = details.message;
+                                WaitigLoader(false)
+                            }
+                        }
+                        else{
+                            WaitigLoader(false)
+                            console.error(detailsList);
+                            discountInserted = false;
+                            dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                        }
+    
+    
+                    })
+
+                    if(discountInserted){
+                        WaitigLoader(false)
+                        dynamicAlertMessage('Transaction has been successfully processed.', 'success', 3000);
+
+                        setTimeout(function(){
+                            window.location.reload();
+                        },2000)
+                    }
+                    else{
+                        WaitigLoader(false)
+                        dynamicAlertMessage(message, 'error', 3000);
+                    }
+                    
+                } else {
+                    WaitigLoader(false)
+                    dynamicAlertMessage('Transaction has been successfully processed.', 'success', 3000);
+                    setTimeout(function(){
+                        window.location.reload();
+                    },2000)
+                }
+                
+
+            }
+
+        })
+
+    }
+}, 100);
 
 // Prevent non-numeric characters when pasting
 clothesWeightInput.addEventListener('paste', function(event) {
@@ -418,6 +657,14 @@ function loadProductsForCurrentPage(pageNumber) {
     if (productsArray.length > 0) {
         areMoreProductsAvailable = true; // Reset flag if products are found
         productsArray.forEach(product => {
+            let bgColor = 'success';
+            if(parseInt(product.quantity) <= 20){
+                bgColor = 'warning';
+            }
+
+            if(parseInt(product.quantity) <= 10){
+                bgColor = 'danger';
+            }
             const productCard = document.createElement('div');
             productCard.classList.add('col-md-4');
             productCard.innerHTML = `
@@ -429,7 +676,7 @@ function loadProductsForCurrentPage(pageNumber) {
                         <h5 class="card-title">${product.product_name}</h5>
                         <p class="card-text opacity-75">Brand: ${product.product_brand}</p>
                         <p class="card-text opacity-75">Price: ${formatToCurrency(product.price)}</p>
-                        <p class="card-text opacity-75">Quantity: ${product.quantity}</p>
+                        <p class="card-text opacity-75 ">Quantity: <span class="text-${bgColor}">${product.quantity}</span></p>
                         <div class="d-flex align-items-center">
                             <input type="number" class="form-control me-2" id="quantityInput${product.product_id}" value="1" min="1" style="width: 70px;">
                             <label style="min-width:50px; width:auto; max-width:500px;" type="button" class="btn btn-info d-flex justify-content-center flex-row-reverse gap-2 text-white" for="productSelect${product.product_id}">
