@@ -364,5 +364,292 @@ if (isset($inputData['checkIfShopExist'])) {
     echo json_encode($response);
 }
 
+// transaction listener to return the counts
+if (isset($inputData['listenToTransaction'])) {
+    $userRole = isset($inputData['userRole']) ? $inputData['userRole'] : null;
+    $userId = isset($inputData['userId']) ? $inputData['userId'] : null;
+    $shop_id = isset($inputData['shop_id']) ? $inputData['shop_id'] : null;
+
+    // Set status condition based on the user role
+    if ($userRole === 'Laundry Owner' || $userRole === 'Laundry Staff') {
+        $statusCondition = "transaction_status = 'Pending' AND shop_id = '$shop_id'";
+    } elseif ($userRole === 'Customer') {
+        $statusCondition = "transaction_status IN ('Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected') AND user_id = '$userId' AND notification_is_read = 'False'";
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid user role']);
+        exit;
+    }
+
+    // Query for the count only
+    $countQuery = "SELECT COUNT(*) AS total_count FROM transactions WHERE $statusCondition";
+    $countResult = $conn->query($countQuery);
+
+    if ($countResult) {
+        $totalCount = $countResult->fetch_assoc()['total_count'];
+        echo json_encode(['status' => 'success', 'total_count' => $totalCount]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to retrieve count']);
+    }
+
+    $conn->close();
+}
+
+// load the transaction info
+if (isset($inputData['queryTransaction'])) {
+    $transactionId = $inputData['transactionId'];
+
+    // SQL query with additional LEFT JOINs
+    $query = "
+        SELECT t.transaction_id, t.shop_id, t.user_id, t.transaction_name, t.transaction_date,
+               t.pick_up_date, t.total, t.initial, t.transaction_status, t.clothes_weight, t.service_id,
+               t.transaction_changes_other_details, t.notification_is_read, t.last_update_date,
+               op.order_products_id, op.order_name, op.product_id AS order_product_id, 
+               op.order_date, op.item_quantity,
+               dt.discounted_transaction_id, dt.discount_id, dt.discounted_transaction_status,
+               p.product_id, p.product_name, p.price AS product_price, p.quantity AS product_quantity, 
+               p.image_link, p.product_brand, p.product_status,
+               s.service_id AS svc_service_id, s.service_name, s.description AS service_description,
+               s.price AS service_price, s.service_status,
+               d.discount_id AS disc_discount_id, d.discount_name, d.discount_percent, 
+               d.discount_description, d.discount_status
+        FROM transactions t
+        LEFT JOIN order_products op ON t.transaction_id = op.transaction_id
+        LEFT JOIN discounted_transactions dt ON t.transaction_id = dt.transaction_id
+        LEFT JOIN product p ON op.product_id = p.product_id
+        LEFT JOIN services s ON t.service_id = s.service_id
+        LEFT JOIN discount d ON dt.discount_id = d.discount_id
+        WHERE t.transaction_id = ?
+    ";
+
+    // Prepare and execute the query
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $transactionId);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    // Initialize an array to store formatted output
+    $formattedResult = [];
+    
+    // Loop through result and format the data
+    foreach ($result as $item) {
+        // Populate transaction details (only once)
+        if (!isset($formattedResult['transaction'])) {
+            $formattedResult['transaction'] = [
+                'transaction_id' => $item['transaction_id'],
+                'shop_id' => $item['shop_id'],
+                'user_id' => $item['user_id'],
+                'transaction_name' => $item['transaction_name'],
+                'transaction_date' => $item['transaction_date'],
+                'pick_up_date' => $item['pick_up_date'],
+                'total' => $item['total'],
+                'initial' => $item['initial'],
+                'transaction_status' => $item['transaction_status'],
+                'clothes_weight' => $item['clothes_weight'],
+                'transaction_changes_other_details' => $item['transaction_changes_other_details'],
+                'notification_is_read' => $item['notification_is_read'],
+                'last_update_date' => $item['last_update_date']
+            ];
+        }
+
+        // Add product if not already in the list
+        if (!isset($formattedResult['products'])) {
+            $formattedResult['products'] = [];
+        }
+
+        $productExists = false;
+        foreach ($formattedResult['products'] as $product) {
+            if ($product['order_products_id'] == $item['order_products_id']) {
+                $productExists = true;
+                break;
+            }
+        }
+
+        if (!$productExists) {
+            $formattedResult['products'][] = [
+                'order_products_id' => $item['order_products_id'],
+                'order_name' => $item['order_name'],
+                'order_product_id' => $item['order_product_id'],
+                'order_date' => $item['order_date'],
+                'item_quantity' => $item['item_quantity'],
+                'product_id' => $item['product_id'],
+                'product_name' => $item['product_name'],
+                'product_price' => $item['product_price'],
+                'product_quantity' => $item['product_quantity'],
+                'image_link' => $item['image_link'],
+                'product_brand' => $item['product_brand'],
+                'product_status' => $item['product_status']
+            ];
+        }
+
+        // Add service (assuming it’s the same across items)
+        if (!isset($formattedResult['service'])) {
+            $formattedResult['service'] = [
+                'service_id' => $item['svc_service_id'],
+                'service_name' => $item['service_name'],
+                'service_description' => $item['service_description'],
+                'service_price' => $item['service_price'],
+                'service_status' => $item['service_status']
+            ];
+        }
+
+        // Add discount if not already in the list
+        if (!isset($formattedResult['discounts'])) {
+            $formattedResult['discounts'] = [];
+        }
+
+        $discountExists = false;
+        foreach ($formattedResult['discounts'] as $discount) {
+            if ($discount['discount_id'] == $item['discount_id']) {
+                $discountExists = true;
+                break;
+            }
+        }
+
+        if (!$discountExists) {
+            $formattedResult['discounts'][] = [
+                'discounted_transaction_id' => $item['discounted_transaction_id'],
+                'discount_id' => $item['discount_id'],
+                'discounted_transaction_status' => $item['discounted_transaction_status'],
+                'discount_name' => $item['discount_name'],
+                'discount_percent' => $item['discount_percent'],
+                'discount_description' => $item['discount_description'],
+                'discount_status' => $item['discount_status']
+            ];
+        }
+    }
+
+    // Output the formatted result as JSON
+    echo json_encode($formattedResult, JSON_PRETTY_PRINT);
+}
+
+// order product common dmls
+if (isset($inputData['orderProductsCommonDml'])) {
+
+    if (isset($inputData['queryDml']) && $inputData['queryDml'] === true) {
+        // Capture input data
+        $transactionId = $inputData['transaction_id'] ?? null;
+        $productId = $inputData['product_id'] ?? null;
+    
+        // Query for order products based on transaction_id and product_id
+        $sql = "SELECT `order_products_id`, `order_name`, `transaction_id`, `product_id`, `order_date`, `item_quantity`
+                FROM `order_products`
+                WHERE `transaction_id` = ? AND `product_id` = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ii", $transactionId, $productId);
+        
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $data = $result->fetch_all(MYSQLI_ASSOC);
+    
+            $response = [
+                'status' => 'query success',
+                'message' => 'Data retrieved successfully',
+                'data' => $data
+            ];
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'Query failed: ' . $stmt->error
+            ];
+        }
+    } elseif (isset($inputData['updateDml']) && $inputData['updateDml'] === true) {
+        // Capture input data
+        $orderProductId = $inputData['order_products_id'] ?? null;
+        $orderName = $inputData['order_name'] ?? null;
+        $transactionId = $inputData['transaction_id'] ?? null;
+        $productId = $inputData['product_id'] ?? null;
+        $orderDate = $inputData['order_date'] ?? null;
+        $itemQuantity = $inputData['item_quantity'] ?? null;
+        $addQuantity = isset($inputData['addQuantity']) && $inputData['addQuantity'] !== '' ? $inputData['addQuantity'] : null;
+    
+        // Build update fields dynamically based on non-null and non-empty fields
+        $updateFields = [];
+        $params = [];
+        $types = '';
+    
+        if ($orderName !== null) {
+            $updateFields[] = "order_name = ?";
+            $params[] = $orderName;
+            $types .= 's';
+        }
+        if ($transactionId !== null) {
+            $updateFields[] = "transaction_id = ?";
+            $params[] = $transactionId;
+            $types .= 'i';
+        }
+        if ($productId !== null && $addQuantity == null) {
+            $updateFields[] = "product_id = ?";
+            $params[] = $productId;
+            $types .= 'i';
+        }
+        if ($orderDate !== null) {
+            $updateFields[] = "order_date = ?";
+            $params[] = $orderDate;
+            $types .= 's';
+        }
+        if ($itemQuantity !== null) {
+            $updateFields[] = "item_quantity = ?";
+            $params[] = $itemQuantity;
+            $types .= 'i';
+        }
+
+        if ($addQuantity !== null) {
+            $updateFields[] = "item_quantity = item_quantity + ?";
+            $params[] = $addQuantity;
+            $types .= 'i';
+        }
+    
+        if (count($updateFields) > 0 && $orderProductId !== null) {
+            $updateClause = implode(", ", $updateFields);
+            $sql = "UPDATE `order_products` SET $updateClause WHERE `order_products_id` = ?";
+            $params[] = $orderProductId;
+            $types .= 'i';
+    
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+    
+            if ($stmt->execute()) {
+                $response = [
+                    'status' => 'success',
+                    'message' => 'Order product updated successfully'
+                ];
+
+                if($addQuantity !== null){
+                    // Update product quantity in the product table
+                    $updateQuantitySql = "UPDATE `product` 
+                    SET `quantity` = `quantity` - $addQuantity 
+                    WHERE `product_id` = '$productId'";
+
+                    if ($conn->query($updateQuantitySql) === TRUE) {
+                        $response = [
+                        'status' => 'success',
+                        'message' => 'Order product updated successfully and product quantity subracted.'
+                        ];
+                    } else {
+                    $response = [
+                        'status' => 'error',
+                        'message' => 'Quantity update failed: ' . $conn->error
+                        ];
+                    }
+                }
+
+            } else {
+                $response = [
+                    'status' => 'error',
+                    'message' => 'Update failed: ' . $stmt->error
+                ];
+            }
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'No fields to update or order_products_id missing.'
+            ];
+        }
+    }
+    
+    // Output the response as JSON
+    echo json_encode($response);
+}
 
 ?>

@@ -26,12 +26,13 @@ if(isset($inputData['submitLaundryShopProduct'])){
     
     if ($product_id) {
         $service_status = isset($inputData['service_status']) && $inputData['service_status'] !== '' ? $inputData['service_status'] : null;
-    
+        $addQuantity = isset($inputData['addQuantity']) && $inputData['addQuantity'] !== '' ? $inputData['addQuantity'] : null;
+        
         // Dynamically build the SET clause based on non-null and non-empty fields
         $setClause = [];
         $params = [];
         $types = '';
-    
+        
         if ($productName !== null) {
             $setClause[] = "product_name = ?";
             $params[] = $productName;
@@ -62,20 +63,27 @@ if(isset($inputData['submitLaundryShopProduct'])){
             $params[] = $productStatus;
             $types .= 's';
         }
-    
+        
+        // Add addQuantity if specified, adding it to the quantity field
+        if ($addQuantity !== null) {
+            $setClause[] = "quantity = quantity + ?";
+            $params[] = $addQuantity;
+            $types .= 'i';
+        }
+        
         // Only proceed with the update if there are fields to update
         if (count($setClause) > 0) {
             $setClauseString = implode(", ", $setClause);
             $sql = "UPDATE product SET $setClauseString WHERE shop_id = ? AND product_id = ?";
-    
+            
             // Add shop_id and product_id to the params array
             $params[] = $shop_id;
             $params[] = $product_id;
             $types .= 'ii';
-    
+            
             $stmt = $conn->prepare($sql);
             $stmt->bind_param($types, ...$params);
-    
+            
             if ($stmt->execute()) {
                 $response['message'] = "Product updated successfully";
             } else {
@@ -84,7 +92,6 @@ if(isset($inputData['submitLaundryShopProduct'])){
         } else {
             $response['error'] = "No fields to update.";
         }
-    
     } else {
         // If no product_id is provided, perform an INSERT
         $sql = "INSERT INTO `product`(`product_name`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`) 

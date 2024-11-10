@@ -120,4 +120,10 @@
         cursor: pointer;
       }
 
+      #notif-badge-message{
+            margin-left: -7px !important;
+            margin-top: 6px !important;
+            font-size: 10px;
+      }
+
     </style>

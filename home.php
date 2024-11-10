@@ -55,6 +55,15 @@
 
        
         </div>
+        <div class="row g-4 pb-4  align-items-center d-none" id="shop-list-is-empty">
+
+          <div class="card">
+            <div class="card-body">
+              Currently, there are no active shops available.
+            </div>
+          </div>
+      
+        </div>
 
         </div>
       </div>
@@ -68,7 +77,6 @@
     <script src="vendors/simplebar/js/simplebar.min.js"></script>
     <script>
       const header = document.querySelector('header.header');
-
       document.addEventListener('scroll', () => {
         if (header) {
           header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);

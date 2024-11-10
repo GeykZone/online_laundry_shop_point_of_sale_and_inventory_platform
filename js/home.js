@@ -7,6 +7,7 @@ manageServiceMoreSessionStorage(false, false);
 let page = 1;
 let loading = false;
 let moreShopsAvailable = true; // Track if more shops are available
+let hasShop = [];
 
 function loadMoreShops() {
     if (loading || !moreShopsAvailable) return; // Prevent loading if no more shops
@@ -14,16 +15,27 @@ function loadMoreShops() {
     loading = true;
     const data = { queryShops: true, page: page };
 
+    // Make the asynchronous request and handle the response
     const response = dynamicSynchronousPostRequest('php-sql-controller/home-controller.php', data);
     const shops = JSON.parse(response);
 
+    // Log to debug if shops are loaded correctly
+    console.log('Loaded Shops:', shops);
+    console.log('Page:', page);
+
+    // Toggle the empty state message
+    const emptyMessage = document.getElementById('shop-list-is-empty');
+    const shopListContainer = document.getElementById('shop-list-container');
+
     if (shops.length > 0) {
-        
+        hasShop.push(shops);
+        emptyMessage.classList.add('d-none'); // Hide the empty message
+        shopListContainer.classList.remove('d-none'); // Show shop list container
 
         shops.forEach(shop => {
+            // [Add your existing code to create and append shop cards]
             let shopLogoLink = shop.image_link || 'https://cdn-icons-png.freepik.com/512/4992/4992668.png';
             let additionalScheduleDetails = '';
-
 
             if(shop.additional_schedule_details.length > 1){
                 additionalScheduleDetails = `<span class="card-text opacity-75">- ${shop.additional_schedule_details}</span>`;
@@ -52,35 +64,34 @@ function loadMoreShops() {
                         </div>
                     </div>
                 </div>`;
-            document.getElementById('shop-list-container').appendChild(shopItem);
+            shopListContainer.appendChild(shopItem);
 
-            const service_more_btn = document.getElementById(`service-and-more-btn-${shop.shop_id}`);
-
-            service_more_btn.addEventListener('click', (e) => {
+            const serviceMoreBtn = document.getElementById(`service-and-more-btn-${shop.shop_id}`);
+            serviceMoreBtn.addEventListener('click', (e) => {
                 manageServiceMoreSessionStorage(shop, true);
-
                 if (areAllServiceMoreSessionStorageItemsSet()) {
                     window.location.href = 'service-and-more.php';
                 } else {
                     console.log("Some session storage items are missing");
                 }
-                
-            })
+            });
         });
 
-        page++; // Increment page
+        page++; // Increment page only if new shops are loaded
+    } else {
+        // Show the empty message if no shops are found
+        if (hasShop.length === 0) {
+            emptyMessage.classList.remove('d-none');
+            shopListContainer.classList.add('d-none');
+        }
+        moreShopsAvailable = false; // Disable further loading if no more shops are available
     }
 
-    // If fewer shops are returned than expected (e.g., 10), stop loading more
-    if (shops.length < 1) {
-        moreShopsAvailable = false;
-    }
+    loading = false; // Reset loading flag
 
-    loading = false;
-
-    // Check if the content height is smaller than the viewport, trigger more loading
+    // Check if content height is smaller than the viewport, trigger more loading
     if (document.body.scrollHeight <= window.innerHeight && moreShopsAvailable) {
-        loadMoreShops(); // Load more content if everything fits in the viewport
+        loadMoreShops();
     }
 }
 
@@ -128,4 +139,3 @@ function areAllServiceMoreSessionStorageItemsSet() {
     // Check if all keys have values in sessionStorage
     return keys.every(key => sessionStorage.getItem(key) !== null);
 }
-

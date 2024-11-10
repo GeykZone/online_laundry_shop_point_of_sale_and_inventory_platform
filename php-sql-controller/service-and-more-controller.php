@@ -158,10 +158,14 @@ if(isset($inputData['insertTransaction']) ){
         if (isset($inputData['user_id'])) $fieldsToUpdate[] = "user_id = '{$inputData['user_id']}'";
         if (isset($inputData['transaction_name'])) $fieldsToUpdate[] = "transaction_name = '{$inputData['transaction_name']}'";
         if (isset($inputData['transaction_date'])) $fieldsToUpdate[] = "transaction_date = '{$inputData['transaction_date']}'";
+        if (isset($inputData['last_update_date'])) $fieldsToUpdate[] = "last_update_date = '{$inputData['last_update_date']}'";
         if (isset($inputData['pick_up_date'])) $fieldsToUpdate[] = "pick_up_date = '{$inputData['pick_up_date']}'";
         if (isset($inputData['total'])) $fieldsToUpdate[] = "total = '{$inputData['total']}'";
+        if (isset($inputData['initial'])) $fieldsToUpdate[] = "initial = '{$inputData['initial']}'";
         if (isset($inputData['transaction_status'])) $fieldsToUpdate[] = "transaction_status = '{$inputData['transaction_status']}'";
         if (isset($inputData['clothes_weight'])) $fieldsToUpdate[] = "clothes_weight = '{$inputData['clothes_weight']}'";
+        if (isset($inputData['transaction_changes_other_details'])) $fieldsToUpdate[] = "transaction_changes_other_details = '{$inputData['transaction_changes_other_details']}'";
+        if (isset($inputData['notification_is_read'])) $fieldsToUpdate[] = "notification_is_read = '{$inputData['notification_is_read']}'";
     
         // Join fields to update in SQL query
         $updateQuery = "UPDATE transactions SET " . implode(", ", $fieldsToUpdate) . " WHERE transaction_id = '$transactionId'";
@@ -179,14 +183,18 @@ if(isset($inputData['insertTransaction']) ){
         $userId = $inputData['user_id'] ?? null;
         $transactionName = $inputData['transaction_name'] ?? null;
         $transactionDate = $inputData['transaction_date'] ?? null;
+        $lastUpdateDate = $inputData['last_update_date'] ?? null;
         $pickUpDate = $inputData['pick_up_date'] ?? null;
         $total = $inputData['total'] ?? null;
+        $initial = $inputData['initial'] ?? null;
         $transactionStatus = $inputData['transaction_status'] ?? null;
         $clothesWeight = $inputData['clothes_weight'] ?? null;
         $serviceId = $inputData['service_id'] ?? null;
     
-        $insertQuery = "INSERT INTO transactions (service_id, shop_id, user_id, transaction_name, transaction_date, pick_up_date, total, transaction_status, clothes_weight) 
-                        VALUES ('$serviceId', '$shopId', '$userId', '$transactionName', '$transactionDate', '$pickUpDate', '$total', '$transactionStatus', '$clothesWeight')";
+        $insertQuery = "INSERT INTO transactions (service_id, shop_id, user_id, transaction_name,
+         transaction_date, pick_up_date, total, transaction_status, clothes_weight, initial, last_update_date) 
+                        VALUES ('$serviceId', '$shopId', '$userId', '$transactionName', '$transactionDate',
+                         '$pickUpDate', '$total', '$transactionStatus', '$clothesWeight', '$initial', '$lastUpdateDate')";
     
         if (mysqli_query($conn, $insertQuery)) {
             $response['status'] = 'success';
@@ -201,45 +209,83 @@ if(isset($inputData['insertTransaction']) ){
     echo json_encode($response);
 }
 
-// insert new order product
+// Check if order_products_id is provided and determine if it's an update, delete, or insert operation
 if (isset($inputData['insertOrderProduct']) && $inputData['insertOrderProduct'] === true) {
-    // Prepare and bind parameters for insert
+    $orderProductsId = $inputData['order_products_id'] ?? null;
+    $isRemoveProduct = $inputData['isRemoveProduct'] ?? false;
+
+    // Prepare common parameters
     $orderName = $inputData['order_name'] ?? null;
     $transactionId = $inputData['transaction_id'] ?? null;
     $productId = $inputData['product_id'] ?? null;
     $orderDate = $inputData['order_date'] ?? null;
     $itemQuantity = $inputData['item_quantity'] ?? null;
 
-    // Insert statement for order_products table
-    $sql = "INSERT INTO `order_products` (`order_name`, `transaction_id`, `product_id`, `order_date`, `item_quantity`) 
-            VALUES ('$orderName', '$transactionId', '$productId', '$orderDate', '$itemQuantity')";
+    if ($isRemoveProduct && $orderProductsId) {
+        // Delete operation
+        $deleteSql = "DELETE FROM `order_products` WHERE `order_products_id` = '$orderProductsId'";
 
-    if ($conn->query($sql) === TRUE) {
-        $newOrderProductId = $conn->insert_id; // Capture the ID of the newly inserted record
-
-        // Update the product quantity in the product table
-        $updateQuantitySql = "UPDATE `product` 
-                              SET `quantity` = `quantity` - $itemQuantity 
-                              WHERE `product_id` = '$productId' ";
-
-        if ($conn->query($updateQuantitySql) === TRUE) {
+        if ($conn->query($deleteSql) === TRUE) {
             $response = [
                 'status' => 'success',
-                'order_products_id' => $newOrderProductId
+                'message' => 'Product successfully removed.'
             ];
         } else {
-            // Handle update quantity error
             $response = [
                 'status' => 'error',
-                'message' => 'Quantity update failed: ' . $conn->error
+                'message' => 'Deletion failed: ' . $conn->error
             ];
         }
+
+    } elseif ($orderProductsId) {
+        // Update operation
+        $updateSql = "UPDATE `order_products` 
+                      SET `order_name` = '$orderName', `transaction_id` = '$transactionId', `product_id` = '$productId', 
+                          `order_date` = '$orderDate', `item_quantity` = '$itemQuantity'
+                      WHERE `order_products_id` = '$orderProductsId'";
+
+        if ($conn->query($updateSql) === TRUE) {
+            $response = [
+                'status' => 'success',
+                'message' => 'Product updated successfully.'
+            ];
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'Update failed: ' . $conn->error
+            ];
+        }
+
     } else {
-        // Handle insert order error
-        $response = [
-            'status' => 'error',
-            'message' => 'Insertion failed: ' . $conn->error
-        ];
+        // Insert operation
+        $insertSql = "INSERT INTO `order_products` (`order_name`, `transaction_id`, `product_id`, `order_date`, `item_quantity`) 
+                      VALUES ('$orderName', '$transactionId', '$productId', '$orderDate', '$itemQuantity')";
+
+        if ($conn->query($insertSql) === TRUE) {
+            $newOrderProductId = $conn->insert_id;
+
+            // Update product quantity in the product table
+            $updateQuantitySql = "UPDATE `product` 
+                                  SET `quantity` = `quantity` - $itemQuantity 
+                                  WHERE `product_id` = '$productId'";
+
+            if ($conn->query($updateQuantitySql) === TRUE) {
+                $response = [
+                    'status' => 'success',
+                    'order_products_id' => $newOrderProductId
+                ];
+            } else {
+                $response = [
+                    'status' => 'error',
+                    'message' => 'Quantity update failed: ' . $conn->error
+                ];
+            }
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'Insertion failed: ' . $conn->error
+            ];
+        }
     }
 
     // Output response as JSON

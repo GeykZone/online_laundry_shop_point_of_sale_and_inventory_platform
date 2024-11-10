@@ -7,6 +7,25 @@ let userPosition;
 let userUserName;
 let userId;
 let isShopView;
+let listinerErrors = 0
+let savedCount = 0
+let notifTransationTableVar
+let changeServiceShopId
+let changedServiceSelected = [];
+let changeableDiscount = [];
+let selectedDiscountsGloabl = [];
+let defaultInitial;
+let isChangeServiceCloseListenerAdded = false;
+let isAddMoreProductListenerAdded = false;
+let isAddMoreProductCloseListenerAdded = false;
+let isChangeServiceListenerAdded = false;
+let ischangeConfirmTransactionBack = false;
+let finalTransactionObject = [];
+let defaultTrnsactionId;
+let transactionCustomer;
+let selectedTransactionShopId;
+let oldTransactionStatus;
+let oldTransaction = [];
 
 // Initialize Firebase
 if(typeof firebase !== 'undefined' && firebase.apps.length === 0){
@@ -145,6 +164,21 @@ dynamicConfirmationMessage(
             </div>
 
         </div>`,
+    }
+)
+
+// confirm change transaction
+dynamicConfirmationMessage( 
+    {
+        modalId : 'change-finalize-transaction-confirm-modal',
+        modalText : '<span class="fa-solid fa-clipboard-list"></span> Transaction Confirmation',
+        otherButtonId : 'change-confirm-transaction-now',
+        otherButtonText : 'Cancel',
+        hideCancelButton: true,
+        customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
+        <h5 id="transactionConfirmMessage" style="font-size: 17px;"></h5>
+        </div>`,
+        customFooterContent: `<button type="button" id="change-confirm-transaction-update" data-coreui-dismiss="modal" class="btn btn-info text-white">Confirm Transaction Update</button>`
     }
 )
 
@@ -322,7 +356,241 @@ const updateUserInfoButtonVar = setInterval(() => {
             userInfoUpdate();
         })
     }
-})
+}, 100);
+
+// Interval variable to check if notif button exist
+const checkNotifButton = setInterval(() => {
+    const openNotificationButton = document.getElementById('open-notification-button');
+    if(openNotificationButton){
+
+        clearInterval(checkNotifButton);
+        openNotificationButton.addEventListener('click', function(){
+            notifTransationTable();
+        })
+    }
+}, 100)
+
+// Interval variable to check if submit changes transactio button exist
+const checkSubmitTransactionChangeBtn = setInterval(() => {
+    const transactionSubmitChanges = document.getElementById('transaction-submit-changes');
+
+    if(transactionSubmitChanges){
+
+        clearInterval(checkSubmitTransactionChangeBtn);
+        transactionSubmitChanges.addEventListener('click', function(){
+            formulateChangesForTransaction();
+        })
+    }
+
+}, 100)
+
+// Interval variable to check if the Back to notification button exist
+const checkBackToNotificationList = setInterval(() => {
+    const backToNotificationList = document.getElementById('back-to-notification-list');
+
+    if(backToNotificationList){
+
+        clearInterval(checkBackToNotificationList);
+        backToNotificationList.addEventListener('click', function(){
+            $('#viewNoftiicationList').modal('show');
+            $('#manageTransactionModal').modal('hide');
+        })
+    }
+
+
+}, 100);
+
+// Interval variable to check if the checkForAddMoreCheckoutBtn exist
+const checkForAddMoreCheckoutBtn = setInterval(() => {
+
+    let addMoreCheckout = document.getElementById('add-more-checkout');
+    let addedMoreProductContainer = document.getElementById('added-more-product-container');
+    let addedMoreProduct = document.querySelectorAll('.added-more-product');
+    let notifyCheckoutMoreProductContainerLabel = document.getElementById('notify-checkout-more-product-container-label');
+    
+    if(addMoreCheckout && addedMoreProductContainer && addedMoreProduct){
+
+        clearInterval(checkForAddMoreCheckoutBtn);
+        addMoreCheckout.addEventListener('click', function(){
+
+            $('#addMoreProductModal').modal('hide');
+            $('#manageTransactionModal').modal('show');
+    
+            addedMoreProductContainer.innerHTML = '';
+    
+            if(Object.keys(selectedAddMoreProductIds).length > 0){
+    
+                addedMoreProduct.forEach((e) => {
+                    if(e.classList.contains('d-none')){
+                        e.classList.remove('d-none')
+                    }
+                })
+
+                if(Object.keys(selectedAddMoreProductIds).length > 1){
+                    notifyCheckoutMoreProductContainerLabel.textContent = 'Added Products'
+                }else{
+                    notifyCheckoutMoreProductContainerLabel.textContent = 'Added Product'
+                }
+    
+                selectedAddMoreProductIds.forEach(function(product){
+    
+                    const productPrice = product.price;
+                    const productBrand = product.product_brand;
+                    const productImage = product.product_image;
+                    const productName = product.product_name;
+                    const productQuantity = product.quantity;
+    
+                    // Create the card HTML dynamically
+                    const productCardHTML = `
+                    <div class=" col-12 col-md-6">
+                        <div class="card">
+                        <div class="card-header">
+                            ${productName}
+                        </div>
+                        <div class="card-body d-flex gap-3">
+                            <div class="rounded-3 overflow-hidden shadow" style="width: 100px;">
+                            <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+                            </div>
+                            <div>
+                            <p>Brand: ${productBrand}</p>
+                            <p>Price: ${formatToCurrency(productPrice)}</p>
+                            <p>Selected Quantity: ${productQuantity}</p> <!-- You can replace 1 with a dynamic value if needed -->
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    `;
+    
+                    // Insert the card into the selectedProductsContainer
+                    addedMoreProductContainer.innerHTML += productCardHTML;
+    
+                })
+    
+            }
+            else{
+                addedMoreProduct.forEach((e) => {
+                    if(!e.classList.contains('d-none')){
+                        e.classList.add('d-none')
+                    }
+                })
+            }
+    
+        })
+    }
+
+    
+}, 100);
+
+// Interval variable to check if the notify-checkout-clothes-weight-input exist
+const checknotifyCheckoutClothesWeightInput = setInterval(() => {
+    const notifyCheckoutClothesWeightInput = document.getElementById('notify-checkout-clothes-weight-input');
+
+    if(notifyCheckoutClothesWeightInput){
+
+        clearInterval(checknotifyCheckoutClothesWeightInput);
+        // Add event listeners for 'keydown' (for typing) and 'paste' events
+        notifyCheckoutClothesWeightInput.addEventListener('keydown', function(event) {
+            // Allow backspace, delete, tab, escape, and enter
+            if (
+                event.key === 'Backspace' || 
+                event.key === 'Delete' || 
+                event.key === 'Tab' || 
+                event.key === 'Escape' || 
+                event.key === 'Enter'
+            ) {
+                return;
+            }
+
+            // Allow navigation keys like arrows
+            if (event.key.startsWith('Arrow')) {
+                return;
+            }
+
+            // Allow digits (0-9), spaces, dashes, parentheses
+            const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
+
+            if (!allowedCharacters.test(event.key)) {
+                event.preventDefault(); // Prevent any other character from being input
+            }
+        });
+
+        // Prevent non-numeric characters when pasting
+        notifyCheckoutClothesWeightInput.addEventListener('paste', function(event) {
+            // Get the pasted data
+            const pasteData = event.clipboardData.getData('text');
+
+            // Allow only numbers, spaces, dashes, parentheses, and decimal points in the pasted data
+            const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
+
+
+            if (!allowedCharacters.test(pasteData)) {
+                event.preventDefault(); // Prevent the paste if invalid characters are found
+            }
+        });
+    }
+
+
+}, 100);
+
+// Interval variable to check if the notify-checkout-clothes-weight-input exist
+const checkchangeConfirmTransactionUpdate = setInterval(() => {
+    const changeConfirmTransactionUpdate = document.getElementById('change-confirm-transaction-update');
+
+    if(changeConfirmTransactionUpdate){
+
+        clearInterval(checkchangeConfirmTransactionUpdate);
+        changeConfirmTransactionUpdate.addEventListener('click', function(){
+            updateTransaction();
+        })
+    }
+
+
+}, 100);
+
+// Interval variable to check if the mark-as-read-notification exist
+const checkmarkAsReadNotification = setInterval(() => {
+    const markAsReadNotification = document.getElementById('mark-as-read-notification')
+
+    if(markAsReadNotification){
+
+        clearInterval(checkmarkAsReadNotification);
+        markAsReadNotification.addEventListener('click', function(){
+            WaitigLoader(true)
+
+            const url = "php-sql-controller/service-and-more-controller.php";
+            const data = {
+                insertTransaction: true,
+                transaction_id: defaultTrnsactionId,
+                notification_is_read: 'True'
+            };
+            const detailsList = dynamicSynchronousPostRequest(url, data);
+            if(isValidJSON(detailsList)){
+                const details = JSON.parse(detailsList);
+                // console.log('transaction => ', details)
+                let status = details.status;
+                if(status == 'success'){
+                    $('#manageTransactionModal').modal('hide');
+                }
+                else{
+                    let message = details.message
+                    // WaitigLoader(false)
+                    dynamicAlertMessage(message, 'error', 3000);
+                }
+
+                WaitigLoader(false)
+            }
+            else{
+                console.error(detailsList);
+                // WaitigLoader(false)
+                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                WaitigLoader(false)
+            }
+
+        })
+    }
+
+
+}, 100);
 
 // dynamic function to show error field message
 function dynamicFieldErrorMessage(fieldId, errorMessage){
@@ -829,7 +1097,7 @@ function avatarLogoQuery() {
 function showHideFunctions() {
 
     let adminClass = document.querySelectorAll('.admin')
-    let customerClass = document.querySelectorAll('.costumer')
+    let customerClass = document.querySelectorAll('.customer')
     let laundryOwnerAndStaffCustomer = document.querySelectorAll('.laundry-owner-and-staff-customer');
     let laundryOwner = document.querySelectorAll('.laundry-owner')
     let adminAndLaundryOwner =  document.querySelectorAll('.admin-and-laundry-owner');
@@ -884,7 +1152,7 @@ function showHideFunctions() {
     }
 
 
-    if(userPosition == 'Costumer'){
+    if(userPosition == 'Customer'){
         customerClass.forEach(adcls => {
             if(adcls.classList.contains('d-none')){
                 adcls.classList.remove('d-none');
@@ -898,6 +1166,11 @@ function showHideFunctions() {
             }
 
         })
+
+        setInterval(function(){
+            listenToTRansaction()
+        },1000)
+        
     }
 
 
@@ -974,6 +1247,12 @@ function showHideFunctions() {
 
         avatarUserImage.src = avatarLogoQuery();
         avatarUserLabel.textContent = capitalizeWords(userPosition)+" "+capitalizeWords(userUserName);
+
+
+        setInterval(function(){
+            listenToTRansaction()
+        },1000)
+       
     }
 
     changeMainLogoConfiguration();
@@ -1541,18 +1820,17 @@ function retypePasswordAndUsername(isForLogo, isForInfo, isForShop){
 }
 
 // Function to format the input into currency with peso sign
+// Function to format the input with peso sign without altering the original decimal precision
 function formatToCurrency(input) {
     // Remove non-numeric characters (except for the decimal point)
     let value = input.replace(/[^0-9.]/g, '');
 
-    // Parse the value as a floating point number and format it to currency
-    let formattedValue = new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP',
-        minimumFractionDigits: 2
-    }).format(value ? parseFloat(value) : 0);
+    // Convert the cleaned string to a number, keeping the original precision
+    let parsedValue = value ? parseFloat(value) : 0;
 
-    // Update the input value with the formatted currency
+    // Add peso sign manually, without changing decimal places
+    let formattedValue = `₱${parsedValue}`;
+
     return formattedValue;
 }
 
@@ -1714,6 +1992,1598 @@ function getPhilippineDateTime() {
 
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
+
+// dynamic function to reverse discount
+function reverseDiscount(discountedPrice, discountPercentage) {
+    if (discountPercentage >= 100) {
+        throw new Error("Discount percentage should be less than 100");
+    }
+    return discountedPrice / (1 - (discountPercentage / 100));
+}
+
+// function to listen to transaction
+function listenToTRansaction() {
+    const notifBadgeMessage =  document.getElementById('notif-badge-message');
+    const url = "php-sql-controller/common-controller.php";
+    const data = {
+        listenToTransaction: true,
+        userRole: userPosition,
+        userId: userId,
+    };
+
+    if(sessionStorage.getItem('viewAsLaundryShop') && sessionStorage.getItem('viewAsLaundryShop') == 'true'){
+        data.shop_id = sessionStorage.getItem('sessionShopId');
+    }
+
+    let transactionListTableContainer = document.getElementById('transaction-list-table-container')
+    let transactionListInfoMessage = document.getElementById('transaction-list-info-message')
+
+    const detailsList = dynamicSynchronousPostRequest(url, data);
+
+    if(isValidJSON(detailsList)){
+
+        const details = JSON.parse(detailsList);
+
+        if(Object.keys(details).length > 0){
+            let status = details.status;
+           
+            if(status == 'success'){
+                const totalcount = parseInt(details.total_count);
+                
+                if(totalcount > 0){
+                    
+                    if(notifBadgeMessage.classList.contains('d-none')){
+                        notifBadgeMessage.classList.remove('d-none');
+                    }
+                    listinerErrors = 0;
+
+                    if(totalcount >= 99){
+                        notifBadgeMessage.textContent = '99+';
+                    }
+                    else{
+                        notifBadgeMessage.textContent = totalcount;
+                    }
+
+                    if(!transactionListInfoMessage.classList.contains('d-none')){
+                        transactionListInfoMessage.classList.add('d-none');
+                    }
+
+                    if(transactionListTableContainer.classList.contains('d-none')){
+                        transactionListTableContainer.classList.remove('d-none');
+                    }
+
+                    const notifCustomerTransactionTable = document.getElementById('notif-customer-transaction-table');
+                    if ($.fn.DataTable.isDataTable(`#${notifCustomerTransactionTable.id}`) && savedCount != totalcount) {
+                            // If table exists, reload its data without resetting the page
+                            $(`#${notifCustomerTransactionTable.id}`).DataTable().ajax.reload(null, false);
+
+                            savedCount = totalcount;
+                    }
+                    
+                }
+                else{
+                    notifBadgeMessage.classList.add('d-none');
+                    notifBadgeMessage.textContent = 0;
+
+                    if(transactionListInfoMessage.classList.contains('d-none')){
+                        transactionListInfoMessage.classList.remove('d-none');
+                    }
+
+                    if(!transactionListTableContainer.classList.contains('d-none')){
+                        transactionListTableContainer.classList.add('d-none');
+                    }
+                }
+
+            }
+            else{
+
+                listinerErrors += 1;
+                
+                if(listinerErrors == 1){
+                    let errMessage = details.message;
+                    console.error(errMessage);
+                    if(!notifBadgeMessage.classList.contains('d-none')){
+                        notifBadgeMessage.classList.add('d-none');
+                        notifBadgeMessage.textContent = 0;
+
+                        if(transactionListInfoMessage.classList.contains('d-none')){
+                            transactionListInfoMessage.classList.remove('d-none');
+                        }
+    
+                        if(!transactionListTableContainer.classList.contains('d-none')){
+                            transactionListTableContainer.classList.add('d-none');
+                        }
+                    }
+                }
+                
+            }
+        }
+        
+    }
+    else{
+        console.error(detailsList);
+        if(!notifBadgeMessage.classList.contains('d-none')){
+            notifBadgeMessage.classList.add('d-none');
+            notifBadgeMessage.textContent = 0;
+
+            if(transactionListInfoMessage.classList.contains('d-none')){
+                transactionListInfoMessage.classList.remove('d-none');
+            }
+
+            if(!transactionListTableContainer.classList.contains('d-none')){
+                transactionListTableContainer.classList.add('d-none');
+            }
+        }
+    }
+
+}
+
+// function to load the notification table
+function notifTransationTable() {
+    var ajax_url = "php-sql-controller/manage-transactions-controller.php";
+    let tableParamValue = {
+        showCostumerTransaction: true,
+        isForNotification: true,
+        position: userPosition,
+        userId: userId,
+    };
+
+    const notifCustomerTransactionTable = document.getElementById('notif-customer-transaction-table');
+    let sessionShopId = sessionStorage.getItem('sessionShopId');
+
+    if (sessionShopId) {
+        tableParamValue.shop_id = sessionShopId;
+    }
+
+    // Check if DataTable instance already exists for reload functionality
+    if ($.fn.DataTable.isDataTable(`#${notifCustomerTransactionTable.id}`)) {
+        // If table exists, reload its data without resetting the page
+        $(`#${notifCustomerTransactionTable.id}`).DataTable().ajax.reload(null, false);
+    } else {
+        // If table does not exist, initialize it
+        notifTransationTableVar = $(`#${notifCustomerTransactionTable.id}`).DataTable({
+            deferRender: true,
+            serverSide: true,
+            ajax: {
+                url: ajax_url,
+                data: tableParamValue,
+                dataSrc: function (json) {
+                    return json.data;
+                }
+            },
+            order: [[1, 'asc']],
+            responsive: true,
+            fixedHeader: true,
+            searching: true,
+            dom: 'Blfrtip',
+            pageLength: 10,
+            buttons: [
+                {
+                    extend: 'excel',
+                    text: 'Export Excel',
+                    className: 'export-excel-btn',
+                    title: 'Costumer Transactions',
+                    exportOptions: {
+                        columns: function (idx) {
+                            return idx >= 1 && idx <= 8;
+                        }
+                    }
+                }
+            ],
+            lengthMenu: [[5, 10, 20, 50, 100], [5, 10, 20, 50, 100]],
+            columnDefs: [{
+                targets: 0,
+                orderable: false
+            }],
+            language: {
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoFiltered: ""
+            },
+            columns: [
+                {
+                    targets: 0,
+                    render: function (data, type, row) {
+                        return `<button type="button" onClick="manageTransactionModal('${row}',true)" class="btn btn-primary text-white">Manage</button>`;
+                    }
+                },
+                null,
+                null,
+                null,
+                {
+                    targets: 4,
+                    render: function (data) {
+                        return formatToCurrency(`${data}`);
+                    }
+                },
+                null,
+                null,
+                null,
+                null,
+            ],
+        });
+    }
+
+    // Code to modify and relocate DataTable UI elements
+    let transactionListModalTableContainer = document.getElementById('notif-customer-transaction-table_wrapper')
+    let navBtnContainer = document.getElementById('notif-nav-btn-container');
+    let navfilterContainer = document.getElementById('notif-nav-search-container');
+    let navFooterContainer = document.getElementById('notif-nav-footer-container');
+
+    let dataTableButtons = transactionListModalTableContainer.querySelector('.dt-buttons');
+    let dataTablefilter = transactionListModalTableContainer.querySelector('.dataTables_filter');
+    let dataTableInfo = transactionListModalTableContainer.querySelector('.dataTables_info');
+    let dataTablePaginate = transactionListModalTableContainer.querySelector('.dataTables_paginate');
+    let dataTableLength = transactionListModalTableContainer.querySelector('.dataTables_length');
+
+    if (navBtnContainer && dataTableButtons) {
+        navBtnContainer.appendChild(dataTableButtons);
+        let excelBtn = dataTableButtons.querySelector('.buttons-excel');
+        excelBtn.classList.add('btn', 'btn-primary', 'd-flex', 'justify-content-center', 'align-items-center', 'gap-2');
+        if (excelBtn.classList.contains('dt-button')) {
+            excelBtn.classList.remove('dt-button');
+        }
+    }
+
+    if (dataTablefilter && navfilterContainer && dataTableLength) {
+        navfilterContainer.appendChild(dataTableLength);
+        navfilterContainer.appendChild(dataTablefilter);
+        
+        let dataTablefilterLabel = dataTablefilter.querySelector('label');
+        if (dataTablefilterLabel) {
+            let searchInput = dataTablefilterLabel.querySelector('input');
+            searchInput.classList.add('form-control');
+            searchInput.placeholder = 'Search';
+
+            dataTablefilterLabel.childNodes.forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE && child.nodeValue.includes('Search:')) {
+                    child.remove();
+                }
+            });
+        }
+
+        let labelElement = dataTableLength.querySelector('label');
+        if (labelElement) {
+            labelElement.querySelector('select').classList.add('form-select');
+            labelElement.childNodes.forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE && (child.nodeValue.includes('Show') || child.nodeValue.includes('entries'))) {
+                    child.remove();
+                }
+            });
+        }
+    }
+
+    if (navFooterContainer && dataTableInfo && dataTablePaginate) {
+        navFooterContainer.appendChild(dataTableInfo);
+        navFooterContainer.appendChild(dataTablePaginate);
+    }
+}
+
+// Array to hold selected products
+let selectedProductToRemove = [];
+let defaultProducSelected = [];
+
+// Function to toggle product selection and update label text
+function NotiftoggleProductSelection(product) {
+    const checkbox = document.getElementById(`selectedProductInput${product.order_product_id}`);
+    const labelText = document.getElementById(`NotifProductlabelText${product.order_product_id}`);
+    const existingIndex = selectedProductToRemove.findIndex(p => p.order_product_id === product.order_products_id);
+
+    if (checkbox.checked) {
+        if (existingIndex === -1) {
+            selectedProductToRemove.push({
+                order_product_id: product.order_products_id,
+                product_id: product.product_id,
+                item_quantity: product.item_quantity,
+                product_price: product.product_price
+            });
+            labelText.textContent = 'Unmark to unremove';
+        }
+    } else {
+        if (existingIndex > -1) {
+            selectedProductToRemove.splice(existingIndex, 1);
+            labelText.textContent = 'Mark to remove';
+        }
+    }
+
+    // Update session storage
+    // console.log('Selected Products:', selectedProductToRemove);
+}
+
+// function to open modal for mananging transations
+function manageTransactionModal(row, fromNotif) {
+    selectedProductToRemove = [];
+    selectedAddMoreProductIds = [];
+    selectedDiscountsGloabl = [];
+    defaultProducSelected = [];
+    changedServiceSelected = [];
+    changeableDiscount = [];
+    defaultInitial = null;
+    let notifySelectedProductContainer = document.getElementById('notify-checkout-product-container');
+    let notifModaldiscountContainer = document.getElementById('notify-checkout-discount-container');
+    let notifyCheckoutSelectedService = document.getElementById('notify-checkout-selected-service');
+    let notifySheckoutSelectedServiceDescription = document.getElementById('notify-checkout-selected-service-description');
+    let notifyCheckoutSelectedServicePrice = document.getElementById('notify-checkout-selected-service-price');
+    let notifyCheckoutClothesWeightInput = document.getElementById('notify-checkout-clothes-weight-input');
+    let notifyCheckoutInitialInput = document.getElementById('notify-checkout-initial-input');
+    let notifyCheckoutTotalInput = document.getElementById('notify-checkout-total-input');
+    // let addMoreDiscount = document.getElementById('add-more-discount');
+    let addMoreProduct = document.getElementById('add-more-product');
+    let detailsTransactionStatus = document.getElementById('details-transaction-status');
+    let changeServiceFromNotifBtn = document.getElementById('change-service-from-notif-btn');
+    let changeServiceCloseBtn = document.getElementById('changeService-close-btn');
+    let addMoreProductCloseBtn =  document.getElementById('add-more-product-close-btn');
+    let notifyCheckoutProductContainerLabel =  document.getElementById('notify-checkout-product-container-label');
+    let otherTransactionChangesDescription = document.getElementById('other-transaction-changes-description');
+    let hideThisClass = '';
+    const ThistransactionSubmitChanges = document.getElementById('transaction-submit-changes');
+    const markAsReadNotification = document.getElementById('mark-as-read-notification')
+
+    // an event that convert the value of price input into a currency
+    notifyCheckoutInitialInput.addEventListener('blur', function(e){
+        if(e.target.value.length > 0){
+            e.target.value = formatToCurrency(e.target.value)
+        }
+    })
+
+    // Given string
+    let str = row;
+
+    // Split the string into an array
+    let values = str.split(",");
+
+    // Define the keys for the JSON object
+    let keys = ["id", "customer", "shop", "service", "payable_amount", "status", "transaction_date", "pickup_date"];
+
+    // Create a JSON object by mapping keys to values
+    let jsonObj = {};
+    keys.forEach((key, index) => {
+        jsonObj[key] = values[index];
+    });
+
+    const transactionId = jsonObj.id;
+    defaultTrnsactionId = transactionId;
+    transactionCustomer = jsonObj.customer;
+
+    // using my custom js to post request to php 
+    const url = "php-sql-controller/common-controller.php"; 
+    const data = {
+        transactionId: transactionId, 
+        queryTransaction: true, 
+    };
+
+    const detailsList = dynamicSynchronousPostRequest(url, data);
+    if(isValidJSON(detailsList)){
+
+        const details = JSON.parse(detailsList);
+        if(Object.keys(details).length > 0){
+            const productList = details.products;
+            const discountList = details.discounts;
+            const service = details.service;
+            const transaction = details.transaction ;
+            selectedTransactionShopId = transaction.shop_id;
+            oldTransactionStatus =transaction.transaction_status;
+
+            notifySelectedProductContainer.innerHTML = '';
+            notifModaldiscountContainer.innerHTML = '';
+
+            // console.log(transaction)
+
+            notifyCheckoutSelectedService.textContent = service.service_name
+            notifySheckoutSelectedServiceDescription.textContent = service.service_description
+            notifyCheckoutSelectedServicePrice.textContent = formatToCurrency(`${service.service_price}`)
+            notifyCheckoutClothesWeightInput.value = parseInt(transaction.clothes_weight);
+            notifyCheckoutInitialInput.value = formatToCurrency(`${transaction.initial}`);
+            notifyCheckoutTotalInput.value = formatToCurrency(`${transaction.total}`);
+            otherTransactionChangesDescription.textContent = transaction.transaction_changes_other_details
+            defaultInitial = transaction.initial;
+            detailsTransactionStatus.value = transaction.transaction_status;
+            oldTransaction = transaction;
+
+            if(userPosition == 'Customer'){
+                detailsTransactionStatus.disabled = true;
+                notifyCheckoutInitialInput.disabled = true;
+                otherTransactionChangesDescription.disabled = true;
+
+                if(detailsTransactionStatus.value != 'Pending'){
+                    changeServiceFromNotifBtn.classList.add('d-none')
+                    addMoreProduct.classList.add('d-none')
+                    ThistransactionSubmitChanges.classList.add('d-none')
+                    notifyCheckoutClothesWeightInput.disabled = true;
+                    hideThisClass = 'd-none';
+                }
+                else{
+                    changeServiceFromNotifBtn.classList.remove('d-none')
+                    addMoreProduct.classList.remove('d-none')
+                    ThistransactionSubmitChanges.classList.remove('d-none')
+                    notifyCheckoutClothesWeightInput.disabled = false;
+                }
+
+
+                if(fromNotif){
+                    if(transaction.notification_is_read == 'False'){
+                        
+                        if(markAsReadNotification.classList.contains('d-none')){
+                            markAsReadNotification.classList.remove('d-none');
+                        }
+
+                    }
+                    else{
+                        if(!markAsReadNotification.classList.contains('d-none')){
+                            markAsReadNotification.classList.add('d-none');
+                        }
+                    }
+                }else{
+                    if(!markAsReadNotification.classList.contains('d-none')){
+                        markAsReadNotification.classList.add('d-none');
+                    }
+                }
+            }
+
+            if (!isChangeServiceListenerAdded) {
+                changeServiceFromNotifBtn.addEventListener('click', function(){
+                    $('#changeService').modal('show');
+                    $('#manageTransactionModal').modal('hide');
+                    changeServiceShopId = transaction.shop_id;
+                    openChangeServiceModal();
+                });
+                isChangeServiceListenerAdded = true; // Mark listener as added
+            }
+
+            // Add event listener for changeServiceCloseBtn if not already added
+            if (!isChangeServiceCloseListenerAdded) {
+                changeServiceCloseBtn.addEventListener('click', function() {
+                    $('#changeService').modal('hide');
+                    $('#manageTransactionModal').modal('show');
+                });
+                isChangeServiceCloseListenerAdded = true;
+            }
+
+            // Add event listener for addMoreProduct if not already added
+            if (!isAddMoreProductListenerAdded) {
+                addMoreProduct.addEventListener('click', function() {
+                    $('#addMoreProductModal').modal('show');
+                    $('#manageTransactionModal').modal('hide');
+                    changeServiceShopId = transaction.shop_id;
+                    loadAndSelectAddMoreProduct(service);
+                });
+                isAddMoreProductListenerAdded = true;
+            }
+
+            // Add event listener for addMoreProductCloseBtn if not already added
+            if (!isAddMoreProductCloseListenerAdded) {
+                addMoreProductCloseBtn.addEventListener('click', function() {
+                    $('#addMoreProductModal').modal('hide');
+                    $('#manageTransactionModal').modal('show');
+                });
+                isAddMoreProductCloseListenerAdded = true;
+            }
+
+            //products
+            productList.forEach((product) => {
+                const productPrice = product.product_price;
+                const productBrand = product.product_brand;
+                const productImage = product.image_link;
+                const productName = product.product_name;
+                const productQuantity = product.item_quantity;
+                const productId = product.product_id;
+                defaultProducSelected.push(product);
+            
+                // Create the card HTML dynamically
+                const productCardHTML = `
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            ${productName}
+                            <label class="btn btn-info ${hideThisClass} d-flex justify-content-center gap-2 text-white">
+                                <input class="form-check-input" type="checkbox" value="${productId}" 
+                                    id="selectedProductInput${product.order_product_id}" 
+                                    onclick='NotiftoggleProductSelection(${JSON.stringify(product)})'>
+                                <span id="NotifProductlabelText${product.order_product_id}">Mark to remove</span>
+                            </label>
+                        </div>
+                        <div class="card-body d-flex gap-3">
+                            <div class="rounded-3 overflow-hidden shadow" style="width: 100px;">
+                                <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+                            </div>
+                            <div>
+                                <p>Brand: ${productBrand}</p>
+                                <p>Price: ${formatToCurrency(`${productPrice}`)}</p>
+                                <p>Selected Quantity: ${productQuantity}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            
+                // Insert the card into the notifySelectedProductContainer
+                notifySelectedProductContainer.innerHTML += productCardHTML;
+            });
+            
+            if(Object.keys(defaultProducSelected).length > 1){
+                notifyCheckoutProductContainerLabel.textContent = 'Selected Products'
+            }
+            else{
+                notifyCheckoutProductContainerLabel.textContent = 'Selected Product'
+            }
+
+            //dicounts
+            selectedDiscountsGloabl = discountList
+            discountList.forEach(discount => {
+                if (discount.discount_id) {
+                    const discountCardHTML = `
+                    <div class="card mb-3 responsive-card">
+                        <div class="row g-0">
+                            <div class="col img-container bg-info">
+                                <img src="https://cdn-icons-png.flaticon.com/512/9528/9528844.png" alt="Discount Image" class="product-image">
+                            </div>
+                            <div class="col content-container d-flex flex-wrap flex-column">
+                                <div class="card-body">
+                                    <h5 class="card-title">${discount.discount_name}</h5>
+                                    <p class="card-text">${discount.discount_description}</p>
+                                    <p class="card-text">${discount.discount_percent}%</p>
+                                    
+                                    <div class="row g-3 mb-3 needs-validation">
+                                        <div class="col-12">
+                                            <label for="details-discount-status-${discount.discount_id}" class="form-label">Status</label>
+                                            <select id="details-discount-status-${discount.discount_id}" class="form-select form-select" aria-label=".form-select-sm example" style="max-width:200px;">
+                                                <option value='' selected>Select Option...</option>
+                                                <option value="Approved">Approved</option>
+                                                <option value="Rejected">Rejected</option>
+                                                <option value="Pending">Pending</option>
+                                            </select>
+                                            <div id="details-discount-status-${discount.discount_id}-error-feedback" class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+
+                    notifModaldiscountContainer.insertAdjacentHTML('beforeend', discountCardHTML);
+
+                    // Get the select element and set initial value
+                    const discountStatusSelectList = document.getElementById(`details-discount-status-${discount.discount_id}`);
+                    discountStatusSelectList.value = discount.discounted_transaction_status;
+
+                    if(userPosition == 'Customer'){
+                        discountStatusSelectList.disabled = true;
+                    }
+
+                    const updatedDiscount = {
+                        discount_id: discount.discount_id,
+                        discount_transaction_id: discount.discounted_transaction_id,
+                        discount_name: discount.discount_name,
+                        discount_percent: discount.discount_percent,
+                        discount_description: discount.discount_description,
+                        olddiscounted_transaction_status: discount.discounted_transaction_status,
+                        discounted_transaction_status: document.getElementById(`details-discount-status-${discount.discount_id}`).value
+                    };
+
+                    // Check if the discount already exists in the changeableDiscount array
+                    const existingIndex = changeableDiscount.findIndex(d => d.discount_id === discount.discount_id);
+                    if (existingIndex !== -1) {
+                        // Update the existing entry
+                        changeableDiscount[existingIndex] = updatedDiscount;
+                    } else {
+                        // Add a new entry
+                        changeableDiscount.push(updatedDiscount);
+                    }
+
+                    // Add change event listener to the select element
+                    discountStatusSelectList.addEventListener('change', () => {
+
+                        const updatedDiscount2 = {
+                            discount_id: discount.discount_id,
+                            discount_transaction_id: discount.discounted_transaction_id,
+                            discount_name: discount.discount_name,
+                            discount_percent: discount.discount_percent,
+                            discount_description: discount.discount_description,
+                            olddiscounted_transaction_status: discount.discounted_transaction_status,
+                            discounted_transaction_status: document.getElementById(`details-discount-status-${discount.discount_id}`).value
+                        };
+
+                        // Check if the discount already exists in the changeableDiscount array
+                        const existingIndex = changeableDiscount.findIndex(d => d.discount_id === discount.discount_id);
+                        if (existingIndex !== -1) {
+                            // Update the existing entry
+                            changeableDiscount[existingIndex] = updatedDiscount2;
+                        } else {
+                            // Add a new entry
+                            changeableDiscount.push(updatedDiscount2);
+                        }
+
+                        // console.log('Updated changeableDiscount:', changeableDiscount);
+                    });
+                } else {
+                    const discountCardHTML = `<p>No selected discount found.</p>`;
+                    notifModaldiscountContainer.insertAdjacentHTML('beforeend', discountCardHTML);
+                }
+            });
+
+
+        }
+        
+    }
+    else{
+        console.error(detailsList);
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+    }
+
+    $('#viewNoftiicationList').modal('hide');
+    $('#manageTransactionModal').modal('show');
+    const backToNotificationList = document.getElementById('back-to-notification-list');
+
+    if(fromNotif){
+        if(backToNotificationList.classList.contains('d-none')){
+            backToNotificationList.classList.remove('d-none')
+        }
+    }else{
+        if(!backToNotificationList.classList.contains('d-none')){
+            backToNotificationList.classList.add('d-none')
+        }
+    }
+
+    let addedMoreProductContainer = document.getElementById('added-more-product-container');
+    let addedMoreProduct = document.querySelectorAll('.added-more-product')
+
+    addedMoreProductContainer.innerHTML = '';
+    if(Object.keys(selectedAddMoreProductIds).length > 0){
+        addedMoreProduct.forEach((e) => {
+            if(e.classList.contains('d-none')){
+                e.classList.remove('d-none')
+            }
+        })
+    }
+    else{
+        addedMoreProduct.forEach((e) => {
+            if(!e.classList.contains('d-none')){
+                e.classList.add('d-none')
+            }
+        })
+    }
+}
+
+// function to formulate changes for trensaction
+function formulateChangesForTransaction() {
+    const notifyCheckoutTotalInput = document.getElementById('notify-checkout-total-input');
+    let changedTotal = currencyToNormalFormat(`${notifyCheckoutTotalInput.value}`)
+    const tobeRemoveOrderProduct = selectedProductToRemove;
+    const tobeAddedMoreProduct = selectedAddMoreProductIds;
+    let isValid = true;
+    let changeAddMore = false;
+
+    let isValiddetailsTransactionStatus = true;
+
+    const notifyCheckoutClothesWeightInput = document.getElementById('notify-checkout-clothes-weight-input');
+    const notifyCheckoutInitialInput = document.getElementById('notify-checkout-initial-input');
+    const detailsTransactionStatus = document.getElementById('details-transaction-status');
+    const otherTransactionChangesDescription = document.getElementById('other-transaction-changes-description');
+    
+    if (changedServiceSelected){
+        if(Object.keys(changedServiceSelected).length > 0){
+            changeAddMore = true;
+        }
+    }
+
+    let singleItemPrice = currencyToNormalFormat(`${notifyCheckoutInitialInput.value}`);
+   
+    const totaldefaultProduct = defaultProducSelected.reduce((total, product) => {
+        return total + parseFloat(product.product_price) * parseInt(product.item_quantity, 10);
+    }, 0);
+
+    // Calculate subtotal
+    let subtotal = singleItemPrice + totaldefaultProduct;
+
+    const totalProductPrice = tobeRemoveOrderProduct.reduce((total, product) => {
+        return total + parseFloat(product.product_price) * parseInt(product.item_quantity, 10);
+    }, 0);
+
+    const totalAddMoreProducts = tobeAddedMoreProduct.reduce((total, product) => {
+        return total + parseFloat(product.price) * parseInt(product.quantity, 10);
+    }, 0);
+
+    if(totalAddMoreProducts > 0){
+        subtotal += totalAddMoreProducts;
+        changeAddMore = true;
+    }
+
+    if(totalProductPrice > 0){
+        subtotal -= totalProductPrice;
+        changeAddMore = true;
+    }    
+    
+    if (Object.keys(changeableDiscount).length > 0) {
+        // console.log('changeableDiscount = >' , changeableDiscount)
+        
+        // Initialize discount variables
+        let discount3 = changeableDiscount[0] && changeableDiscount[0].discounted_transaction_status != 'Rejected'? parseFloat(changeableDiscount[0].discount_percent) / 100 : null;
+        let discount4 = changeableDiscount[1] && changeableDiscount[1].discounted_transaction_status != 'Rejected'? parseFloat(changeableDiscount[1].discount_percent) / 100 : null;
+    
+        // Check if the first discount is present, else alert and stop
+        if (discount3 ||discount4) {
+
+            // console.log("discount3 = " + discount3);
+            // Apply the first discount
+            let afterFirstDiscount = subtotal * (1 - discount3);
+            subtotal = parseFloat(afterFirstDiscount.toFixed(2)); // Format with two decimal places
+    
+            // Check if the second discount is present
+            if (discount4) {
+                // console.log("discount4 = " + discount4);
+                // Apply the second discount to the result of the first discount
+                let finalPrice = afterFirstDiscount * (1 - discount4);
+                subtotal = parseFloat(finalPrice.toFixed(2)); // Format with two decimal places
+            }
+        }
+
+        changeableDiscount.forEach(function(discount){
+
+            if(discount.olddiscounted_transaction_status != discount.discounted_transaction_status){
+                changeAddMore = true;
+            }
+
+        })
+
+    }
+
+    changedTotal = subtotal;
+
+    // validations
+    if(parseInt(Object.keys(tobeRemoveOrderProduct).length) == parseInt(Object.keys(defaultProducSelected).length) && parseInt(Object.keys(tobeAddedMoreProduct).length) < 1){
+        dynamicAlertMessage('You cannot remove all products without adding new one.', 'warning', 3000);
+        isValid = false;
+    }
+
+    if(notifyCheckoutClothesWeightInput.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, 'Please input a valid clothes weight.');
+    }
+    else {
+        dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, '');
+    }
+
+    changeableDiscount.forEach((discount) => {
+        const detailsDiscountID = document.getElementById(`details-discount-status-${discount.discount_id}`);
+
+        if(detailsDiscountID){
+            if(detailsDiscountID.value.length < 1){
+                isValid = false;
+                dynamicFieldErrorMessage(detailsDiscountID.id, 'Please select a valid discount status.');
+            }
+            else {
+                dynamicFieldErrorMessage(detailsDiscountID.id, '');
+            }
+    
+            if(detailsDiscountID.value == 'Pending' && (detailsTransactionStatus.value == 'Approved'
+                                                        || detailsTransactionStatus.value == 'In-Progress' 
+                                                        || detailsTransactionStatus.value == 'Ready-to-Pick-Up'
+                                                        || detailsTransactionStatus.value == 'Picked-Up' )){
+                                                            console.log( detailsTransactionStatus.id+' - One or more discounts remain pending approval.')
+                isValid = false;
+                isValiddetailsTransactionStatus = false;
+                dynamicFieldErrorMessage(detailsTransactionStatus.id, 'One or more discounts remain pending approval.');
+            }
+        }
+    })
+
+    if(isValiddetailsTransactionStatus){
+        if(detailsTransactionStatus.value.length < 1){
+            isValid = false;
+            dynamicFieldErrorMessage(detailsTransactionStatus.id, 'Please select a valid transaction status.');
+        }
+        else {
+            dynamicFieldErrorMessage(detailsTransactionStatus.id, '');
+        }
+    }
+
+    if(notifyCheckoutInitialInput.value < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, 'Please input a valid clothes weight.');
+    }    
+    else {
+        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, '');
+    }
+
+    if(notifyCheckoutInitialInput.value.length < 1 || !isValidCurrency(notifyCheckoutInitialInput.value)){
+        isValid = false;
+        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, 'Please input a valid intial amount.');
+    }
+    else {
+        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, '');
+    }
+
+    if (oldTransactionStatus === 'Rejected') {
+        dynamicAlertMessage('You cannot update a transaction that has already been rejected.', 'error', 3000);
+        isValid = false;
+    }
+    else if(changeAddMore && ['Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus)){
+        dynamicAlertMessage('You cannot modify the products, services, or discount once the transaction is being processed.', 'error', 3000);
+        isValid = false;
+    }
+    
+    if(['Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up'].includes(oldTransactionStatus) && detailsTransactionStatus.value == 'Rejected'){
+        dynamicAlertMessage('You cannot reject the transaction once it is already in process.', 'error', 3000);
+        isValid = false;
+    }
+
+    // console.log("oldTransaction = > ", oldTransaction)
+
+    if((oldTransaction.clothes_weight != notifyCheckoutClothesWeightInput.value 
+      || formatToCurrency(`${oldTransaction.initial}`)  != notifyCheckoutInitialInput.value
+      || oldTransaction.transaction_changes_other_details != otherTransactionChangesDescription.value) 
+      && ['Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus))
+    {
+        dynamicAlertMessage('You cannot modify the Transaction fields once the transaction is being processed or rejected.', 'error', 3000);
+        isValid = false;
+    }
+
+    if((['Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus)) && detailsTransactionStatus.value == 'Pending'){
+        dynamicAlertMessage('You cannot modify the Transaction status to Pending once the transaction is being processed or rejected.', 'error', 3000);
+        isValid = false;
+    }
+
+    if((['In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus)) && detailsTransactionStatus.value == 'Approved'){
+        dynamicAlertMessage(`You cannot modify the Transaction status to Approve once the transaction is 'In Progress', 'Ready to Pick-Up', 'Picked-Up', or 'Rejected'.`, 'error', 3000);
+        isValid = false;
+    }
+
+    if((['Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus)) && detailsTransactionStatus.value == 'In-Progress'){
+        dynamicAlertMessage(`You cannot modify the Transaction status to In Progress once the transaction is 'Ready to Pick Up', 'Picked-Up', or 'Rejected'.`, 'error', 3000);
+        isValid = false;
+    }
+
+    if((['Picked-Up', 'Rejected'].includes(oldTransactionStatus)) && detailsTransactionStatus.value == 'Ready-to-Pick-Up'){
+        dynamicAlertMessage(`You cannot modify the Transaction status to Ready to Pick Up once the transaction is 'Picked-Up', or 'Rejected'.`, 'error', 3000);
+        isValid = false;
+    }
+
+    if(oldTransactionStatus == "Picked-Up"){
+        dynamicAlertMessage(`You cannot modify the Transaction status once it is Picked-Up.`, 'error', 3000);
+        isValid = false;
+    }
+
+    if((['Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus)) && oldTransactionStatus == detailsTransactionStatus.value){
+        dynamicAlertMessage(`You can only modify the status of the Transaction.`, 'error', 3000);
+        isValid = false;
+    }
+
+    if(isValid){
+        const changeConfirmTransactionBack = document.getElementById('change-confirm-transaction-now');
+        const transactionConfirmMessage = document.getElementById('transactionConfirmMessage');
+
+        `<span id="change-identifier"></span> estimated payable amount is <span id="change-confirmMessagePayblleAmount"></span>. <span id="change-lastNote"></span>`
+
+        if(userPosition == "Customer"){
+            transactionConfirmMessage.textContent = `Your estimated payable amount is ${formatToCurrency(`${changedTotal}`)}. Please note that this amount may change based on staff review of your eligibility for payment criteria.`
+        }
+        else{
+            transactionConfirmMessage.textContent = `The Customer's estimated payable amount is ${formatToCurrency(`${changedTotal}`)}. Please note that by confirming, you acknowledge that you have reviewed the transaction.`
+        }
+
+        if(detailsTransactionStatus.value == 'Rejected'){
+            transactionConfirmMessage.textContent = 'By confirming, you acknowledge that you have reviewed and confirmed the rejection of this transaction.'
+        }
+
+        if(changeConfirmTransactionBack.classList.contains('btn-info')){
+            changeConfirmTransactionBack.classList.remove('btn-info');
+            changeConfirmTransactionBack.classList.add('btn-danger');
+        }
+
+        if (!ischangeConfirmTransactionBack) {
+            changeConfirmTransactionBack.addEventListener('click', function(){
+                $('#change-finalize-transaction-confirm-modal').modal('hide');
+                $('#manageTransactionModal').modal('show');
+            });
+            ischangeConfirmTransactionBack = true; // Mark listener as added
+        }
+
+        $('#change-finalize-transaction-confirm-modal').modal('show');
+        $('#manageTransactionModal').modal('hide');
+
+        finalTransactionObject = {
+            transactionTotal: changedTotal,
+            clothesWeight: notifyCheckoutClothesWeightInput.value,
+            initial: currencyToNormalFormat(`${notifyCheckoutInitialInput.value}`),
+            changesDescription: otherTransactionChangesDescription.value,
+            transactionStatus: detailsTransactionStatus.value,
+            oldTransactionId: defaultTrnsactionId,
+            newService: changedServiceSelected,
+            removedProduct: tobeRemoveOrderProduct,
+            moreProduct: tobeAddedMoreProduct,
+            discountChanges: changeableDiscount
+        }
+    }
+
+}
+
+function updateTransaction() {
+    console.log(finalTransactionObject)
+    let isSuccessful = true;
+    const changesDescription = finalTransactionObject.changesDescription;
+    const clothesWeight = finalTransactionObject.clothesWeight;
+    const initialTotal = finalTransactionObject.initial;
+    const oldTransactionId = finalTransactionObject.oldTransactionId;
+    const transactionStatus = finalTransactionObject.transactionStatus;
+    const transactionTotal = finalTransactionObject.transactionTotal;
+    WaitigLoader(true)
+
+    // insert transaction
+    const url = "php-sql-controller/service-and-more-controller.php";
+    let data = {
+        insertTransaction: true,
+        transaction_id: oldTransactionId,
+        clothes_weight: clothesWeight,
+        total: transactionTotal,
+        last_update_date: getPhilippineDateTime(),
+        notification_is_read: 'False',
+        initial: initialTotal,
+        transaction_status: transactionStatus,
+        transaction_changes_other_details: changesDescription
+    };
+
+    if(transactionStatus == 'Rejected'){
+        data = {
+            insertTransaction: true,
+            transaction_id: oldTransactionId,
+            last_update_date: getPhilippineDateTime(),
+            notification_is_read: 'False',
+            transaction_status: transactionStatus,
+        };
+    }
+    if (Object.keys(finalTransactionObject.newService).length > 0){
+        // console.log('new Service Update')
+        const newService = finalTransactionObject.newService;
+        const newServiceId = newService.service_id;
+        const transaction_name = `${transactionCustomer} - ${newService.service_name} - Transaction`;
+        data.service_id = newServiceId
+        data.transaction_name = transaction_name;
+    }
+    if(transactionStatus == 'Picked-Up'){
+        data.pick_up_date = getPhilippineDateTime();
+    }
+    const detailsList = dynamicSynchronousPostRequest(url, data);
+    if(isValidJSON(detailsList)){
+        const details = JSON.parse(detailsList);
+        // console.log('transaction => ', details)
+        let status = details.status;
+        if(status == 'success'){
+            console.info(details.message);
+        }
+        else{
+            let message = details.message
+            // WaitigLoader(false)
+            dynamicAlertMessage(message, 'error', 3000);
+            isSuccessful = false
+        }
+    }
+    else{
+        console.error(detailsList);
+        // WaitigLoader(false)
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+        isSuccessful = false
+    }
+
+    // Remove Product
+    if (Object.keys(finalTransactionObject.removedProduct).length > 0 && transactionStatus != 'Rejected'){
+       
+        const removedProductFromTransaction = finalTransactionObject.removedProduct;
+        
+        removedProductFromTransaction.forEach((removedProduct) => {
+            const item_quantity = removedProduct.item_quantity;
+            const order_product_id = removedProduct.order_product_id;
+            const product_id = removedProduct.product_id;
+            let allProductRemoveSuccess = true;
+            // const product_price = removedProduct.product_id;
+
+            const url = "php-sql-controller/service-and-more-controller.php";
+            const data = {
+                isRemoveProduct: true,
+                insertOrderProduct: true,
+                order_products_id: order_product_id
+            };
+            const detailsList = dynamicSynchronousPostRequest(url, data);
+
+            if(isValidJSON(detailsList)){
+                const details = JSON.parse(detailsList);
+                // console.log('transaction => ', details)
+                let status = details.status;
+                if(status == 'success'){
+                    console.info(details.message);
+                }
+                else{
+                    let message = details.message
+                    dynamicAlertMessage(message, 'error', 3000);
+                    allProductRemoveSuccess = false;
+                    isSuccessful = false
+                }
+            }
+            else{
+                console.error(detailsList);
+                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                allProductRemoveSuccess = false;
+                isSuccessful = false
+            }
+
+            if(allProductRemoveSuccess){
+                const url = "php-sql-controller/manage-products-controller.php";
+                const data = {
+                    submitLaundryShopProduct: true,
+                    product_id: product_id,
+                    addQuantity: parseInt(item_quantity),
+                    shop_id:selectedTransactionShopId
+                };
+                const detailsList = dynamicSynchronousPostRequest(url, data);
+
+                if(isValidJSON(detailsList)){
+                    const details = JSON.parse(detailsList);
+                    if(details.message && details.message.length != 0){
+                        console.info(details.message);
+                    }
+                    else{
+                        let message = details.error; 
+                        dynamicAlertMessage(message, 'error', 3000);
+                        isSuccessful = false
+                    }
+                }
+                else{
+                    console.error(detailsList);
+                    dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                    isSuccessful = false
+                }
+            }
+        })
+    }
+
+    // Add More Product
+    if (Object.keys(finalTransactionObject.moreProduct).length > 0 && transactionStatus != 'Rejected'){
+        const addMoreProductToTransaction = finalTransactionObject.moreProduct;
+
+        addMoreProductToTransaction.forEach((product) => {
+            const productId = product.id;
+            let justUpdateOrderProduct = false;
+            let toUpdateOrders = [];
+
+            const url = "php-sql-controller/common-controller.php";
+            const data = {
+                orderProductsCommonDml: true,
+                queryDml: true,
+                transaction_id: oldTransactionId,
+                product_id: productId
+            };
+            const detailsList = dynamicSynchronousPostRequest(url, data);
+            if(isValidJSON(detailsList)){
+                const details = JSON.parse(detailsList);
+                // console.log('transaction => ', details)
+                let status = details.status;
+                if(status == 'query success'){
+                    console.info(details.message);
+                    const retrieved = details.data
+
+                    if(Object.keys(retrieved).length > 0){
+                        justUpdateOrderProduct = true;
+                        toUpdateOrders = retrieved
+                    }
+                    
+                }
+                else{
+                    let message = details.message
+                    dynamicAlertMessage(message, 'error', 3000);
+                    isSuccessful = false
+                }
+            }
+            else{
+                console.error(detailsList);
+                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                isSuccessful = false
+            }
+
+            if(justUpdateOrderProduct){
+
+                toUpdateOrders.forEach((order) => {
+                    const url = "php-sql-controller/common-controller.php";
+                    const data = {
+                        orderProductsCommonDml: true,
+                        updateDml: true,
+                        order_products_id: order.order_products_id,
+                        product_id: order.product_id,
+                        addQuantity: parseInt(product.quantity)
+                    };
+    
+                    const detailsList = dynamicSynchronousPostRequest(url, data);
+    
+                    if(isValidJSON(detailsList)){
+                        const details = JSON.parse(detailsList);
+                        // console.log('order => ', details)
+                        let status = details.status;
+                        if(status == 'success'){
+                            console.info(details.message);
+                        }
+                        else{
+                            let message = details.message
+                            dynamicAlertMessage(message, 'error', 3000);
+                            isSuccessful = false
+                        }
+                    }
+                    else{
+                        console.error(detailsList);
+                        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'warning', 3000);
+                        isSuccessful = false
+                    }
+                })
+            }
+            else{
+                const orderName = product.product_name + ' - ' + product.product_brand;
+                const url = "php-sql-controller/service-and-more-controller.php";
+                const data = {
+                    insertOrderProduct: true,
+                    order_name: orderName,
+                    transaction_id: oldTransactionId,
+                    product_id: productId,
+                    order_date: getPhilippineDateTime(),
+                    item_quantity: product.quantity
+                };
+
+                const detailsList = dynamicSynchronousPostRequest(url, data);
+
+                if(isValidJSON(detailsList)){
+                    const details = JSON.parse(detailsList);
+                    // console.log('order => ', details)
+                    let status = details.status;
+                    if(status == 'success'){
+                        console.info('More Product are added.');
+                    }
+                    else{
+                        let message = details.message
+                        dynamicAlertMessage(message, 'error', 3000);
+                         isSuccessful = false
+                    }
+                }
+                else{
+                    console.error(detailsList);
+                    dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                     isSuccessful = false
+                }
+            }
+
+        })
+    }
+
+    if (Object.keys(finalTransactionObject.discountChanges).length > 0 && transactionStatus != 'Rejected'){
+        
+        const changedDiscount = finalTransactionObject.discountChanges;
+        console.log('changedDiscount => ', changedDiscount)
+
+        changedDiscount.forEach((discounted_transaction) => {
+
+            const url = "php-sql-controller/service-and-more-controller.php";
+            const data = {
+                insertDiscountedTransaction: true,
+                discounted_transaction_id: discounted_transaction.discount_transaction_id,
+                discounted_transaction_status: discounted_transaction.discounted_transaction_status
+            };
+            const detailsList = dynamicSynchronousPostRequest(url, data);
+            if(isValidJSON(detailsList)){
+                const details = JSON.parse(detailsList);
+                // console.log('transaction => ', details)
+                let status = details.status;
+                if(status == 'success'){
+                    console.info(details.message);
+                }
+                else{
+                    let message = details.message
+                    // WaitigLoader(false)
+                    dynamicAlertMessage(message, 'error', 3000);
+                    isSuccessful = false
+                }
+            }
+            else{
+                console.error(detailsList);
+                // WaitigLoader(false)
+                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                isSuccessful = false
+            }
+
+        })
+        
+    }
+
+    if(transactionStatus == 'Rejected' && Object.keys(defaultProducSelected).length > 0){
+
+        defaultProducSelected.forEach((orderProduct) => {
+            const url = "php-sql-controller/manage-products-controller.php";
+            const data = {
+                submitLaundryShopProduct: true,
+                product_id: orderProduct.product_id,
+                addQuantity: parseInt(orderProduct.item_quantity),
+                shop_id:selectedTransactionShopId
+            };
+            const detailsList = dynamicSynchronousPostRequest(url, data);
+
+            if(isValidJSON(detailsList)){
+                const details = JSON.parse(detailsList);
+                if(details.message && details.message.length != 0){
+                    console.info(details.message);
+                }
+                else{
+                    let message = details.error; 
+                    dynamicAlertMessage(message, 'error', 3000);
+                    isSuccessful = false
+                }
+            }
+            else{
+                console.error(detailsList);
+                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                isSuccessful = false
+            }
+        })
+
+    }
+
+    if(isSuccessful){
+        WaitigLoader(false)
+        dynamicAlertMessage('Transaction is updated successfully.', 'success', 3000);
+        $('#manageTransactionModal').modal('hide');
+        setTimeout(function(){
+           window.location.reload();
+        },200)
+    }
+    else{
+        setTimeout(function(){
+            WaitigLoader(false)
+        },3000)
+    }
+
+
+}
+
+// Define global variables for pagination specific to Change Service
+let changeServiceMaxDisplayPages = 5; // Adjust as needed
+let changeServiceCurrentPage = 1; // Start at the first page
+
+// Function to open the Change Service modal and load services
+function openChangeServiceModal() {
+    // Reset the current page when opening the modal
+    changeServiceCurrentPage = 1; 
+    loadServicesForChangeModal(changeServiceCurrentPage); // Load services for the first page
+}
+
+// Function to load services into the Change Service modal
+function loadServicesForChangeModal(pageNumber) {
+    const data = { queryServices: true, page: pageNumber, shop_id: changeServiceShopId };
+
+    const response = dynamicSynchronousPostRequest('php-sql-controller/service-and-more-controller.php', data);
+    const result = JSON.parse(response);
+    const services = result.services;
+    const totalPages = result.totalPages;
+    const changeServiceContainer = document.getElementById('change-transaction-service-container');
+
+    changeServiceContainer.innerHTML = ''; // Clear previous services
+
+    if (services.length > 0) {
+        services.forEach(service => {
+
+            // console.log(service)
+
+            const serviceItem = document.createElement('div');
+            serviceItem.classList.add('col-md-4');
+            serviceItem.innerHTML = `
+                <div class="card d-flex flex-column">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">${service.service_name}</h5>
+                        <p class="card-text opacity-75">Description: ${service.description || 'No description available'}</p>
+                        <p class="card-text opacity-75">Price: ${formatToCurrency(service.price)}</p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" id="change-service-btn-${service.service_id}" type="button">Select Service</button>
+                        </div>
+                    </div>
+                </div>`;
+
+            changeServiceContainer.appendChild(serviceItem);
+
+            // Add event listener to "Select Service" button
+            document.getElementById(`change-service-btn-${service.service_id}`).addEventListener('click', () => {
+                $('#changeService').modal('hide');
+                $('#manageTransactionModal').modal('show');
+
+                changedServiceSelected = service;
+
+                const notifyCheckoutSelectedService = document.getElementById('notify-checkout-selected-service');
+                const notifySheckoutSelectedServiceDescription = document.getElementById('notify-checkout-selected-service-description');
+                const notifyCheckoutSelectedServicePrice = document.getElementById('notify-checkout-selected-service-price');
+
+                notifyCheckoutSelectedService.textContent = changedServiceSelected.service_name
+                notifySheckoutSelectedServiceDescription.textContent = changedServiceSelected.description
+                notifyCheckoutSelectedServicePrice.textContent = formatToCurrency(`${changedServiceSelected.price}`)
+
+                let notifyCheckoutInitialInput = document.getElementById('notify-checkout-initial-input');
+                notifyCheckoutInitialInput.value = formatToCurrency(`${changedServiceSelected.price}`);
+
+                // console.log(changedServiceSelected)
+            });
+        });
+
+        // Show the pagination and reset empty state message
+        document.getElementById('change-transaction-service-pagination').classList.remove('d-none');
+        document.getElementById('change-transaction-empty-service-identifier').classList.add('d-none');
+    } else {
+        // No services for this page
+        document.getElementById('change-transaction-service-pagination').classList.add('d-none');
+        document.getElementById('change-transaction-empty-service-identifier').classList.remove('d-none');
+    }
+
+    updateChangeServicePagination(pageNumber, totalPages); // Call to update pagination
+}
+
+// Function to update pagination in the Change Service modal
+function updateChangeServicePagination(currentPage, totalPages) {
+    const pagination = document.querySelector('#change-transaction-service-pagination .pagination');
+    pagination.innerHTML = ''; // Clear existing pagination
+
+    const startPage = Math.max(1, currentPage - Math.floor(changeServiceMaxDisplayPages / 2));
+    const endPage = Math.min(totalPages, startPage + changeServiceMaxDisplayPages - 1);
+
+    // Add "Previous" button
+    const prevItem = document.createElement('li');
+    prevItem.classList.add('page-item');
+    if (currentPage === 1) {
+        prevItem.classList.add('disabled');
+    }
+    const prevLink = document.createElement('a');
+    prevLink.classList.add('page-link');
+    prevLink.href = '#';
+    prevLink.innerText = 'Previous';
+    prevLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentPage > 1) {
+            loadServicesForChangeModal(currentPage - 1);
+        }
+    });
+    prevItem.appendChild(prevLink);
+    pagination.appendChild(prevItem);
+
+    // Add page links dynamically
+    for (let i = startPage; i <= endPage; i++) {
+        const pageItem = document.createElement('li');
+        pageItem.classList.add('page-item');
+        if (i === currentPage) {
+            pageItem.classList.add('active');
+        }
+
+        const pageLink = document.createElement('a');
+        pageLink.classList.add('page-link');
+        pageLink.href = '#';
+        pageLink.innerText = i;
+
+        pageLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            changeServiceCurrentPage = i; // Update current page
+            loadServicesForChangeModal(changeServiceCurrentPage); // Load services for the clicked page
+        });
+
+        pageItem.appendChild(pageLink);
+        pagination.appendChild(pageItem);
+    }
+
+    // Add "Next" button
+    const nextItem = document.createElement('li');
+    nextItem.classList.add('page-item');
+    if (currentPage === totalPages) {
+        nextItem.classList.add('disabled');
+    }
+    const nextLink = document.createElement('a');
+    nextLink.classList.add('page-link');
+    nextLink.href = '#';
+    nextLink.innerText = 'Next';
+    nextLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (changeServiceCurrentPage < totalPages) {
+            loadServicesForChangeModal(changeServiceCurrentPage + 1);
+        }
+    });
+    nextItem.appendChild(nextLink);
+    pagination.appendChild(nextItem);
+}
+
+// Global variables for add more products
+let selectedAddMoreProductIds = []; // To store selected product IDs and their quantities
+let addMoreProductPage = 1; // Current page for add more products
+let areMoreAddMoreProductsAvailable = true; // Flag for product availability
+let maxDisplayAddMoreProductPages = 5; // Max number of pages to display in pagination
+
+// Function to load and select product for the selected service
+function loadAndSelectAddMoreProduct(service) {
+    addMoreProductPage = 1; 
+    loadAddMoreProductsForCurrentPage(addMoreProductPage); // Load products for the first page
+}
+
+// Function to load products for the given page in add more product modal
+function loadAddMoreProductsForCurrentPage(pageNumber) {
+    const addMoreProductListContainer = document.getElementById('add-more-order-process-container');
+    const addMoreProductPaginationElement = document.getElementById('add-more-product-pagination');
+    const productRequestData = {
+        queryProducts: true,
+        currentPage: pageNumber,
+        shop_id: changeServiceShopId // Ensure this variable is defined
+    };
+
+    const productResponse = dynamicSynchronousPostRequest('php-sql-controller/service-and-more-controller.php', productRequestData);
+    const parsedResponse = JSON.parse(productResponse);
+
+    const productsArray = parsedResponse.products;
+    const totalAddMoreProductPages = parsedResponse.totalPages;
+
+    addMoreProductListContainer.innerHTML = ''; // Clear existing product cards
+
+    if (productsArray.length > 0) {
+        areMoreAddMoreProductsAvailable = true; // Reset flag if products are found
+        productsArray.forEach(product => {
+            let bgColor = 'success';
+            if (parseInt(product.quantity) <= 20) {
+                bgColor = 'warning';
+            }
+            if (parseInt(product.quantity) <= 10) {
+                bgColor = 'danger';
+            }
+
+            const productCard = document.createElement('div');
+            productCard.classList.add('col-md-4');
+            productCard.innerHTML = `
+                <div class="card d-flex flex-column">
+                    <div class="overflow-hidden shadow-sm" style="height: 300px;">
+                        <img src="${product.image_link}" class="card-img-top" alt="${product.product_name}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">${product.product_name}</h5>
+                        <p class="card-text opacity-75">Brand: ${product.product_brand}</p>
+                        <p class="card-text opacity-75">Price: ${formatToCurrency(product.price)}</p>
+                        <p class="card-text opacity-75 ">Quantity: <span class="text-${bgColor}">${product.quantity}</span></p>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control me-2" id="add-more-quantityInput${product.product_id}" value="1" min="1" style="width: 70px;">
+                            <label style="min-width:50px; width:auto; max-width:500px;" type="button" class="btn btn-info d-flex justify-content-center flex-row-reverse gap-2 text-white" for="add-more-productSelect${product.product_id}">
+                                <input class="form-check-input" type="checkbox" value="${product.product_id}" id="add-more-productSelect${product.product_id}" ${selectedAddMoreProductIds.some(item => item.id === product.product_id) ? 'checked' : ''}>
+                                <span id="add-more-product-check-label${product.product_id}">${selectedAddMoreProductIds.some(item => item.id === product.product_id) ? 'Selected' : 'Select'}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>`;
+
+            addMoreProductListContainer.appendChild(productCard);
+
+            // Add event listener for the checkbox to track selections
+            const checkbox = document.getElementById(`add-more-productSelect${product.product_id}`);
+            const quantityInput = document.getElementById(`add-more-quantityInput${product.product_id}`);
+
+            // Restore quantity if the product is already selected
+            const selectedProduct = selectedAddMoreProductIds.find(item => item.id === product.product_id);
+            if (selectedProduct) {
+                quantityInput.value = selectedProduct.quantity; // Restore previous quantity
+            }
+
+            // Update selection when checkbox is changed
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    const quantity = quantityInput.value; // Get quantity from input
+                    selectedAddMoreProductIds.push({
+                        id: product.product_id,
+                        quantity: quantity,
+                        product_name: product.product_name, 
+                        product_image: product.image_link,
+                        product_brand: product.product_brand,
+                        price: product.price
+                    }); // Store product ID and quantity
+                    document.getElementById(`add-more-product-check-label${product.product_id}`).textContent = 'Selected';
+                } else {
+                    selectedAddMoreProductIds = selectedAddMoreProductIds.filter(item => item.id !== product.product_id); // Remove product from selection
+                    document.getElementById(`add-more-product-check-label${product.product_id}`).textContent = 'Select';
+                }
+
+                // console.log(selectedAddMoreProductIds)
+            });
+
+            // Add event listener to update quantity when input value changes
+            quantityInput.addEventListener('input', () => {
+                const quantity = quantityInput.value; // Get the updated quantity
+                const selectedProduct = selectedAddMoreProductIds.find(item => item.id === product.product_id); // Find the selected product
+
+                if (selectedProduct) {
+                    selectedProduct.quantity = quantity; // Update the quantity in the selectedAddMoreProductIds array
+                }
+
+                // console.log(selectedAddMoreProductIds)
+            });
+        });
+
+        // Show pagination if products are found
+        addMoreProductPaginationElement.classList.remove('d-none');
+        document.getElementById('add-more-empty-product-identifier').classList.add('d-none');
+    } else {
+        // No products found for this page
+        areMoreAddMoreProductsAvailable = false; // Update flag if no products are found
+        addMoreProductPaginationElement.classList.add('d-none'); // Hide pagination
+        document.getElementById('add-more-empty-product-identifier').classList.remove('d-none'); // Show empty state
+    }
+
+    updateAddMoreProductPagination(pageNumber, totalAddMoreProductPages); // Update the pagination display
+}
+
+// Function to update product pagination
+function updateAddMoreProductPagination(currentProductPage, totalProductPages) {
+    const paginationContainer = document.querySelector('#add-more-product-pagination-ui');
+    paginationContainer.innerHTML = ''; // Clear existing pagination
+
+    const startProductPage = Math.max(1, currentProductPage - Math.floor(maxDisplayAddMoreProductPages / 2));
+    const endProductPage = Math.min(totalProductPages, startProductPage + maxDisplayAddMoreProductPages - 1);
+
+    // Add "Previous" button for pagination
+    const prevProductItem = document.createElement('li');
+    prevProductItem.classList.add('page-item');
+    if (currentProductPage === 1) {
+        prevProductItem.classList.add('disabled');
+    }
+    const prevProductLink = document.createElement('a');
+    prevProductLink.classList.add('page-link');
+    prevProductLink.href = '#';
+    prevProductLink.innerText = 'Previous';
+    prevProductLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentProductPage > 1) {
+            loadAddMoreProductsForCurrentPage(currentProductPage - 1);
+        }
+    });
+    prevProductItem.appendChild(prevProductLink);
+    paginationContainer.appendChild(prevProductItem);
+
+    // Add individual page links dynamically
+    for (let i = startProductPage; i <= endProductPage; i++) {
+        const productPageItem = document.createElement('li');
+        productPageItem.classList.add('page-item');
+        if (i === currentProductPage) {
+            productPageItem.classList.add('active');
+        }
+
+        const productPageLink = document.createElement('a');
+        productPageLink.classList.add('page-link');
+        productPageLink.href = '#';
+        productPageLink.innerText = i;
+
+        productPageLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            addMoreProductPage = i;
+            loadAddMoreProductsForCurrentPage(addMoreProductPage); // Load products for the clicked page
+        });
+
+        productPageItem.appendChild(productPageLink);
+        paginationContainer.appendChild(productPageItem);
+    }
+
+    // Add "Next" button for pagination
+    const nextProductItem = document.createElement('li');
+    nextProductItem.classList.add('page-item');
+    if (currentProductPage === totalProductPages) {
+        nextProductItem.classList.add('disabled');
+    }
+    const nextProductLink = document.createElement('a');
+    nextProductLink.classList.add('page-link');
+    nextProductLink.href = '#';
+    nextProductLink.innerText = 'Next';
+    nextProductLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentProductPage < totalProductPages) {
+            loadAddMoreProductsForCurrentPage(currentProductPage + 1);
+        }
+    });
+    nextProductItem.appendChild(nextProductLink);
+    paginationContainer.appendChild(nextProductItem);
+}
+
+
+
+
+
+
+
 
 
 

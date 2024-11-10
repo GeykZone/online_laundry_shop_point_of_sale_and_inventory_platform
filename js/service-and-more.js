@@ -36,7 +36,7 @@ let estimatedPayable;
 dynamicConfirmationMessage( 
     {
         modalId : 'finalize-transaction-confirm-modal',
-        modalText : '<span class="fa-solid fa-right-from-bracket"></span> Transaction Confirmation',
+        modalText : '<span class="fa-solid fa-clipboard-list"></span> Transaction Confirmation',
         otherButtonId : 'confirm-transaction-now',
         otherButtonText : 'Confirm Transaction',
         customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
@@ -320,6 +320,20 @@ clothesWeightInput.addEventListener('keydown', function(event) {
     }
 });
 
+// Prevent non-numeric characters when pasting
+clothesWeightInput.addEventListener('paste', function(event) {
+    // Get the pasted data
+    const pasteData = event.clipboardData.getData('text');
+
+    // Allow only numbers, spaces, dashes, parentheses, and decimal points in the pasted data
+    const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
+
+
+    if (!allowedCharacters.test(pasteData)) {
+        event.preventDefault(); // Prevent the paste if invalid characters are found
+    }
+});
+
 // event listener to confirm transaction 
 const confirmTransactionCheck = setInterval(() => {
     let confirmTransaction = document.getElementById('confirm-transaction-now');
@@ -351,9 +365,11 @@ const confirmTransactionCheck = setInterval(() => {
                 user_id: user_id,
                 service_id: service.service_id,
                 transaction_date: getPhilippineDateTime(),
+                last_update_date: getPhilippineDateTime(),
                 transaction_name: transaction_name,
                 clothes_weight: clothsWeight,
                 total: payable,
+                initial: selectedServiceGlobalVar.price,
                 transaction_status: 'Pending'
             };
 
@@ -494,20 +510,6 @@ const confirmTransactionCheck = setInterval(() => {
 
     }
 }, 100);
-
-// Prevent non-numeric characters when pasting
-clothesWeightInput.addEventListener('paste', function(event) {
-    // Get the pasted data
-    const pasteData = event.clipboardData.getData('text');
-
-    // Allow only numbers, spaces, dashes, parentheses, and decimal points in the pasted data
-    const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
-
-
-    if (!allowedCharacters.test(pasteData)) {
-        event.preventDefault(); // Prevent the paste if invalid characters are found
-    }
-});
 
 // function to load all services from a shop
 function loadServicesForPage(pageNumber) {
@@ -822,44 +824,54 @@ function updateProductPagination(currentProductPage, totalProductPages) {
 function loadDiscounts() {
     const shopId = sessionStorage.getItem('service_more_shop_id');
     const data = { queryDiscounts: true, page: discountPage, shop_id: shopId };
+    const emptyDiscountIdentifier = document.getElementById('empty-discount-identifier');
     const response = dynamicSynchronousPostRequest('php-sql-controller/service-and-more-controller.php', data);
 
     if (isValidJSON(response)) {
         const discounts = JSON.parse(response);
 
-        discounts.forEach(discount => {
-            const discountCardHTML = `
-                <div class="card mb-3 responsive-card">
-                    <div class="row g-0">
-                        <div class="col img-container bg-info">
-                            <img src="https://cdn-icons-png.flaticon.com/512/9528/9528844.png" alt="Discount Image" class="product-image">
-                        </div>
-                        <div class="col content-container d-flex flex-wrap flex-column">
-                            <div class="card-body">
-                                <h5 class="card-title">${discount.discount_name}</h5>
-                                <p class="card-text">${discount.discount_description}</p>
-                                <p class="card-text">${discount.discount_percent}%</p>
-                                <label class="btn btn-info d-flex justify-content-center gap-2 text-white">
-                                    <input class="form-check-input" type="checkbox" value="${discount.discount_id}" 
-                                        id="selectedDiscountInput${discount.discount_id}" 
-                                        onclick='toggleDiscountSelection(${JSON.stringify(discount)})'>
-                                    <span>Select</span>
-                                </label>
+        if(Object.keys(discounts).length > 0){
+
+            discounts.forEach(discount => {
+                const discountCardHTML = `
+                    <div class="card mb-3 responsive-card">
+                        <div class="row g-0">
+                            <div class="col img-container bg-info">
+                                <img src="https://cdn-icons-png.flaticon.com/512/9528/9528844.png" alt="Discount Image" class="product-image">
+                            </div>
+                            <div class="col content-container d-flex flex-wrap flex-column">
+                                <div class="card-body">
+                                    <h5 class="card-title">${discount.discount_name}</h5>
+                                    <p class="card-text">${discount.discount_description}</p>
+                                    <p class="card-text">${discount.discount_percent}%</p>
+                                    <label class="btn btn-info d-flex justify-content-center gap-2 text-white" style="width:100px;">
+                                        <input class="form-check-input" type="checkbox" value="${discount.discount_id}" 
+                                            id="selectedDiscountInput${discount.discount_id}" 
+                                            onclick='toggleDiscountSelection(${JSON.stringify(discount)})'>
+                                        <span>Select</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            
-            discountContainer.insertAdjacentHTML('beforeend', discountCardHTML);
+                `;
+                
+                discountContainer.insertAdjacentHTML('beforeend', discountCardHTML);
+    
+                // Restore selection state from sessionStorage
+                if (selectedDiscounts.some(d => d.discount_id === discount.discount_id)) {
+                    document.getElementById(`selectedDiscountInput${discount.discount_id}`).checked = true;
+                }
+            });
+    
+            discountPage++;
 
-            // Restore selection state from sessionStorage
-            if (selectedDiscounts.some(d => d.discount_id === discount.discount_id)) {
-                document.getElementById(`selectedDiscountInput${discount.discount_id}`).checked = true;
+            if(!emptyDiscountIdentifier.classList.contains('d-none')){
+                emptyDiscountIdentifier.classList.add('d-none')
             }
-        });
+    
+        }
 
-        discountPage++;
     } else {
         console.error(response);
         dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
@@ -893,13 +905,14 @@ discountContainer.addEventListener('scroll', () => {
     }
 });
 
+// transaction finalozation validation
 function transactionFinalizationValidation(){
     let isValid = true;
 
     // validation using dynamic error message
     if(clothesWeightInput.value.length < 1){
         isValid = false;
-        dynamicFieldErrorMessage(clothesWeightInput.id, 'Please input a valid Laundry Shop Service Name.');
+        dynamicFieldErrorMessage(clothesWeightInput.id, 'Please input a valid clothes weight.');
     }
     else {
         dynamicFieldErrorMessage(clothesWeightInput.id, '');

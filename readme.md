@@ -24,13 +24,15 @@
     -discount_id
     -discounted_transaction_status
 
--ayha ra maka comment ug maka rating if naka order na..
--after order maka pili si customer ug discount, like basin unsa, tas checkon ra ni admin if naka sulod ba sha sa discount
-tas if approve sa discount kay ma kaltasan ang total bayaronon
-
-
 
 # online_laundry_shop_point_of_sale_and_inventory_platform
 
 to do
-- e pa display ang mga transactions
+- pun-an nako overall rating field ang object shop, ayha ra maka comment ug maka rating if naka order na
+- generate printable data of sales
+
+# Default Creds
+
+-Super Admin
+    -Username : Admin
+    -Password : admin1234

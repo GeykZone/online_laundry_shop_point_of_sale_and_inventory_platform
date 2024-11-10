@@ -121,41 +121,6 @@
                   </div>
                 </div>
 
-                <style>
-                 /* General card styling */
-                  .responsive-card {
-                    display: flex;
-                    flex-direction: row;
-                    align-items: center;
-                  }
-
-                  /* Default image size */
-                  .product-image {
-                    width: 200px;
-                    height: 200px;
-                    object-fit: cover;
-                    margin: auto;
-                  }
-
-                  /* Media Query for screen widths of 1199px or smaller */
-                  @media (max-width: 1199px) {
-                    .responsive-card {
-                      flex-direction: column;
-                      text-align: center;
-                    }
-
-                    .img-container, .content-container {
-                      width: 100%;
-                    }
-
-                    .product-image {
-                      width: 150px;
-                      height: 150px;
-                    }
-                  }
-
-                </style>
-
  
                 <h4 id="selected-product-container-label">Selected Product</h4>
                 <div  class=" overflow-y-hidden rounded-3 mt-3 mb-3 px-3" >
@@ -167,33 +132,10 @@
                 <h4 id="selected-product-container-label">Discount List</h4>
                 <div  class=" overflow-y-hidden rounded-3 mt-3 mb-3 px-3" >
                   <div id="checkout-discount-container" class=" overflow-y-scroll g-3" style="max-height: 500px;">
-
-                  <!-- <div class="card mb-3 responsive-card">
-                    <div class="row g-0">
-                      <div class="col img-container bg-info">
-                        <img src="https://cdn-icons-png.flaticon.com/512/9528/9528844.png" alt="User" class="product-image">
-                      </div>
-                      <div class="col content-container d-flex flex-wrap flex-column">
-                        <div class="card-body ">
-                          <h5 class="card-title">Discount Name here</h5>
-                          <p class="card-text">Discount Description here</p>
-                          <p class="card-text">Discount percent here</p>
-                          <labe type="button" class="btn btn-info d-flex justify-content-center gap-2 text-white" for="productSelect${product.product_id}">
-                              <input class="form-check-input" type="checkbox" value="${product.product_id}" id="selectedDisountInput">
-                              <span id="selectedDisountInputText">Select</span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div> -->
-  
-                  
                   </div>
                 </div>             
                 
               </div>
-              
-
               <div class="modal-footer">
                 <button id="back-to-product-modal-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Back to Products</button>
                 <button id="finalize-transaction-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Finalize Transaction</button>
@@ -237,7 +179,7 @@
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                  <button id="open-transaction-creation-modal" class="btn btn-primary me-md-2  d-none costumer" data-coreui-toggle="modal" data-coreui-target="#createTransactionMadal" type="button">Create Transaction <span class="fa-solid fa-money-check ms-2"></span></button>
+                  <button id="open-transaction-creation-modal" class="btn btn-primary me-md-2  d-none customer" data-coreui-toggle="modal" data-coreui-target="#createTransactionMadal" type="button">Create Transaction <span class="fa-solid fa-money-check ms-2"></span></button>
                 </div>
 
               </div>

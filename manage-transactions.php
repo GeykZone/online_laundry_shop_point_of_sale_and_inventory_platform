@@ -7,14 +7,15 @@
 -->
 <html lang="en">
   <head>
+    <!-- Resources -->
     <?php include ("resources.php"); ?>
-    <title>Manage Transactions</title>
+    <!-- Resources -->
+    <title>Manage Owner</title>
   </head>
   <body>
     <script>
     showLoader();
     </script>
-    
     <!-- Side Bar Area -->
     <?php include ("sidebar.php"); ?>
     <!-- Side Bar Area -->
@@ -28,32 +29,99 @@
       <div class="body flex-grow-1">
         <div class="container-lg px-4">
 
-        <div class="row g-4 pb-4  align-items-center" id="shop-list-container">
+        <div class="card" >
+          <h5 class="card-header">Costumer Transactions</h5>
+          <div class="card-body row px-5 py-4" id="customer-transaction-card-body">
+            <!-- <h5 class="card-title">Special title treatment</h5>
+            <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
 
-        <!-- <div class="col-sm-6 col-xl-3" >
-          <div class="card rounded-4 overflow-hidden" >
-            <div class="card-img-top rounded-top-4" >
-            <img src="https://wisebusinessplans.com/wp-content/uploads/2023/03/snack-shop-business-plan-sample-1.jpg"
-            width="100%"
-            height="300"
-            style="object-fit: cover;"
-            class="card-img-top rounded-top-4"
-            alt="...">
+            <style>
+              @media (max-width: 504px) {
+                #nav-btn-container, #nav-search-container {
+                  flex: 0 0 100%;
+                  max-width: 100%;
+                }
+                
+                #nav-search-container {
+                  justify-content: flex-start !important;
+                  margin-top: 20px;
+                }
+              }
+            </style>
+            
 
+            <div class="col-6 col-12-504px align-items-center d-flex flex-wrap gap-2 px-0" id="nav-btn-container">
             </div>
-            <div class="card-body " >
-              
-              <div class=" overflow-y-scroll mb-3" style="height: 10vh;">
-              <h5 class="card-title">Card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-              </div>
-              
-              <a href="#" class="btn btn-primary">Service and more</a>
+
+            <div class="col-6 col-12-504px justify-content-end justify-content-start-504px align-items-center d-flex flex-wrap gap-2 px-0" id="nav-search-container">
             </div>
+
+
+            <div class="col-12 d-flex flex-wrap gap-4 px-0 overflow-x-auto overflow-y-auto py-0 rounded-3 border-2 border mt-4" id="laundry-owners-table-container">
+            <table class="table table-striped nowrap content-table" id="customer-transaction-table" width="100%">
+              <thead class=" table-dark">
+                <tr>
+                  <th scope="col">Action</th>
+                  <th scope="col">Customer</th>
+                  <th scope="col">Shop</th>
+                  <th scope="col">Service</th>
+                  <th scope="col">Payable Amount</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Transaction Date</th>
+                  <th scope="col">Pick-up Date</th>
+                  <th scope="col">Last Update</th>
+                </tr>
+              </thead>
+              <tbody class="table-group-divider">
+                <!-- <tr>
+                  <th scope="row">1</th>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                </tr>
+                <tr>
+                  <th scope="row">2</th>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                </tr>
+                <tr>
+                  <th scope="row">3</th>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                </tr>
+                <tr>
+                  <th scope="row">4</th>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                  <td>Test</td>
+                </tr> -->
+              </tbody>
+            </table>
+            </div>
+
+            <div class="col-12 mt-3 px-0 dataTables_wrapper" id="nav-footer-container">
+            </div>
+
+            
           </div>
-        </div> -->
-
-       
         </div>
 
         </div>
@@ -76,6 +144,9 @@
       });
     </script>
     <!-- Plugins and scripts required by this view-->
+    <script src="vendors/chart.js/js/chart.umd.js"></script>
+    <script src="vendors/@coreui/chartjs/js/coreui-chartjs.js"></script>
+    <script src="vendors/@coreui/utils/js/index.js"></script>
     <script src="js/manage-transactions.js"></script>
     <!-- <script src="js/main.js"></script> -->
 
