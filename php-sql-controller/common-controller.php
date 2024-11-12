@@ -222,6 +222,7 @@ if (isset($inputData['changeLogo'])) {
     // Input data (from POST or actual values)
     $userId = isset($inputData['user_id']) ? $inputData['user_id'] : null;
     $shop_id = isset($inputData['shop_id']) ? $inputData['shop_id'] : null;
+    $isSuperAdmin = isset($inputData['isSuperAdmin']) ? $inputData['isSuperAdmin'] : null;
     $logo_id = null;
     $imageLink = $inputData['imageLink'];
     $whereClause = "user_id = ?";
@@ -229,6 +230,11 @@ if (isset($inputData['changeLogo'])) {
 
     if($shop_id){
         $whereClause = "shop_id = ?";
+        $identifierId = $shop_id;
+    }
+
+    if($isSuperAdmin){
+        $whereClause = "shop_id = ? AND user_id = '0'";
         $identifierId = $shop_id;
     }
 
@@ -651,5 +657,71 @@ if (isset($inputData['orderProductsCommonDml'])) {
     // Output the response as JSON
     echo json_encode($response);
 }
+
+// Insert rating
+if (isset($inputData['insertRating']) && $inputData['insertRating'] === true) {
+    // Capture input data
+    $ratingCreatedDate = $inputData['rating_created_date'] ?? null;
+    $rate = $inputData['rate'] ?? null;
+    $comment = $inputData['comment'] ?? null;
+    $shopId = $inputData['shop_id'] ?? null; // Assume `shop_id` and `user_id` are sent or available through session.
+    $userId = $inputData['user_id'] ?? null;
+
+    // Check required fields
+    if ($shopId && $userId && $rate !== null && $ratingCreatedDate) {
+        // Insert statement
+        $sql = "INSERT INTO `shop_rating` (`shop_id`, `user_id`, `rate`, `comment`, `rating_created_date`) 
+                VALUES ('$shopId', '$userId', '$rate', '$comment', '$ratingCreatedDate')";
+
+        if ($conn->query($sql) === TRUE) {
+            $newRatingId = $conn->insert_id; // Capture the ID of the newly inserted record
+
+            // Now calculate the overall rating for the shop
+            $query = "SELECT AVG(rate) AS overall_rating FROM `shop_rating` WHERE `shop_id` = '$shopId'";
+            $result = $conn->query($query);
+
+            if ($result && $result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                $overallRating = round($row['overall_rating'], 2); // Compute average and round to 2 decimal places
+
+                // Update the shop's overall rating
+                $updateSql = "UPDATE `shop` SET `overall_rating` = '$overallRating' WHERE `shop_id` = '$shopId'";
+                if ($conn->query($updateSql) === TRUE) {
+                    $response = [
+                        'status' => 'success',
+                        'message' => 'Rating inserted successfully and overall rating updated.',
+                        'shop_rating_id' => $newRatingId,
+                        'overall_rating' => $overallRating, // Include the new overall rating
+                    ];
+                } else {
+                    $response = [
+                        'status' => 'error',
+                        'message' => 'Failed to update shop overall rating: ' . $conn->error
+                    ];
+                }
+            } else {
+                $response = [
+                    'status' => 'error',
+                    'message' => 'Failed to calculate overall rating'
+                ];
+            }
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'Insertion failed: ' . $conn->error
+            ];
+        }
+    } else {
+        $response = [
+            'status' => 'error',
+            'message' => 'Missing required fields'
+        ];
+    }
+
+    // Output response as JSON
+    echo json_encode($response);
+}
+
+
 
 ?>

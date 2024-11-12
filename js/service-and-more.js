@@ -2,7 +2,6 @@ dynamicHeaderLowerText('service-and-more.php', 'Service and More', userPosition)
 let sidebarLogo = document.getElementById('sidebar-logo').src = sideBarLogoQuery();
 let headerAvatar = document.getElementById('header-avatar').src = sideBarLogoQuery();
 showHideFunctions();
-let ratingInput = document.getElementById('rating-input');
 let page = 1; // Track the current page
 let totalPages = 15; // Set the total number of pages (you can calculate this based on the total services count in PHP)
 const maxDisplayPages = 5; // Maximum number of pages to display at once
@@ -31,6 +30,7 @@ let selectedDiscounts = JSON.parse(sessionStorage.getItem('selectedDiscounts')) 
 let clothesWeightInput = document.getElementById('clothes-weight-input');
 let finalizeTransactionBtn = document.getElementById('finalize-transaction-btn');
 let estimatedPayable;
+let ratingLength = 0;
 
 // confirm transaction
 dynamicConfirmationMessage( 
@@ -47,16 +47,6 @@ dynamicConfirmationMessage(
     }
 )
 
-// // an event listener for rating input field
-// ratingInput.addEventListener('input', function () {
-//     const rating = parseFloat(this.value);
-
-//     if (ratingInput.value.length > 0 && (isNaN(rating) || rating < 0 || rating > 5)) {
-//         dynamicFieldErrorMessage('rating-input', "Rating must be between 0 and 5.")
-//     } else {
-//         dynamicFieldErrorMessage('rating-input', "")
-//     }
-// });
 
 // put a values on the shop card if session shop id exist
 if (sessionStorage.getItem('service_more_shop_id')) {
@@ -71,10 +61,22 @@ if (sessionStorage.getItem('service_more_shop_id')) {
         days_open: sessionStorage.getItem('service_more_days_open'),
         additional_schedule_details: sessionStorage.getItem('service_more_additional_schedule_details'),
         image_link: sessionStorage.getItem('service_more_image_link'),
-        requirement_status: sessionStorage.getItem('service_more_requirement_status')
+        requirement_status: sessionStorage.getItem('service_more_requirement_status'),
+        rating: sessionStorage.getItem('service_more_rating')
     };
 
-    console.log(shopDetails.image_link)
+    console.log(shopDetails)
+
+    // Assume the rating value is dynamically obtained
+    let ratingValue = parseFloat(shopDetails.rating); // Example: dynamically computed rating value
+
+    // Set the value for the star rating
+    let starRatingElement = document.getElementById("shop-rating-point-stars");
+    starRatingElement.style.setProperty('--rating', ratingValue);  // Dynamically update the --rating CSS variable
+
+    // Set the equivalent numeric rating value
+    let ratingValueElement = document.getElementById("shop-rating-equivalent-value");
+    ratingValueElement.textContent = ratingValue.toFixed(1);  // Set the value to one decimal place
 
     // Now, populate the fields with the values from shopDetails
     document.querySelector("#service-and-more-shop-name").innerText = shopDetails.shop_name || "Laundry Shop Name";
@@ -85,7 +87,8 @@ if (sessionStorage.getItem('service_more_shop_id')) {
     document.querySelector(".service-more-elements.opacity-75:nth-child(5) span").innerText = shopDetails.days_open || "Loading...";
     document.querySelector(".service-more-elements.opacity-75:nth-child(6) span").innerText = shopDetails.additional_schedule_details || "N/A";
     document.querySelector("#laundry-shoup-service-more-image").src = shopDetails.image_link != "null" ? shopDetails.image_link : "https://cdn-icons-png.freepik.com/512/4992/4992668.png" ;
-
+    let nocommentsandRatingsYet = document.getElementById('no-comments-and-ratings-yet')
+    let ratingListContainer = document.getElementById('comment-list-container');
     // Helper function to convert 24-hour format to AM/PM
     function convertTimeFormat(time) {
         let [hours, minutes] = time.split(':');
@@ -93,6 +96,91 @@ if (sessionStorage.getItem('service_more_shop_id')) {
         hours = hours % 12 || 12; // Convert to 12-hour format
         return `${hours}:${minutes} ${period}`;
     }
+
+    let currentPage = 1;  // Track the current page for pagination
+    const commentsPerPage = 10; // Number of comments to fetch per request
+    let isRatingLoading = false;  // Prevent multiple requests at once
+    const ratingsUrl = "php-sql-controller/service-and-more-controller.php";
+    const selectedShopId = shopDetails.shop_id;  // Assuming shopDetails is already defined with a shop_id
+    
+    // Function to create and append a rating card to the comment list container
+    function createRatingCard(ratingData) {
+        const ratingCard = document.createElement('div');
+        ratingCard.className = 'card';
+    
+        ratingCard.innerHTML = `
+            <h5 class="card-header">Customer</h5>
+            <div class="card-body">
+                <h5 class="card-title">${ratingData.comment}</h5>
+                <h6 class="Stars" style="--rating: ${ratingData.rate};" aria-label="Rating: ${ratingData.rate} out of 5 stars"></h6>
+                <h6>${ratingData.rate}</h6>
+                <p>${new Date(ratingData.rating_created_date).toLocaleString()}</p>
+            </div>
+        `;
+    
+        return ratingCard;
+    }
+    
+    // Function to fetch ratings from the PHP backend
+    function fetchRatingsForShop() {
+        if (isRatingLoading) return;  // Exit if already loading ratings
+        isRatingLoading = true;
+    
+        const ratingRequestData = {
+            queryRatingFromShop: true,
+            shop_id: selectedShopId,
+            page: currentPage,
+            limit: commentsPerPage
+        };
+    
+        // Assuming dynamicSynchronousPostRequest sends a POST request and returns JSON data
+        const ratingResponse = dynamicSynchronousPostRequest(ratingsUrl, ratingRequestData);
+        const ratingResults = JSON.parse(ratingResponse);
+    
+        // Append each rating as a card to the container
+        ratingResults.forEach(rating => {
+            const ratingCard = createRatingCard(rating);
+            ratingListContainer.appendChild(ratingCard);
+        });
+    
+        // Increment the page count if ratings were loaded successfully
+        if (ratingResults.length > 0) {
+           
+            ratingLength = ratingResults.length;
+            currentPage++;
+        }
+
+
+        if(ratingLength > 0){
+            if(ratingListContainer.classList.contains('d-none')){
+                ratingListContainer.classList.remove('d-none')
+            }
+
+            if(!nocommentsandRatingsYet.classList.contains('d-none')){
+                nocommentsandRatingsYet.classList.add('d-none')
+            }
+        }else{
+            if(!ratingListContainer.classList.contains('d-none')){
+                ratingListContainer.classList.add('d-none')
+            }
+
+            if(nocommentsandRatingsYet.classList.contains('d-none')){
+                nocommentsandRatingsYet.classList.remove('d-none')
+            }
+        }
+    
+        isRatingLoading = false;  // Reset loading state
+    }
+    
+    // Attach scroll event listener to the ratings container
+    ratingListContainer.addEventListener('scroll', () => {
+        if (ratingListContainer.scrollTop + ratingListContainer.clientHeight >= ratingListContainer.scrollHeight - 10) {
+            fetchRatingsForShop();  // Load more ratings if scrolled near the bottom
+        }
+    });
+    
+    // Initial load of ratings
+    fetchRatingsForShop();  // Load the first set of ratings on page load
     
 }
 else{

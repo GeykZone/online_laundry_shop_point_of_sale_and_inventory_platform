@@ -547,6 +547,24 @@ const checkchangeConfirmTransactionUpdate = setInterval(() => {
 
 }, 100);
 
+// Interval variable to check if the nrate-shop exist
+const checkrateShop = setInterval(() => {
+    const rateShopBTNVAr = document.getElementById('rate-shop');
+
+    if(rateShopBTNVAr){
+
+        clearInterval(checkrateShop);
+        rateShopBTNVAr.addEventListener('click', function(){
+
+            $('#rateShop').modal('show');
+            $('#manageTransactionModal').modal('hide');
+           
+        })
+    }
+
+
+}, 100);
+
 // Interval variable to check if the mark-as-read-notification exist
 const checkmarkAsReadNotification = setInterval(() => {
     const markAsReadNotification = document.getElementById('mark-as-read-notification')
@@ -591,6 +609,89 @@ const checkmarkAsReadNotification = setInterval(() => {
 
 
 }, 100);
+
+// Interval variable to check if the ratingInput exist
+const checratingInput = setInterval(() => {
+    let ratingInput = document.getElementById('rating-input');
+
+    if(ratingInput){
+
+        clearInterval(checratingInput);
+        // an event listener for rating input field
+        ratingInput.addEventListener('input', function () {
+            const rating = parseFloat(this.value);
+
+            if (ratingInput.value.length > 0 && (isNaN(rating) || rating < 0 || rating > 5)) {
+                dynamicFieldErrorMessage('rating-input', "Rating must be between 0 and 5.")
+            } else {
+                dynamicFieldErrorMessage('rating-input', "")
+            }
+        });
+
+        let submitRatingButton = document.getElementById('submit-rating-button');
+        let commentBoxForRating = document.getElementById('comment-box-for-rating')
+        submitRatingButton.addEventListener('click', function(){
+            let isValid = true
+            const rating = parseFloat(ratingInput.value);
+            if (ratingInput.value.length < 0) {
+                dynamicFieldErrorMessage('rating-input', "Rating must be between 0 and 5.")
+                isValid = false
+            }
+            else if((isNaN(rating) || rating < 0 || rating > 5)){
+                dynamicFieldErrorMessage('rating-input', "Rating must be between 0 and 5.")
+                isValid = false
+            } else {
+                dynamicFieldErrorMessage('rating-input', "")
+            }
+
+
+            if(isValid){
+                
+                // insert rating
+                const url = "php-sql-controller/common-controller.php";
+                const data = {
+                    insertRating: true,
+                    rating_created_date: getPhilippineDateTime(),
+                    rate: ratingInput.value,
+                    comment: commentBoxForRating.value,
+                    shop_id: selectedTransactionShopId,
+                    user_id: userId
+                };
+
+                console.log(data)
+
+                const detailsList = dynamicSynchronousPostRequest(url, data);
+
+                if(isValidJSON(detailsList)){
+                    const details = JSON.parse(detailsList);
+                    // console.log('transaction => ', details)
+                    let status = details.status;
+                    if(status == 'success'){
+                        let message = details.message
+                        dynamicAlertMessage(message, 'success', 3000);
+                        setTimeout(function(){
+                            window.location.reload();
+                        },2000)
+                    }
+                    else{
+                        let message = details.message
+                        WaitigLoader(false)
+                        dynamicAlertMessage(message, 'error', 3000);
+                    }
+                }
+                else{
+                    console.error(detailsList);
+                    WaitigLoader(false)
+                    dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                }
+
+            }
+        })
+    }
+
+
+}, 100);
+
 
 // dynamic function to show error field message
 function dynamicFieldErrorMessage(fieldId, errorMessage){
@@ -777,7 +878,8 @@ function routePage() {
                 'service_more_days_open',
                 'service_more_additional_schedule_details',
                 'service_more_image_link',
-                'service_more_requirement_status'
+                'service_more_requirement_status',
+                'service_more_rating'
             ];
 
              // Convert the keysToKeep array into a Set for faster lookups
@@ -1565,6 +1667,10 @@ function mainLogoUpdate(){
                         user_id: userId,
                         changeLogo: true,
                     };
+
+                    if(userPosition == 'Admin'){
+                        data.isSuperAdmin = true;
+                    }
                     const updateResult = dynamicSynchronousPostRequest(url, data);
     
                     if(isValidJSON(updateResult)){
@@ -1958,6 +2064,7 @@ function manageServiceMoreSessionStorage(shop, shouldStore) {
         sessionStorage.setItem('service_more_additional_schedule_details', shop.additional_schedule_details);
         sessionStorage.setItem('service_more_image_link', shop.image_link);
         sessionStorage.setItem('service_more_requirement_status', shop.requirement_status);
+        sessionStorage.setItem('service_more_rating', shop.overall_rating);
     } else {
         // Remove the session storage variables if shouldStore is false
         sessionStorage.removeItem('service_more_shop_id');
@@ -1971,6 +2078,7 @@ function manageServiceMoreSessionStorage(shop, shouldStore) {
         sessionStorage.removeItem('service_more_additional_schedule_details');
         sessionStorage.removeItem('service_more_image_link');
         sessionStorage.removeItem('service_more_requirement_status');
+        sessionStorage.removeItem('service_more_rating');
     }
 }
 
@@ -2151,7 +2259,7 @@ function notifTransationTable() {
                     return json.data;
                 }
             },
-            order: [[1, 'asc']],
+            order: [[8, 'desc']],
             responsive: true,
             fixedHeader: true,
             searching: true,
@@ -2315,6 +2423,7 @@ function manageTransactionModal(row, fromNotif) {
     let notifyCheckoutProductContainerLabel =  document.getElementById('notify-checkout-product-container-label');
     let otherTransactionChangesDescription = document.getElementById('other-transaction-changes-description');
     let hideThisClass = '';
+    let rateShopVar = document.getElementById('rate-shop')
     const ThistransactionSubmitChanges = document.getElementById('transaction-submit-changes');
     const markAsReadNotification = document.getElementById('mark-as-read-notification')
 
@@ -2396,6 +2505,17 @@ function manageTransactionModal(row, fromNotif) {
                     addMoreProduct.classList.remove('d-none')
                     ThistransactionSubmitChanges.classList.remove('d-none')
                     notifyCheckoutClothesWeightInput.disabled = false;
+                }
+
+                if(detailsTransactionStatus.value == 'Picked-Up'){
+                    if(rateShopVar.classList.contains('d-none')){
+                        rateShopVar.classList.remove('d-none')
+                    }
+                }
+                else{
+                    if(!rateShopVar.classList.contains('d-none')){
+                        rateShopVar.classList.add('d-none')
+                    }
                 }
 
 

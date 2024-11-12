@@ -345,4 +345,35 @@ if (isset($inputData['insertDiscountedTransaction']) && $inputData['insertDiscou
     echo json_encode($response);
 }
 
+// Check if the request is to query ratings
+if (isset($inputData['queryRatingFromShop']) && $inputData['queryRatingFromShop'] === true) {
+    $shopId = $inputData['shop_id'];
+    $page = isset($inputData['page']) ? (int)$inputData['page'] : 1;
+    $limit = isset($inputData['limit']) ? (int)$inputData['limit'] : 10; // Number of comments per request
+    $offset = ($page - 1) * $limit;
+
+    // Query to fetch ratings with pagination
+    $sql = "SELECT shop_rating_id, shop_id, user_id, rate, comment, rating_created_date 
+            FROM shop_rating 
+            WHERE shop_id = ? 
+            ORDER BY rating_created_date DESC 
+            LIMIT ? OFFSET ?";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iii", $shopId, $limit, $offset);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Fetch results as an associative array
+    $ratings = [];
+    while ($row = $result->fetch_assoc()) {
+        $ratings[] = $row;
+    }
+
+    // Output ratings as JSON
+    echo json_encode($ratings);
+    exit;
+}
+
+
 ?>

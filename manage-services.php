@@ -238,7 +238,7 @@
       <!-- Header Area -->
 
       <div class="body flex-grow-1">
-        <div class="container-lg px-4">
+        <div class="container-fluid px-4">
 
         <div class="card">
           <h5 class="card-header">Laundry Shop Services</h5>
@@ -283,46 +283,7 @@
                 </tr>
               </thead>
               <tbody class="table-group-divider">
-                <!-- <tr>
-                  <th scope="row">1</th>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                </tr>
-                <tr>
-                  <th scope="row">4</th>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                  <td>Test</td>
-                </tr> -->
+               
               </tbody>
             </table>
             </div>

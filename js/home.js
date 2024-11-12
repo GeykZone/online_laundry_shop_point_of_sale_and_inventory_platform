@@ -13,7 +13,19 @@ function loadMoreShops() {
     if (loading || !moreShopsAvailable) return; // Prevent loading if no more shops
 
     loading = true;
-    const data = { queryShops: true, page: page };
+    const data = { queryShops: true, 
+                  page: page, };
+    
+    if(sessionStorage.getItem('viewAsLaundryShop') && sessionStorage.getItem('viewAsLaundryShop') == 'true'){
+        data.shop_id = sessionStorage.getItem('sessionShopId');
+    }
+    else{
+
+        if(userPosition == 'Laundry Owner'){
+            data.user_id = userId;
+        }
+
+    }
 
     // Make the asynchronous request and handle the response
     const response = dynamicSynchronousPostRequest('php-sql-controller/home-controller.php', data);
@@ -58,7 +70,7 @@ function loadMoreShops() {
                             <span class="card-text opacity-75">- Days Open: ${shop.days_open}</span>
                             ${additionalScheduleDetails}
                         </div>
-                        <h6 class="mt-3">5.0</h6>
+                        <h6 class="mt-3">${parseFloat(shop.overall_rating)}</h6>
                         <div class="d-grid mt-3 gap-2">
                             <a id="service-and-more-btn-${shop.shop_id}" class="btn btn-primary shadow-sm">Service and more</a>
                         </div>
@@ -71,6 +83,7 @@ function loadMoreShops() {
                 manageServiceMoreSessionStorage(shop, true);
                 if (areAllServiceMoreSessionStorageItemsSet()) {
                     window.location.href = 'service-and-more.php';
+                  
                 } else {
                     console.log("Some session storage items are missing");
                 }
@@ -133,7 +146,8 @@ function areAllServiceMoreSessionStorageItemsSet() {
         'service_more_days_open',
         'service_more_additional_schedule_details',
         'service_more_image_link',
-        'service_more_requirement_status'
+        'service_more_requirement_status',
+        'service_more_rating'
     ];
 
     // Check if all keys have values in sessionStorage

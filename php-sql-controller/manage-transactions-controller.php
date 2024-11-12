@@ -69,4 +69,74 @@ if(isset($_GET['showCostumerTransaction'])){
     echo json_encode( SSP::simple( $_GET, $dbDetails, $table, $primaryKey, $columns, $joinQuery, $where) );
 }
 
+
+// Show the list of transactions if 'showTransactionReport' is set in the GET request
+if (isset($_GET['showTransactionReport'])) {
+
+    // Create a new connection to the database
+    $mysqli = new mysqli($dbDetails['host'], $dbDetails['user'], $dbDetails['pass'], $dbDetails['db']);
+
+    // Check connection
+    if ($mysqli->connect_error) {
+        die("Connection failed: " . $mysqli->connect_error);
+    }
+
+    $reportYear = $_GET['reportYear'];
+    $SalesType = $_GET['SalesType']; // eg. Daily, Monthly, Weekly
+    $shop_id = $_GET['shop_id'];
+
+    // Determine grouping and date format based on SalesType
+    if ($SalesType === 'Daily') {
+        $dateFormat = "%Y-%m-%d";
+        $groupBy = "DATE(transaction_date)";
+    } elseif ($SalesType === 'Weekly') {
+        $dateFormat = "%Y-%u"; // %u for week number
+        $groupBy = "YEARWEEK(transaction_date)";
+    } else { // Default to Monthly
+        $dateFormat = "%Y-%m";
+        $groupBy = "DATE_FORMAT(transaction_date, '%Y-%m')";
+    }
+
+    // SQL query to fetch data with dynamic grouping
+    $sql = "
+        SELECT 
+            DATE_FORMAT(transaction_date, '$dateFormat') AS period,
+            SUM(total) AS total_sum,
+            COUNT(transaction_id) AS transaction_count,
+            AVG(total) AS average_total
+        FROM transactions
+        WHERE YEAR(transaction_date) = $reportYear
+        AND shop_id = $shop_id
+        AND transaction_status IN ('Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up') 
+        GROUP BY $groupBy
+        ORDER BY period
+    ";
+
+    // Executing the SQL query
+    $result = $mysqli->query($sql);
+
+    // Preparing the data to be returned in JSON format
+    $data = array();
+    while ($row = $result->fetch_assoc()) {
+        $data[] = array(
+            $row['period'],               // Grouped period (formatted date)
+            $row['total_sum'],            // Sum of total
+            $row['transaction_count'],    // Count of transactions
+            $row['average_total']         // Average of total
+        );
+    }
+
+    // Output the processed data as a JSON response
+    echo json_encode(array(
+        "draw"            => isset($_GET['draw']) ? $_GET['draw'] : 1,  // DataTables draw count
+        "recordsTotal"    => count($data),                              // Total records
+        "recordsFiltered" => count($data),                              // Filtered records (same as total in this case)
+        "data"            => $data                                       // Data to be displayed
+    ));
+
+    // Close the database connection
+    $mysqli->close();
+}
+
+
 ?>

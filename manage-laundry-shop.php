@@ -381,7 +381,7 @@
       <!-- Header Area -->
 
       <div class="body flex-grow-1">
-        <div class="container-lg px-4">
+        <div class="container-fluid px-4">
 
         <div class="card">
           <h5 class="card-header">Laundry Shops</h5>

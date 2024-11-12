@@ -166,8 +166,8 @@
               <div class="card-body px-4">
 
                 <h1 class="card-title" id="service-and-more-shop-name">Laundry Shop Name</h1>
-                <h1 class="Stars" style="--rating: 5.0;" aria-label=""></h1>
-                <h4>5.0</h4>
+                <h1 class="Stars" id="shop-rating-point-stars" style="--rating: 5.0;" aria-label=""></h1>
+                <h4 id="shop-rating-equivalent-value">5.0</h4>
 
                 <div class="mt-3">
                     <p class="card-text service-more-elements opacity-75">- ${shop.shop_address}</p>
@@ -193,25 +193,9 @@
           </div>
           <div class="card-body">
 
-          <!-- <div id="comment-form-container" class="needs-validation row g-3">
-              <div class="mb-12">
-                <label for="exampleFormControlTextarea1" class="form-label">Comment</label>
-                <textarea class="form-control" placeholder="Comment" id="exampleFormControlTextarea1" rows="3"></textarea>
-              </div>
+          <div id="comment-list-container" class="gap-3 d-flex flex-column overflow-y-scroll px-4 d-none" style="height:500px;">
 
-              <div class="col-12">
-                <label for="rating-input" class="form-label">Rating (0 - 5)</label>
-                <input class="form-control" placeholder="Rating" type="number" id="rating-input" name="rating" step="0.1" min="0" max="5" required>
-                <div id="rating-input-error-feedback" class="invalid-feedback">
-                </div>
-              </div>
-
-              <div class="col-12"><a  class="btn btn-primary isClickable">Submit Response</a></div>
-          </div> -->
-
-          <div id="comment-list-container" class="gap-3 d-flex flex-column overflow-y-scroll px-4" style="height:500px;">
-
-              <div class="card">
+              <!-- <div class="card">
                 <h5 class="card-header">Customer</h5>
                 <div class="card-body">
 
@@ -221,33 +205,12 @@
                   <p>Oct 20, 2024 8:53 PM</p>
                   
                 </div>
-              </div>
+              </div> -->
 
-              <div class="card">
-                <h5 class="card-header">Customer</h5>
-                <div class="card-body">
+          </div>
 
-                  <h5 class="card-title">Shop is good and clothes are very clean.</h5>
-                  <h6 class="Stars" style="--rating: 5.0;" aria-label=""></h6>
-                  <h6>5.0</h6>
-                  <p>Oct 20, 2024 8:53 PM</p>
-                  
-                </div>
-              </div>
-
-
-              <div class="card">
-                <h5 class="card-header">Customer</h5>
-                <div class="card-body">
-
-                  <h5 class="card-title">Shop is good and clothes are very clean.</h5>
-                  <h6 class="Stars" style="--rating: 5.0;" aria-label=""></h6>
-                  <h6>5.0</h6>
-                  <p>Oct 20, 2024 8:53 PM</p>
-                  
-                </div>
-              </div>
-
+          <div  id="no-comments-and-ratings-yet" >
+            <p>Shop has no comments and ratings yet</p>
           </div>
 
           </div>

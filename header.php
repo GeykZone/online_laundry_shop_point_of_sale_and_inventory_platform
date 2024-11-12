@@ -130,7 +130,7 @@
 
     <!-- transaction list -->
     <div class="modal fade" id="viewNoftiicationList" data-coreui-backdrop="static" data-coreui-keyboard="false" tabindex="-1" aria-labelledby="viewNoftiicationListLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-xl">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl" style="max-width: 1400px;">
             <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="viewNoftiicationListLabel">Transaction List</h5>
@@ -354,6 +354,7 @@
 
                 </div>                
                 <div class="modal-footer">
+                     <button id="rate-shop" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Rate Shop</button>
                      <button id="mark-as-read-notification" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Mark as Read</button>
                      <button id="back-to-notification-list" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Back</button>
                      <button id="transaction-submit-changes" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center">Submit</button>
@@ -424,6 +425,43 @@
           </div>
     </div>
 
+    <!-- rating -->
+    <div class="modal fade" id="rateShop" data-coreui-backdrop="static" data-coreui-keyboard="false" tabindex="-1" aria-labelledby="rateShopLabel" aria-hidden="true">
+         <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="rateShopLabel"><h6>Please select a product for <span id="product-service-name"></span> Laundry Service.</h6></h5>
+                <button type="button" id="add-more-product-close-btn" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+
+                <div class="container">
+                    <div id="comment-form-container" class="needs-validation row g-3">
+                        <div class="mb-12">
+                            <label for="comment-box-for-rating" class="form-label">Comment</label>
+                            <textarea class="form-control" placeholder="Comment" id="comment-box-for-rating" rows="3"></textarea>
+                            <div id="comment-box-for-rating-error-feedback" class="invalid-feedback">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="rating-input" class="form-label">Rating (0 - 5)</label>
+                            <input class="form-control" placeholder="Rating" type="number" id="rating-input" name="rating" step="0.1" min="0" max="5" required>
+                            <div id="rating-input-error-feedback" class="invalid-feedback">
+                            </div>
+                        </div>
+
+                        <div class="col-12" ><a  class="btn btn-primary isClickable" id="submit-rating-button">Submit Response</a></div>
+                    </div>
+                </div>
+
+                
+              </div>
+              <div class="modal-footer">
+              </div>
+            </div>
+          </div>
+    </div>
 <!-- Modal Area -->
 
 <header class="header header-sticky p-0 mb-4">
