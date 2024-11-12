@@ -114,8 +114,8 @@
                 <div id="add-laundry-shop-requirements-form-container" class="row g-3 mb-3 needs-validation">
                   <!-- Clothes Weight -->
                   <div class="col-12">
-                    <label for="clothes-weight-input" class="form-label">Clothes Weight (Kg)</label>
-                    <input type="text" placeholder="Clothes Weight" maxlength="50" class="form-control" id="clothes-weight-input" required>
+                    <label for="clothes-weight-input" class="form-label">Estimated Clothes Weight (Kg)</label>
+                    <input type="text" placeholder="Estimated Clothes Weight Optional" maxlength="50" class="form-control" id="clothes-weight-input" required>
                     <div id="clothes-weight-input-error-feedback" class="invalid-feedback">
                     </div>
                   </div>

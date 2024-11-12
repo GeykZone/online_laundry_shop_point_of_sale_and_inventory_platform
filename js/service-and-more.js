@@ -998,13 +998,13 @@ function transactionFinalizationValidation(){
     let isValid = true;
 
     // validation using dynamic error message
-    if(clothesWeightInput.value.length < 1){
-        isValid = false;
-        dynamicFieldErrorMessage(clothesWeightInput.id, 'Please input a valid clothes weight.');
-    }
-    else {
-        dynamicFieldErrorMessage(clothesWeightInput.id, '');
-    }
+    // if(clothesWeightInput.value.length < 1){
+    //     isValid = false;
+    //     dynamicFieldErrorMessage(clothesWeightInput.id, 'Please input a valid clothes weight.');
+    // }
+    // else {
+    //     dynamicFieldErrorMessage(clothesWeightInput.id, '');
+    // }
 
     if(!isValid){
         dynamicAlertMessage('Please complete additional requirements before finalizing checkout.', 'warning', 3000);
