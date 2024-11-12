@@ -2856,13 +2856,13 @@ function formulateChangesForTransaction() {
         isValid = false;
     }
 
-    if(notifyCheckoutClothesWeightInput.value.length < 1){
-        isValid = false;
-        dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, 'Please input a valid clothes weight.');
-    }
-    else {
-        dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, '');
-    }
+    // if(notifyCheckoutClothesWeightInput.value.length < 1){
+    //     isValid = false;
+    //     dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, 'Please input a valid clothes weight.');
+    // }
+    // else {
+    //     dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, '');
+    // }
 
     changeableDiscount.forEach((discount) => {
         const detailsDiscountID = document.getElementById(`details-discount-status-${discount.discount_id}`);
