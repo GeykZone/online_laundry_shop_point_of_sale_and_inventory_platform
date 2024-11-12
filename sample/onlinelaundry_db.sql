@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 10, 2024 at 01:26 PM
+-- Generation Time: Nov 12, 2024 at 07:38 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -36,13 +36,6 @@ CREATE TABLE `discount` (
   `shop_id` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `discount`
---
-
-INSERT INTO `discount` (`discount_id`, `discount_name`, `discount_percent`, `discount_description`, `discount_status`, `shop_id`) VALUES
-(28, 'Lucky Sale', '30', 'minimum of 300 Php', 'Active', 116);
-
 -- --------------------------------------------------------
 
 --
@@ -55,13 +48,6 @@ CREATE TABLE `discounted_transactions` (
   `discount_id` bigint(20) NOT NULL,
   `discounted_transaction_status` char(55) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `discounted_transactions`
---
-
-INSERT INTO `discounted_transactions` (`discounted_transaction_id`, `transaction_id`, `discount_id`, `discounted_transaction_status`) VALUES
-(36, 47, 28, 'Approved');
 
 -- --------------------------------------------------------
 
@@ -114,13 +100,6 @@ CREATE TABLE `laundry_shop_staff` (
   `shop_id` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `laundry_shop_staff`
---
-
-INSERT INTO `laundry_shop_staff` (`laundry_shop_staff_id`, `user_id`, `shop_id`) VALUES
-(22, 90, 116);
-
 -- --------------------------------------------------------
 
 --
@@ -133,16 +112,6 @@ CREATE TABLE `login_token` (
   `user_id` bigint(20) NOT NULL,
   `expiration_date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `login_token`
---
-
-INSERT INTO `login_token` (`login_token_id`, `token`, `user_id`, `expiration_date`) VALUES
-(101, 'czJlcVBBdnJJMElZSW5OQXZNWW5wTzA0a2tmZmV4MUNsRjFVWEVtdnU2YmluK3ZkQzV1VzBuQWV4YjFIWDBxOQ==', 0, '2024-12-10 15:28:59'),
-(102, 'N3BESHVMQUg2dmRLZFV3ZkdXc3haZVQ1S0NkOGJiREhLTEhNeFRBNFZRSEphWkhyRkZkSlJHWUxZRmgxMkdEOExmZGMrajVkV2IvajAvWGs5WVZzRWc9PQ==', 89, '2024-12-10 15:29:50'),
-(103, 'STFROGVsQWd1VjJON29uUVNNdWl1NXpqMWZBbnJmSHMyMEh4MXpIR0VkRnhocFQyRkRQL2RWMEtzUlNtTW54OUJtQ3VkbTBCWS9xdWdsdW13cU5CL3c9PQ==', 90, '2024-12-10 15:38:59'),
-(104, 'N3BESHVMQUg2dmRLZFV3ZkdXc3haZVQ1S0NkOGJiREhLTEhNeFRBNFZRSHZ5Ky9GZGZPVDd4aHhHQk5nUWxETmEwaEVnRURvV2c5Zzc4dXM3Y0pjY3c9PQ==', 89, '2024-12-10 20:18:33');
 
 -- --------------------------------------------------------
 
@@ -158,13 +127,6 @@ CREATE TABLE `order_products` (
   `order_date` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `item_quantity` bigint(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `order_products`
---
-
-INSERT INTO `order_products` (`order_products_id`, `order_name`, `transaction_id`, `product_id`, `order_date`, `item_quantity`) VALUES
-(62, 'Sabon - Tide', 47, 14, '2024-11-10 15:52:57', 6);
 
 -- --------------------------------------------------------
 
@@ -183,13 +145,6 @@ CREATE TABLE `product` (
   `product_status` char(50) NOT NULL DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `product`
---
-
-INSERT INTO `product` (`product_id`, `product_name`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`, `product_status`) VALUES
-(14, 'Sabon', 75, 94, 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fistockphoto-187248786-612x612.jpg?alt=media&token=40c28c31-da70-45ce-a1d3-8880476a428c', 'Tide', 116, 'Active');
-
 -- --------------------------------------------------------
 
 --
@@ -204,13 +159,6 @@ CREATE TABLE `services` (
   `shop_id` bigint(20) NOT NULL,
   `service_status` char(50) NOT NULL DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `services`
---
-
-INSERT INTO `services` (`service_id`, `service_name`, `description`, `price`, `shop_id`, `service_status`) VALUES
-(22, 'Dry Cleaning', 'Minimum 1kg  to 5kg', 75, 116, 'Active');
 
 -- --------------------------------------------------------
 
@@ -228,16 +176,16 @@ CREATE TABLE `shop` (
   `days_open` char(255) NOT NULL,
   `open_time` time NOT NULL,
   `close_time` time NOT NULL,
-  `additional_schedule_details` char(255) NOT NULL
+  `additional_schedule_details` char(255) NOT NULL,
+  `overall_rating` decimal(10,0) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `shop`
 --
 
-INSERT INTO `shop` (`shop_id`, `shop_name`, `shop_address`, `contact_number`, `user_id`, `requirement_status`, `days_open`, `open_time`, `close_time`, `additional_schedule_details`) VALUES
-(0, 'default_dont_delete', 'default_dont_delete', 'default_dont_delete', 89, 'Approved', 'default_dont_delete', '00:00:00', '00:00:00', 'default_dont_delete'),
-(116, 'Test Shop A', 'Test Shop A Adress', '09123456789', 89, 'Approved', 'Monday, Tuesday, Wednesday, Thursday, Friday, Sunday', '08:40:00', '18:02:00', 'Open Saturday Pero Half Day ra');
+INSERT INTO `shop` (`shop_id`, `shop_name`, `shop_address`, `contact_number`, `user_id`, `requirement_status`, `days_open`, `open_time`, `close_time`, `additional_schedule_details`, `overall_rating`) VALUES
+(0, 'default_dont_delete', 'default_dont_delete', 'default_dont_delete', 0, 'Approved', 'default_dont_delete', '00:00:00', '00:00:00', 'default_dont_delete', 0);
 
 -- --------------------------------------------------------
 
@@ -257,9 +205,7 @@ CREATE TABLE `shop_logo` (
 --
 
 INSERT INTO `shop_logo` (`shop_logo_id`, `shop_id`, `image_link`, `user_id`) VALUES
-(23, 116, 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fimages.jpg?alt=media&token=4f6a818b-15e8-428d-b35b-354df48cd070', 0),
-(30, 0, 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fimages%20(1).jpg?alt=media&token=dc256a4c-94d6-49a8-8473-b181fae9363c', 88),
-(31, 0, 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fmonkey-man-with-thumb-up_1368-7198.avif?alt=media&token=7cea6cbe-67c8-47c2-9f35-9c89d38ae41c', 89);
+(34, 0, 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fcreative-laundry-logo-template-rhdd5wf1f57963.webp?alt=media&token=9e5ce7c3-5493-443f-b8ef-d3c043e7ad70', 0);
 
 -- --------------------------------------------------------
 
@@ -290,14 +236,6 @@ CREATE TABLE `submitted_requirements` (
   `shop_id` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `submitted_requirements`
---
-
-INSERT INTO `submitted_requirements` (`submitted_requirements_id`, `laundry_shop_requirements_id`, `details`, `image_link`, `shop_id`) VALUES
-(63, 15, '12356', 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fimages.jpg?alt=media&token=af06df05-19fb-4f39-bd83-af88f06a2023', 116),
-(64, 16, 'ahasjjajskas', 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fimages%20(1).png?alt=media&token=b0bc90ce-47b4-4bc8-a6e2-7ba8c6d39666', 116);
-
 -- --------------------------------------------------------
 
 --
@@ -320,13 +258,6 @@ CREATE TABLE `transactions` (
   `notification_is_read` char(5) NOT NULL DEFAULT 'False',
   `last_update_date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `transactions`
---
-
-INSERT INTO `transactions` (`transaction_id`, `shop_id`, `user_id`, `transaction_name`, `transaction_date`, `pick_up_date`, `total`, `transaction_status`, `clothes_weight`, `service_id`, `initial`, `transaction_changes_other_details`, `notification_is_read`, `last_update_date`) VALUES
-(47, 116, 88, 'test_customer - Dry Cleaning - Transaction', '2024-11-10 15:50:08', '2024-11-10 15:55:47', 329, 'Picked-Up', 4, 22, 20, 'Wala kaabot emung kwarta', 'True', '2024-11-10 15:55:47');
 
 -- --------------------------------------------------------
 
@@ -352,10 +283,7 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`user_id`, `first_name`, `last_name`, `username`, `password`, `email`, `phone_number`, `address`, `position`, `user_activation_status`) VALUES
-(0, 'Admin_First_Name', 'Admin_Last_Name', 'Admin', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'test_admin@gmail.com', '09123456789', 'Test Address', 'Admin', 'Active'),
-(88, 'Test Customer A', 'Test Customer A', 'test_customer', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'emailA@test.com', '95556565', 'test', 'Customer', 'Active'),
-(89, 'Geykson', 'Maravillas', 'test_laundry_owner', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'geykson@posimente.com', '09123456789', 'Test Shop Adress B', 'Laundry Owner', 'Active'),
-(90, 'Test_Pogi', 'Test', 'Test_Pogi_Test_8298', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'geykson@posimente.com', '09123456789', 'Test Shop Adress B', 'Laundry Staff', 'Active');
+(0, 'Admin_First_Name', 'Admin_Last_Name', 'Admin', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'test_admin@gmail.com', '09123456789', 'Test Address', 'Admin', 'Active');
 
 --
 -- Indexes for dumped tables
@@ -482,7 +410,7 @@ ALTER TABLE `discount`
 -- AUTO_INCREMENT for table `discounted_transactions`
 --
 ALTER TABLE `discounted_transactions`
-  MODIFY `discounted_transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `discounted_transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `laundry_shop_requirements`
@@ -500,13 +428,13 @@ ALTER TABLE `laundry_shop_staff`
 -- AUTO_INCREMENT for table `login_token`
 --
 ALTER TABLE `login_token`
-  MODIFY `login_token_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
+  MODIFY `login_token_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=122;
 
 --
 -- AUTO_INCREMENT for table `order_products`
 --
 ALTER TABLE `order_products`
-  MODIFY `order_products_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `order_products_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT for table `product`
@@ -524,37 +452,37 @@ ALTER TABLE `services`
 -- AUTO_INCREMENT for table `shop`
 --
 ALTER TABLE `shop`
-  MODIFY `shop_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
+  MODIFY `shop_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
 
 --
 -- AUTO_INCREMENT for table `shop_logo`
 --
 ALTER TABLE `shop_logo`
-  MODIFY `shop_logo_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `shop_logo_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `shop_rating`
 --
 ALTER TABLE `shop_rating`
-  MODIFY `shop_rating_id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `shop_rating_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `submitted_requirements`
 --
 ALTER TABLE `submitted_requirements`
-  MODIFY `submitted_requirements_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+  MODIFY `submitted_requirements_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `user_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
+  MODIFY `user_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- Constraints for dumped tables
