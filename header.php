@@ -232,8 +232,8 @@
 
                 <div class="row g-3 mb-3 needs-validation">
                     <div class="col-12">
-                        <label for="notify-checkout-clothes-weight-input" class="form-label">Clothes Weight (Kg)</label>
-                        <input type="text" placeholder="Clothes Weight" maxlength="50" class="form-control" id="notify-checkout-clothes-weight-input" required>
+                        <label for="notify-checkout-clothes-weight-input" class="form-label">Estimated Clothes Weight (Kg)</label>
+                        <input type="text" placeholder="Estimated Clothes Weight (Optional)" maxlength="50" class="form-control" id="notify-checkout-clothes-weight-input" required>
                         <div id="notify-checkout-clothes-weight-input-error-feedback" class="invalid-feedback">
                         </div>
                     </div>

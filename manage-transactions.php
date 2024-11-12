@@ -102,7 +102,7 @@
         <div class="container-fluid px-4">
 
         <div class="card" >
-          <h5 class="card-header">Costumer Transactions</h5>
+          <h5 class="card-header">Customer Transactions</h5>
           <div class="card-body row px-5 py-4" id="customer-transaction-card-body">
             <!-- <h5 class="card-title">Special title treatment</h5>
             <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
