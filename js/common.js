@@ -819,6 +819,11 @@ function routePage() {
 
             return;
         }
+        else{
+            if(lastSegment == 'customer-home.php'){
+                window.location.href = 'home.php';
+            }
+        }
 
         if(JSON.parse(response) == 'login.php'){
 
