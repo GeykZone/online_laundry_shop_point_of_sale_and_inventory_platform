@@ -482,10 +482,10 @@
     </a>
 
     <ul class="header-nav ms-auto">
-        <h6 id="user-title-head">User</h6>
+        <h6 id="user-title-head">Customer</h6>
     </ul>
 
-    <ul class="header-nav">
+    <ul class="header-nav profileAvatar">
     <li class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
     </li>

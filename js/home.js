@@ -1,6 +1,21 @@
-dynamicHeaderLowerText('home.php', 'Home', userPosition);
-let sidebarLogo = document.getElementById('sidebar-logo').src = sideBarLogoQuery();
-let headerAvatar = document.getElementById('header-avatar').src = sideBarLogoQuery();
+let setPositionDisplay = userPosition;
+
+if(!userPosition){
+     setPositionDisplay = 'Customer';
+}
+
+dynamicHeaderLowerText('home.php', 'Home', setPositionDisplay);
+
+let sidebarLogo = document.getElementById('sidebar-logo')
+if(sidebarLogo){
+    sidebarLogo.src = sideBarLogoQuery();
+}
+
+let headerAvatar = document.getElementById('header-avatar')
+if(headerAvatar){
+    headerAvatar.src = sideBarLogoQuery();
+}
+
 showHideFunctions();
 manageServiceMoreSessionStorage(false, false);
 

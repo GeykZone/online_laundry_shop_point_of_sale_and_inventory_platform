@@ -42,7 +42,7 @@ dynamicConfirmationMessage(
         <h5> Please choose the type of user you are registering as.</h5>
 
         </div>`,
-        customFooterContent: `<button type="button" id="as-customer-button" data-coreui-dismiss="modal" class="btn btn-info text-white">Register as Customer</button>`
+        customFooterContent: `<button type="button" id="as-customer-button" data-coreui-dismiss="modal" class="btn btn-info d-none text-white">Register as Customer</button>`
     }
 )
 

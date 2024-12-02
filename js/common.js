@@ -791,6 +791,35 @@ function routePage() {
     .then((response) => {
         let currentPageUrl = window.location.href;
         let lastSegment = currentPageUrl.substring(currentPageUrl.lastIndexOf('/') + 1);
+
+        if(!userPosition){
+
+            const headerToggler = document.querySelector('.header-toggler');
+            const headerNav =  document.querySelector('.profileAvatar');
+
+            if(headerToggler){
+
+                if(!headerToggler.classList.contains('d-none')){
+                    headerToggler.classList.add('d-none')
+                }
+
+            }
+
+            if(headerNav){
+
+                if(!headerNav.classList.contains('d-none')){
+                    headerNav.classList.add('d-none')
+                }
+
+            }
+
+            if(lastSegment == 'home.php'){
+                window.location.href = 'customer-home.php';
+            }
+
+            return;
+        }
+
         if(JSON.parse(response) == 'login.php'){
 
             if(lastSegment != 'login.php'){
@@ -1074,6 +1103,8 @@ function dynamicHeaderLowerText(link, page, userPosition) {
     const container = document.querySelector('.header-lower-text-container');
     const upperContainer = document.querySelector('#user-avatar-container');
 
+    container.innerHTML = '';
+
     // Use template literals to define the HTML structure
     const laundryShopOwnerView = `
     <button id="view-as-laundry-owner" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center laundry-owner is-shop d-none">
@@ -1211,7 +1242,13 @@ function showHideFunctions() {
     let defaultImagePreview = document.getElementById('default-image-preview');
     defaultImagePreview.src = avatarLogoQuery();
 
-    userTitleHead.textContent = capitalizeWords(userPosition)+" "+capitalizeWords(userUserName);
+    if(!userPosition){
+        avatarUserLabel.textContent = 'Customer'
+    }
+
+    if(userPosition){
+        userTitleHead.textContent = capitalizeWords(userPosition)+" "+capitalizeWords(userUserName);
+    }
 
     if(userPosition == 'Admin'){
 
