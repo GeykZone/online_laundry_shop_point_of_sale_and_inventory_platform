@@ -173,10 +173,28 @@ if(isset($inputData['insertTransaction']) ){
         if (mysqli_query($conn, $updateQuery)) {
             $response['status'] = 'success';
             $response['message'] = 'Transaction updated successfully.';
+
+            if(isset($inputData['transactionTrackUpdate']) ){
+
+                $shopName = $inputData['shopName'];
+
+                // // Prepare SMS message with transaction details in a readable format
+                // $smsMessage = "Notice From ".$shopName." \nTransaction Updated:\n\n";
+                // $smsMessage .= isset($inputData['last_update_date']) ? "Last Update Date: {$inputData['last_update_date']}\n" : "";
+                // $smsMessage .= isset($inputData['pick_up_date']) ? "Pick-Up Date: {$inputData['pick_up_date']}\n" : "";
+                // $smsMessage .= isset($inputData['total']) ? "Estimated Total Payable: {$inputData['total']}\n" : "";
+                // $smsMessage .= isset($inputData['transaction_status']) ? "Transaction Status: {$inputData['transaction_status']}\n" : "";
+                // $smsMessage .= isset($inputData['clothes_weight']) ? "Clothes Weight: {$inputData['clothes_weight']} kg\n" : "";
+            
+                // // Send SMS using the API
+            }
+
+            
         } else {
             $response['status'] = 'error';
             $response['message'] = 'Update failed: ' . mysqli_error($conn);
         }
+        
     } else {
         // If no transaction_id, prepare an INSERT statement
         $shopId = $inputData['shop_id'] ?? null;

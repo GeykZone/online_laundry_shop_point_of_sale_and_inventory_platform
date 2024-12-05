@@ -406,25 +406,47 @@ if (isset($inputData['queryTransaction'])) {
 
     // SQL query with additional LEFT JOINs
     $query = "
-        SELECT t.transaction_id, t.shop_id, t.user_id, t.transaction_name, t.transaction_date,
-               t.pick_up_date, t.total, t.initial, t.transaction_status, t.clothes_weight, t.service_id,
-               t.transaction_changes_other_details, t.notification_is_read, t.last_update_date,
-               op.order_products_id, op.order_name, op.product_id AS order_product_id, 
-               op.order_date, op.item_quantity,
-               dt.discounted_transaction_id, dt.discount_id, dt.discounted_transaction_status,
-               p.product_id, p.product_name, p.price AS product_price, p.quantity AS product_quantity, 
-               p.image_link, p.product_brand, p.product_status,
-               s.service_id AS svc_service_id, s.service_name, s.description AS service_description,
-               s.price AS service_price, s.service_status,
-               d.discount_id AS disc_discount_id, d.discount_name, d.discount_percent, 
-               d.discount_description, d.discount_status
-        FROM transactions t
-        LEFT JOIN order_products op ON t.transaction_id = op.transaction_id
-        LEFT JOIN discounted_transactions dt ON t.transaction_id = dt.transaction_id
-        LEFT JOIN product p ON op.product_id = p.product_id
-        LEFT JOIN services s ON t.service_id = s.service_id
-        LEFT JOIN discount d ON dt.discount_id = d.discount_id
-        WHERE t.transaction_id = ?
+        SELECT 
+            t.transaction_id, t.shop_id, t.user_id, t.transaction_name, t.transaction_date,
+            t.pick_up_date, t.total, t.initial, t.transaction_status, t.clothes_weight, t.service_id,
+            t.transaction_changes_other_details, t.notification_is_read, t.last_update_date,
+
+            op.order_products_id, op.order_name, op.product_id AS order_product_id, 
+            op.order_date, op.item_quantity,
+
+            dt.discounted_transaction_id, dt.discount_id, dt.discounted_transaction_status,
+
+            p.product_id, p.product_name, p.price AS product_price, p.quantity AS product_quantity, 
+            p.image_link, p.product_brand, p.product_status,
+
+            s.service_id AS svc_service_id, s.service_name, s.description AS service_description,
+            s.price AS service_price, s.service_status,
+
+            d.discount_id AS disc_discount_id, d.discount_name, d.discount_percent, 
+            d.discount_description, d.discount_status,
+
+            u.user_id AS user_id, u.first_name AS first_name, u.last_name AS last_name, 
+            u.username AS username, u.email AS email, u.phone_number AS phone_number, 
+            u.address AS address, u.position AS position, u.user_activation_status AS user_activation_status
+
+        FROM 
+            transactions t
+        LEFT JOIN 
+            order_products op ON t.transaction_id = op.transaction_id
+        LEFT JOIN 
+            discounted_transactions dt ON t.transaction_id = dt.transaction_id
+        LEFT JOIN 
+            product p ON op.product_id = p.product_id
+        LEFT JOIN 
+            services s ON t.service_id = s.service_id
+        LEFT JOIN 
+            discount d ON dt.discount_id = d.discount_id
+        LEFT JOIN 
+            user u ON t.user_id = u.user_id
+
+        WHERE 
+            t.transaction_id = ?
+
     ";
 
     // Prepare and execute the query
@@ -521,6 +543,21 @@ if (isset($inputData['queryTransaction'])) {
                 'discount_percent' => $item['discount_percent'],
                 'discount_description' => $item['discount_description'],
                 'discount_status' => $item['discount_status']
+            ];
+        }
+
+        // Populate user details (only once)
+        if (!isset($formattedResult['user'])) {
+            $formattedResult['user'] = [
+                'user_id' => $item['user_id'],
+                'first_name' => $item['first_name'],
+                'last_name' => $item['last_name'],
+                'username' => $item['username'],
+                'email' => $item['email'],
+                'phone_number' => $item['phone_number'],
+                'address' => $item['address'],
+                'position' => $item['position'],
+                'user_activation_status' => $item['user_activation_status']
             ];
         }
     }
@@ -719,6 +756,29 @@ if (isset($inputData['insertRating']) && $inputData['insertRating'] === true) {
     }
 
     // Output response as JSON
+    echo json_encode($response);
+}
+
+if(isset($inputData['sendSMS'])){
+
+    $message = isset($inputData['message']) ? $inputData['message'] : null;
+    $cusomerIdUsed = isset($inputData['cusomerIdUsed']) ? $inputData['cusomerIdUsed'] : null;
+
+    if($message !== null && $cusomerIdUsed !== null){
+        $response = sms_api($message, $cusomerIdUsed);
+    }
+    else{
+        $response = [
+            'status' => 'error',
+            'message' => 'Missing required fields'
+        ];
+    }
+
+    echo json_encode($response);
+}
+
+if(isset($inputData['sendEmail'])){
+    $response = getEmailApiConfig();
     echo json_encode($response);
 }
 

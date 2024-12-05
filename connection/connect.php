@@ -46,5 +46,102 @@ function encrypt_decrypt($action, $string) {
   return $output;
 }
 
+function sms_api($message, $userId) {
+  global $conn;
+
+  // Query API configuration from the database
+  $configQuery = "SELECT `api_secret`, `mode`, `device`, `sim`, `priority` FROM `sms_api_config` LIMIT 1";
+  $configResult = $conn->query($configQuery);
+
+  if ($configResult && $configResult->num_rows > 0) {
+      $config = $configResult->fetch_assoc();
+
+      // Query phone number using the userId
+      $userQuery = "SELECT `phone_number` FROM `user` WHERE `user_id` = ?";
+      if ($userStmt = $conn->prepare($userQuery)) {
+          $userStmt->bind_param("i", $userId);
+          $userStmt->execute();
+          $userResult = $userStmt->get_result();
+
+          if ($userResult && $userResult->num_rows > 0) {
+              $user = $userResult->fetch_assoc();
+              $phoneNumber = $user['phone_number'];
+
+              // Prepare the message array using the queried configuration and phone number
+              $messageData = [
+                  "secret" => $config['api_secret'],
+                  "mode" => $config['mode'],
+                  "device" => $config['device'],
+                  "sim" => $config['sim'],
+                  "priority" => $config['priority'],
+                  "phone" => $phoneNumber,
+                  "message" => $message
+              ];
+
+              // Initialize cURL request
+              $cURL = curl_init("https://sms.teamssprogram.com/api/send/sms");
+              curl_setopt($cURL, CURLOPT_RETURNTRANSFER, true);
+              curl_setopt($cURL, CURLOPT_POSTFIELDS, $messageData);
+              $response = curl_exec($cURL);
+              curl_close($cURL);
+
+              // Decode and return the response
+              return json_decode($response, true);
+          } else {
+              return [
+                  'status' => 'error',
+                  'message' => 'Failed to retrieve phone number for the specified user ID'
+              ];
+          }
+      } else {
+          return [
+              'status' => 'error',
+              'message' => 'Failed to prepare user query: ' . $conn->error
+          ];
+      }
+  } else {
+      return [
+          'status' => 'error',
+          'message' => 'Failed to retrieve API configuration'
+      ];
+  }
+}
+
+
+function getEmailApiConfig() {
+  global $conn;
+    // Prepare the response array
+    $response = [];
+
+    // SQL query
+    $sql = "SELECT `user_id`, `service_id`, `template_id` FROM `email_api_config`";
+
+    // Execute the query
+    if ($result = $conn->query($sql)) {
+        // Fetch data into an associative array
+        $data = [];
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+        }
+
+        // Build the response
+        $response = [
+            'status' => 'success',
+            'data' => $data
+        ];
+    } else {
+        // Handle query error
+        $response = [
+            'status' => 'error',
+            'message' => $conn->error
+        ];
+    }
+
+    // Return JSON-encoded response
+    return json_encode($response);
+}
+
+
+
 $inputData = json_decode(file_get_contents('php://input'), true);
 ?>

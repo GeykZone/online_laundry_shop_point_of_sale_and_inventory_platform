@@ -223,7 +223,7 @@
                       <button class="btn btn-primary px-4" id="login-button" type="button">Login</button>
                     </div>
                     <div class="col-6 text-end">
-                      <a class="btn btn-link px-0" type="button" href="landingpage/">Go to landing page</a>
+                      <a class="btn btn-link px-0 hoverBlack" type="button" href="landingpage/">Go to landing page</a>
                     </div>
                   </div>
                 </div>
@@ -234,6 +234,18 @@
                     <h2>Sign up</h2>
                     <p>Streamline Your Laundry Business with Cutting-Edge Management and POS Solutions.</p>
                     <button data-coreui-toggle="modal" data-coreui-target="#create-user-account-modal" class="btn btn-lg btn-outline-light mt-3" id="create-customer-button"  type="button">Create User Account</button>
+                    <div class="col-12 text-center">
+                      <a data-coreui-toggle="modal" data-coreui-target="#account-recovery-modal"  class="btn btn-link px-0 hoverBlack" id="" type="button" style="color: white;">Forgot Password</a>
+
+                      <style>
+                        .hoverBlack:hover {
+                              color: black !important;            /* Change text color to white */
+                              cursor: pointer;         /* Change the cursor to pointer for better UX */
+                          }
+
+                        
+                      </style>
+                    </div>
                   </div>
                 </div>
               </div>

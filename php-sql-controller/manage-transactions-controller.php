@@ -29,7 +29,7 @@ if(isset($_GET['showCostumerTransaction'])){
     // The `dt` parameter represents the DataTables column identifier.
     $columns = array(
         array('db' => 'transaction_id', 'dt' => 0, 'field' => 'transaction_id'),
-        array('db' => 'username', 'dt' => 1, 'field' => 'username'),
+        array('db' => " CONCAT(u.first_name, ' ', u.last_name)", 'dt' => 1, 'field' => 'full_name'),
         array('db' => 'shop_name', 'dt' => 2, 'field' => 'shop_name'),
         array('db' => 'service_name', 'dt' => 3, 'field' => 'service_name'),
         array('db' => 'total', 'dt' => 4, 'field' => 'total'),
@@ -42,7 +42,7 @@ if(isset($_GET['showCostumerTransaction'])){
     // Include SQL query processing class 
     require 'ssp.class.php'; 
 
-    $joinQuery = ", u.username AS username, s.shop_name AS shop_name, sv.service_name AS service_name, ts.total AS total, ts.transaction_status AS transaction_status,
+    $joinQuery = ", CONCAT(u.first_name, ' ', u.last_name) AS full_name,  u.username AS username, s.shop_name AS shop_name, sv.service_name AS service_name, ts.total AS total, ts.transaction_status AS transaction_status,
     ts.transaction_date AS transaction_date, ts.pick_up_date AS pick_up_date, ts.last_update_date AS last_update_date, ts.notification_is_read AS notification_is_read
     FROM `{$table}` AS ts 
     LEFT JOIN user AS u ON ts.user_id = u.user_id 

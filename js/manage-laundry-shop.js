@@ -472,8 +472,11 @@ if(laundryShopTable){
                 "targets": 0,
                 "render": function ( data, type, row, meta ) {
 
+                    // Serialize the row object to JSON and escape it for HTML
+                    const serializedRow = encodeURIComponent(JSON.stringify(row));
+
                     let actionButton;
-                    actionButton = `<button type="button" onClick="openMoreDetails('${row}')" class="btn btn-primary text-white" >Open Details</button> `
+                    actionButton = `<button type="button" onClick="openMoreDetails('${serializedRow}')" class="btn btn-primary text-white" >Open Details</button> `
                     return actionButton;
                             
                 },
@@ -555,7 +558,7 @@ function openMoreDetails(row) {
     let str = row;
 
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
     let keys = ["id", "shop_name", "shop_address", "contact_number", "owner", "requirement_status"];

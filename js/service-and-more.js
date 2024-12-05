@@ -1,4 +1,17 @@
-dynamicHeaderLowerText('service-and-more.php', 'Service and More', userPosition);
+if(!userPosition){
+    dynamicHeaderLowerText('home.php', 'Home', 'Customer');
+
+    const openTransactionCreationModal =  document.getElementById('open-transaction-creation-modal');
+
+    if(openTransactionCreationModal.classList.contains('d-none')){
+        openTransactionCreationModal.classList.remove('d-none')
+    }
+}
+else{
+    dynamicHeaderLowerText('service-and-more.php', 'Service and More', userPosition);
+}
+
+
 let sidebarLogo = document.getElementById('sidebar-logo').src = sideBarLogoQuery();
 let headerAvatar = document.getElementById('header-avatar').src = sideBarLogoQuery();
 showHideFunctions();
@@ -39,6 +52,8 @@ dynamicConfirmationMessage(
         modalText : '<span class="fa-solid fa-clipboard-list"></span> Transaction Confirmation',
         otherButtonId : 'confirm-transaction-now',
         otherButtonText : 'Confirm Transaction',
+        hideCancelButton: true,
+        customFooterContent: `<button type="button" id="cancel-finalize" class="btn btn-danger text-white" data-coreui-dismiss="modal">Cancel</button>`,
         customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
         
         <h5> Your estimated payable amount is <span id="confirmMessagePayblleAmount"></span>. Please note that this amount may change based on staff review of your eligibility for payment criteria. </h5>
@@ -329,6 +344,18 @@ backToProductModalBtn.addEventListener('click', (e) => {
     $('#selectOrderProductModal').modal('show')
     $('#transactionFinalization').modal('hide')
 });
+
+
+
+const checkCancelFinalize =  setInterval(function(){
+    let cancelFinalize = document.getElementById('cancel-finalize');
+    if(cancelFinalize){
+        clearInterval(checkCancelFinalize)
+        cancelFinalize.addEventListener('click', function(){
+            $('#transactionFinalization').modal('show')
+        })
+    }
+},100)
 
 // event listener to check finalization of checkout
 finalizeTransactionBtn.addEventListener('click', function(){

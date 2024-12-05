@@ -65,30 +65,32 @@ if(laundryOwnerTable){
               },
         
             "columns": [
-             {
-                "targets": 0,
-                "render": function ( data, type, row, meta ) {
-
-                    let actionButtonText;
-                    let buttonType;
-
-                    if(row[7] == 'Active'){
-                        actionButtonText = "Deactivate";
-                        buttonType = 'btn-secondary'
-                    }
-                    else if(row[7] == 'Inactive'){
-
-                        actionButtonText = "Activate";
-                        buttonType = 'btn-success'
-                    }
-
-                    let actionButton;
-                    actionButton = `<button type="button" onClick="activateDeactivateLaundryOwner('${row}')" class="btn ${buttonType} text-white" >${actionButtonText}</button> `
-                    return actionButton;
-                            
-                },
+                {
+                    "targets": 0,
+                    "render": function (data, type, row, meta) {
+                        let actionButtonText;
+                        let buttonType;
                 
-             },
+                        if (row[7] === 'Active') {
+                            actionButtonText = "Deactivate";
+                            buttonType = 'btn-secondary';
+                        } else if (row[7] === 'Inactive') {
+                            actionButtonText = "Activate";
+                            buttonType = 'btn-success';
+                        }
+                
+                        // Serialize the row object to JSON and escape it for HTML
+                        const serializedRow = encodeURIComponent(JSON.stringify(row));
+                
+                        let actionButton = `
+                            <button type="button" 
+                                    onClick="activateDeactivateLaundryOwner('${serializedRow}')"
+                                    class="btn ${buttonType} text-white">
+                                ${actionButtonText}
+                            </button>`;
+                        return actionButton;
+                    }
+                },
               null,
               null,
               null,
@@ -167,7 +169,7 @@ function activateDeactivateLaundryOwner(row) {
     let str = row;
 
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
     let keys = ["id", "firstName", "lastName", "username", "email", "phoneNumber", "address", "activation_status"];
@@ -182,6 +184,8 @@ function activateDeactivateLaundryOwner(row) {
     const activationStatus = jsonObj.activation_status
     let updatedActivationStatus;
 
+    console.log(jsonObj)
+
     // alert('Status => ' + activationStatus+ '\n Id => '+laundryOwnerId)
 
     if(activationStatus == 'Inactive'){
@@ -190,6 +194,10 @@ function activateDeactivateLaundryOwner(row) {
     else{
         updatedActivationStatus = 'Inactive';
     }
+
+
+
+    console.log(activationStatus +' stats: ' +updatedActivationStatus)
 
     const url = "php-sql-controller/manage-owner-controller.php";
     const data = {

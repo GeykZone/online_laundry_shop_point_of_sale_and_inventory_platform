@@ -26,6 +26,8 @@ let transactionCustomer;
 let selectedTransactionShopId;
 let oldTransactionStatus;
 let oldTransaction = [];
+let transactionCustomerArr = [];
+let wholeTransactionInfo = [];
 
 // Initialize Firebase
 if(typeof firebase !== 'undefined' && firebase.apps.length === 0){
@@ -763,6 +765,16 @@ function dynamicSynchronousPostRequest(url, data) {
     }
 }
 
+//create an accesstoken
+function generateRandomToken(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
+
 // delete the login token if it is already expired
 function deleteLoginTokenIfExpired() {
 
@@ -796,6 +808,7 @@ function routePage() {
 
             const headerToggler = document.querySelector('.header-toggler');
             const headerNav =  document.querySelector('.profileAvatar');
+            const sideBarId =  document.getElementById('sidebar')
 
             if(headerToggler){
 
@@ -811,6 +824,12 @@ function routePage() {
                     headerNav.classList.add('d-none')
                 }
 
+            }
+
+            if(sideBarId){
+                if(!sideBarId.classList.contains('hide')){
+                    sideBarId.classList.add('hide')
+                }
             }
 
             if(lastSegment == 'home.php'){
@@ -844,95 +863,99 @@ function routePage() {
 
 
     // Make the synchronous POST request
-    const userData = JSON.parse(dynamicSynchronousPostRequest(url, data));
-    if (userData && Object.keys(userData).length > 0) {
-        userAddress = userData.address;
-        userEmail = userData.email;
-        userFirstName = userData.first_name;
-        userLastName = userData.last_name;
-        userPhoneNumber = userData.phone_number;
-        userPosition = userData.position;
-        userUserName = userData.username;
-        userId = userData.user_id;
-
-        if(userPosition == 'Laundry Staff'){
-
+    const queryUserData = dynamicSynchronousPostRequest(url, data)
+    let userData
+    if(isValidJSON(queryUserData)){
+        userData = JSON.parse(queryUserData);
+        if (userData && Object.keys(userData).length > 0) {
+            userAddress = userData.address;
+            userEmail = userData.email;
+            userFirstName = userData.first_name;
+            userLastName = userData.last_name;
+            userPhoneNumber = userData.phone_number;
+            userPosition = userData.position;
+            userUserName = userData.username;
+            userId = userData.user_id;
+    
+            if(userPosition == 'Laundry Staff'){
+    
+                const url = "php-sql-controller/common-controller.php";
+                const data = {
+                    user_id: userId,
+                    queryStaffDetails: true,
+                };
+    
+                const detailsList = dynamicSynchronousPostRequest(url, data);
+    
+                if(isValidJSON(detailsList)){
+    
+                    const details = JSON.parse(detailsList);
+                    console.log('data => ', details)
+                    
+                    if(Object.keys(details).length > 0){
+    
+                        if(details == 'login.php'){
+                            sessionStorage.clear();
+                            sessionStorage.setItem('shopIsRejected', "The user's shop has been rejected by the admin or has not yet been approved. Please contact the laundry owner for more information.");
+                            window.location.href = 'login.php';
+                        }
+    
+                        sessionStorage.setItem('viewAsLaundryShop', true);
+                        sessionStorage.setItem('sessionShopId', details[0].shop_id);
+                        sessionStorage.setItem('sessionShopName', details[0].shop_name);
+                        sessionStorage.setItem('sessionShopAddress', details[0].shop_address);
+                        sessionStorage.setItem('sessionShopContactNumber', details[0].contact_number);
+                    }
+                }
+                else{
+                    console.error(detailsList);
+                }
+    
+            }
+    
+    
             const url = "php-sql-controller/common-controller.php";
             const data = {
-                user_id: userId,
-                queryStaffDetails: true,
+                shop_id: sessionStorage.getItem('sessionShopId'), // Get shop_id from session storage
+                checkIfShopExist: true,
             };
-
             const detailsList = dynamicSynchronousPostRequest(url, data);
-
-            if(isValidJSON(detailsList)){
-
-                const details = JSON.parse(detailsList);
-                console.log('data => ', details)
+            const response = JSON.parse(detailsList);
+            if (!response.exists) {
+                // Define the keys you want to keep
+                const keysToKeep = [
+                    'service_more_shop_id',
+                    'service_more_shop_name',
+                    'service_more_shop_address',
+                    'service_more_contact_number',
+                    'service_more_user_id',
+                    'service_more_open_time',
+                    'service_more_close_time',
+                    'service_more_days_open',
+                    'service_more_additional_schedule_details',
+                    'service_more_image_link',
+                    'service_more_requirement_status',
+                    'service_more_rating'
+                ];
+    
+                 // Convert the keysToKeep array into a Set for faster lookups
+                const keepSet = new Set(keysToKeep);
                 
-                if(Object.keys(details).length > 0){
-
-                    if(details == 'login.php'){
-                        sessionStorage.clear();
-                        sessionStorage.setItem('shopIsRejected', "The user's shop has been rejected by the admin or has not yet been approved. Please contact the laundry owner for more information.");
-                        window.location.href = 'login.php';
-                    }
-
-                    sessionStorage.setItem('viewAsLaundryShop', true);
-                    sessionStorage.setItem('sessionShopId', details[0].shop_id);
-                    sessionStorage.setItem('sessionShopName', details[0].shop_name);
-                    sessionStorage.setItem('sessionShopAddress', details[0].shop_address);
-                    sessionStorage.setItem('sessionShopContactNumber', details[0].contact_number);
-                }
-            }
-            else{
-                console.error(detailsList);
-            }
-
-        }
-
-
-        const url = "php-sql-controller/common-controller.php";
-        const data = {
-            shop_id: sessionStorage.getItem('sessionShopId'), // Get shop_id from session storage
-            checkIfShopExist: true,
-        };
-        const detailsList = dynamicSynchronousPostRequest(url, data);
-        const response = JSON.parse(detailsList);
-        if (!response.exists) {
-            // Define the keys you want to keep
-            const keysToKeep = [
-                'service_more_shop_id',
-                'service_more_shop_name',
-                'service_more_shop_address',
-                'service_more_contact_number',
-                'service_more_user_id',
-                'service_more_open_time',
-                'service_more_close_time',
-                'service_more_days_open',
-                'service_more_additional_schedule_details',
-                'service_more_image_link',
-                'service_more_requirement_status',
-                'service_more_rating'
-            ];
-
-             // Convert the keysToKeep array into a Set for faster lookups
-            const keepSet = new Set(keysToKeep);
-            
-            // Iterate through sessionStorage
-            for (let i = 0; i < sessionStorage.length; i++) {
-                const key = sessionStorage.key(i);
-                
-                // If the key is not in the keepSet, remove it
-                if (!keepSet.has(key)) {
-                    sessionStorage.removeItem(key);
+                // Iterate through sessionStorage
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
                     
-                    // Adjust the iteration since the storage length changes when an item is removed
-                    i--;
+                    // If the key is not in the keepSet, remove it
+                    if (!keepSet.has(key)) {
+                        sessionStorage.removeItem(key);
+                        
+                        // Adjust the iteration since the storage length changes when an item is removed
+                        i--;
+                    }
                 }
             }
+    
         }
-
     }
 
 }
@@ -1967,7 +1990,7 @@ function retypePasswordAndUsername(isForLogo, isForInfo, isForShop){
 
 }
 
-// Function to format the input into currency with peso sign
+
 // Function to format the input with peso sign without altering the original decimal precision
 function formatToCurrency(input) {
     // Remove non-numeric characters (except for the decimal point)
@@ -1976,8 +1999,13 @@ function formatToCurrency(input) {
     // Convert the cleaned string to a number, keeping the original precision
     let parsedValue = value ? parseFloat(value) : 0;
 
-    // Add peso sign manually, without changing decimal places
-    let formattedValue = `₱${parsedValue}`;
+    // Format the number as currency using Intl.NumberFormat
+    let formattedValue = new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+        minimumFractionDigits: 2, // Optional: you can adjust this if you want more/less precision
+        maximumFractionDigits: 2
+    }).format(parsedValue);
 
     return formattedValue;
 }
@@ -2447,6 +2475,8 @@ function manageTransactionModal(row, fromNotif) {
     defaultProducSelected = [];
     changedServiceSelected = [];
     changeableDiscount = [];
+    transactionCustomerArr = [];
+    wholeTransactionInfo = [];
     defaultInitial = null;
     let notifySelectedProductContainer = document.getElementById('notify-checkout-product-container');
     let notifModaldiscountContainer = document.getElementById('notify-checkout-discount-container');
@@ -2510,9 +2540,13 @@ function manageTransactionModal(row, fromNotif) {
             const productList = details.products;
             const discountList = details.discounts;
             const service = details.service;
-            const transaction = details.transaction ;
+            const transaction = details.transaction;
+            const userInfo = details.user;
             selectedTransactionShopId = transaction.shop_id;
             oldTransactionStatus =transaction.transaction_status;
+            transactionCustomerArr = userInfo;
+            wholeTransactionInfo = details;
+            console.log(details)
 
             notifySelectedProductContainer.innerHTML = '';
             notifModaldiscountContainer.innerHTML = '';
@@ -3061,6 +3095,7 @@ function formulateChangesForTransaction() {
 }
 
 function updateTransaction() {
+    WaitigLoader(true)
     console.log(finalTransactionObject)
     let isSuccessful = true;
     const changesDescription = finalTransactionObject.changesDescription;
@@ -3069,7 +3104,7 @@ function updateTransaction() {
     const oldTransactionId = finalTransactionObject.oldTransactionId;
     const transactionStatus = finalTransactionObject.transactionStatus;
     const transactionTotal = finalTransactionObject.transactionTotal;
-    WaitigLoader(true)
+    
 
     // insert transaction
     const url = "php-sql-controller/service-and-more-controller.php";
@@ -3082,8 +3117,13 @@ function updateTransaction() {
         notification_is_read: 'False',
         initial: initialTotal,
         transaction_status: transactionStatus,
-        transaction_changes_other_details: changesDescription
+        transaction_changes_other_details: changesDescription, 
+        transactionTrackUpdate: true
     };
+
+    if(sessionStorage.getItem('sessionShopName')){
+        data.shopName = sessionStorage.getItem('sessionShopName');
+    }
 
     if(transactionStatus == 'Rejected'){
         data = {
@@ -3105,6 +3145,7 @@ function updateTransaction() {
     if(transactionStatus == 'Picked-Up'){
         data.pick_up_date = getPhilippineDateTime();
     }
+
     const detailsList = dynamicSynchronousPostRequest(url, data);
     if(isValidJSON(detailsList)){
         const details = JSON.parse(detailsList);
@@ -3384,12 +3425,99 @@ function updateTransaction() {
     }
 
     if(isSuccessful){
-        WaitigLoader(false)
-        dynamicAlertMessage('Transaction is updated successfully.', 'success', 3000);
         $('#manageTransactionModal').modal('hide');
+
+        
+
+        // using my custom js to post request to php 
+        const url = "php-sql-controller/common-controller.php"; 
+        const data = {
+            transactionId: oldTransactionId, 
+            queryTransaction: true, 
+        };
+
+        const detailsList = dynamicSynchronousPostRequest(url, data);
+        if(isValidJSON(detailsList)){
+            const details = JSON.parse(detailsList);
+            if(Object.keys(details).length > 0){
+                wholeTransactionInfo = details;
+            }
+        }
+        else{
+            console.error(detailsList);
+            dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+        }
+
+        const customerEmailUsed = transactionCustomerArr.email;
+        const customerFullName = transactionCustomerArr.first_name + ' ' + transactionCustomerArr.last_name;
+        const customerPhoneUsed = transactionCustomerArr.phone_number; 
+        const cusomerIdUsed = transactionCustomerArr.user_id;
+
+        // Helper function to check if a value exists and is not blank
+        const isNotBlank = (value) => value !== null && value !== undefined && value !== '';
+
+        // Generate message for products if they exist
+        let productsMessageNL = '';
+        const productsMessage = wholeTransactionInfo.products.length > 0
+            ? wholeTransactionInfo.products.map(product => {
+                const details = [];
+                productsMessageNL = "\n\n\t\tSelected Products:\n\n\t\t";
+                if (isNotBlank(product.product_name)) details.push(`Name: ${product.product_name}`);
+                if (isNotBlank(product.item_quantity)) details.push(`Quantity: ${product.item_quantity}`);
+                if (isNotBlank(product.product_price)) details.push(`Price: ${formatToCurrency(`${product.product_price}`)}`);
+                if (isNotBlank(product.product_brand)) details.push(`Brand: ${product.product_brand}\n`);
+                return details.join(`\n\t\t- `);
+            }).join('\n\t\t')
+            : '';
+
+        // Generate message for discounts if they exist
+        let discountsMessageNL = ''
+        const discountsMessage = wholeTransactionInfo.discounts.length > 0
+            ? wholeTransactionInfo.discounts.map(discount => {
+                const details = [];
+                discountsMessageNL = "\n\n\t\tSelected Discounts:\n\n\t\t";
+                if (isNotBlank(discount.discount_name)) details.push(`Discount Name: ${discount.discount_name}`);
+                if (isNotBlank(discount.discount_percent)) details.push(`Percent: ${discount.discount_percent}%`);
+                if (isNotBlank(discount.discount_percent)) details.push(`Status: ${discount.discounted_transaction_status}`);
+                if (isNotBlank(discount.discount_description)) details.push(`Description: ${discount.discount_description}\n`);
+                return details.join('\n\t\t- ');
+            }).join('\n\t\t')
+            : '';
+
+        let otherMessage = '';
+        if( wholeTransactionInfo.transaction.transaction_changes_other_details){
+            otherMessage += `\n\t\tLaundry Shop Changes Message: ${ wholeTransactionInfo.transaction.transaction_changes_other_details}`
+        }
+
+        // Generate the full notification message
+        const notifMessage = `
+        Hello ${customerFullName}, notice from ${sessionStorage.getItem('sessionShopName')}
+
+        Laundry Transaction Details:
+        Laundry Transaction Status: ${transactionStatus}${otherMessage}
+        Laundry Estimated Payable Amount: ${formatToCurrency(`${transactionTotal}`)}
+        Laundry Service: ${isNotBlank(wholeTransactionInfo.service.service_name) ? wholeTransactionInfo.service.service_name : 'Not specified'}${productsMessageNL+productsMessage}${discountsMessageNL+discountsMessage}
+
+        ${document.getElementById('footer-text').textContent}
+        `;
+
+
+        if(!dynamicEmailSend(notifMessage, customerFullName ,customerEmailUsed)){
+          return;
+        }
+
+        if(!dynamicSendSMS(notifMessage, cusomerIdUsed)){
+          return;
+        }
+
+        dynamicAlertMessage('Transaction is updated successfully.', 'success', 3000);
+        
         setTimeout(function(){
-           window.location.reload();
-        },200)
+            WaitigLoader(false)
+            window.location.reload();
+        },2000)
+       
+       
     }
     else{
         setTimeout(function(){
@@ -3397,6 +3525,104 @@ function updateTransaction() {
         },3000)
     }
 
+}
+
+// dynamic function to send email message
+function dynamicEmailSend(message, name, email){
+
+
+    const url1 = "php-sql-controller/common-controller.php"; 
+    const data1 = {
+        sendEmail: true, 
+    };
+
+    const detailsList1 = dynamicSynchronousPostRequest(url1, data1);
+
+    if(isValidJSON(detailsList1)){
+        const details = JSON.parse(detailsList1);
+        const details2 = JSON.parse(details);
+        let status = details2.status;
+        if(status == 'success'){
+
+            
+            const dataDetail = details2.data[0];
+            
+            const url = "https://api.emailjs.com/api/v1.0/email/send";
+            const data = {
+                service_id: dataDetail.service_id,
+                template_id: dataDetail.template_id,
+                user_id: dataDetail.user_id, //public key
+                template_params: {
+                    'fromName': 'Online Laundry Shop POS and Inventory Platform',
+                    'message': message,
+                    'toEmail': email,
+                    'toName': name
+                }
+            };
+        
+            const detailsList = dynamicSynchronousPostRequest(url, data);
+            if(detailsList != 'OK'){
+                console.error(detailsList);
+                dynamicAlertMessage('Something went wrong in sending email. Please see the error logs for additional information.', 'error', 3000);
+                return false;
+            }
+            else{
+                console.log(detailsList);
+                return true;
+            }
+
+        }
+        else{
+            let message = details.message
+            // WaitigLoader(false)
+            dynamicAlertMessage(message, 'error', 3000);
+            return false;
+        }
+    }
+    else{
+        console.error(detailsList1);
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+        return false;
+    }
+
+   
+
+}
+
+// dynamically send sms
+function dynamicSendSMS(message, cusomerIdUsed){
+    
+
+    let isSuccessful = true
+    const url = "php-sql-controller/common-controller.php"; 
+    const data = {
+        message: message, 
+        cusomerIdUsed: cusomerIdUsed, 
+        sendSMS: true, 
+    };
+
+    const detailsList = dynamicSynchronousPostRequest(url, data);
+    console.log(detailsList)
+    if(isValidJSON(detailsList)){
+        const details = JSON.parse(detailsList);
+        let status = details.status;
+        if(status == '200'){
+            console.info(details.message);
+        }
+        else{
+            let message = details.message
+            // WaitigLoader(false)
+            dynamicAlertMessage(message, 'error', 3000);
+            isSuccessful = false
+        }
+    }
+    else{
+        console.error(detailsList);
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+        isSuccessful = false
+    }
+
+    return isSuccessful;
 
 }
 
@@ -3738,6 +3964,39 @@ function updateAddMoreProductPagination(currentProductPage, totalProductPages) {
     });
     nextProductItem.appendChild(nextProductLink);
     paginationContainer.appendChild(nextProductItem);
+}
+
+// calculate cost kilo gram to gram
+function calculateCostKiloGramToGram(pricePerKg, weightInGrams) {
+    console.log(`Price per kilogram: ₱${pricePerKg}`);
+    console.log(`Weight in grams: ${weightInGrams} grams`);
+    
+    // Convert grams to kilograms
+    let weightInKg = weightInGrams / 1000;
+    console.log(`Converted weight in kilograms: ${weightInKg.toFixed(3)} kg`);
+    
+    // Calculate total cost
+    let totalCost = pricePerKg * weightInKg;
+    console.log(`Total cost calculation: ₱${pricePerKg} x ${weightInKg.toFixed(3)} = ₱${totalCost.toFixed(2)}`);
+    
+    return totalCost;
+}
+
+// calculate cost kilo to cups
+function calculatCostKiloGramToCup(pricePerKg, cups, gramsPerCup) {
+    console.log(`Price per kilogram: ₱${pricePerKg}`);
+    console.log(`Number of cups: ${cups}`);
+    console.log(`Grams per cup: ${gramsPerCup}`);
+    
+    // Convert cups to weight in kilograms
+    let totalWeightKg = (cups * gramsPerCup) / 1000;
+    console.log(`Total weight in kilograms: ${totalWeightKg.toFixed(3)} kg`);
+    
+    // Calculate total cost
+    let totalCost = pricePerKg * totalWeightKg;
+    console.log(`Total cost calculation: ₱${pricePerKg} x ${totalWeightKg.toFixed(3)} = ₱${totalCost.toFixed(2)}`);
+    
+    return totalCost;
 }
 
 

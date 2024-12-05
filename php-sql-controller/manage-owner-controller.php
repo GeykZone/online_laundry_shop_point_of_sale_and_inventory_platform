@@ -63,7 +63,7 @@ if(isset($inputData['activateDeactivateLaundryOwner'])){
         
         // Execute the statement
         if ($stmt->execute()) {
-            $response = "User activation status updated successfully.";
+            $response = "User activation status updated successfully. " . $new_status ." ".$user_id;
         } else {
             $response = "Error updating user: " . $conn->error;
         }

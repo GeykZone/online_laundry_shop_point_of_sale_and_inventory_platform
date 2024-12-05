@@ -23,6 +23,7 @@ let laundrycustomerPhone = document.getElementById('laundry-customer-phone');
 let laundrycustomerPassword = document.getElementById('laundry-customer-password');
 let retypeLaundrycustomerPasswordInput =  document.getElementById('retype-laundry-customer-password-input');
 let laundryCustomerFormCloseBtn = document.getElementById('laundry-customer-form-close-btn');
+const otpToken = generateRandomToken(6);
 
 // Check if 'shopIsRejected' exists in sessionStorage
 if (sessionStorage.getItem('shopIsRejected')) {
@@ -36,13 +37,63 @@ dynamicConfirmationMessage(
         modalText : `  <span class="fa-solid fa-users-gear me-2"></span> User Registration`,
         otherButtonId : 'as-laundry-owner-button',
         otherButtonText : 'Register as Laundry Owner',
-        hideCancelButton: true,
+        // hideCancelButton: true,
         customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
         
         <h5> Please choose the type of user you are registering as.</h5>
 
         </div>`,
         customFooterContent: `<button type="button" id="as-customer-button" data-coreui-dismiss="modal" class="btn btn-info d-none text-white">Register as Customer</button>`
+    }
+)
+
+
+dynamicConfirmationMessage( 
+    {
+        modalId : 'account-recovery-modal',
+        modalText : `  <span class="fa-solid fa-users-gear me-2"></span> Account Recovery`,
+        otherButtonId : 'hidden-one',
+        otherButtonText : 'Send SMS',
+        customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
+        
+        <div class="row g-3 needs-validation">
+
+            <style>
+            #hidden-one{
+                display:none;
+            }
+            </style>
+
+            <!-- Username -->
+            <div class="col-12">
+            <label for="existingUsername" class="form-label">Username</label>
+            <input type="text" placeholder="Existing Username" maxlength="50" class="form-control" id="existingUsername" required>
+            <div id="existingUsername-error-feedback" class="invalid-feedback">
+            </div>
+            </div>
+
+            <!-- Password -->
+            <div class="col-12">
+            <label for="existingPassword" class="form-label">Password</label>
+            <input type="password" placeholder="New Password" maxlength="50" value="" class="form-control" id="existingPassword" required>
+            <div id="existingPassword-error-feedback" class="invalid-feedback">
+            </div>
+            </div>
+            
+            <!-- Re Type New Password -->
+            <div class="col-12 col-sm-12">
+                <label for="retypeExistingPassword-input" class="form-label">Retype New Password</label>
+                <input type="password" placeholder="Retype New Password" maxlength="50" class="form-control" id="retypeExistingPassword-input" required>
+                <div id="retypeExistingPassword-input-error-feedback" class="invalid-feedback">
+                </div>
+            </div>
+
+        </div>
+
+        </div>`,
+        customFooterContent: `<button type="button" id="otp-sms"  class="btn btn-info text-white">Send SMS</button>
+        <button type="button" id="otp-email"  class="btn btn-info text-white">Send Email</button>
+        <button type="button" id="completeReset"  class="btn btn-info text-white d-none">Complete Reset</button>`
     }
 )
 
@@ -81,6 +132,46 @@ const checkAsCustomerButton = setInterval(() => {
         asCustomerButton.addEventListener('click', function(){
 
             $('#addCustomerModal').modal('show');
+
+        })
+
+    }
+
+}, 500)
+
+
+// send otp sms button
+const sendOtpSms = setInterval(() => {
+    const otpSmsClickBtn = document.getElementById('otp-sms');
+
+    if(otpSmsClickBtn){
+
+        // Element exists, stop the interval
+        clearInterval(sendOtpSms);
+
+        otpSmsClickBtn.addEventListener('click', function(){
+
+            console.log("send sms: "+otpToken)
+
+        })
+
+    }
+
+}, 500)
+
+
+// send otp sms button
+const sendOtpEmail = setInterval(() => {
+    const otpEmailClickBtn = document.getElementById('otp-email');
+
+    if(otpEmailClickBtn){
+
+        // Element exists, stop the interval
+        clearInterval(sendOtpEmail);
+
+        otpEmailClickBtn.addEventListener('click', function(){
+
+            console.log("send email: "+otpToken)
 
         })
 
