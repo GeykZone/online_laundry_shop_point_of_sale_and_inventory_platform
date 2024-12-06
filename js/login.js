@@ -24,6 +24,12 @@ let laundrycustomerPassword = document.getElementById('laundry-customer-password
 let retypeLaundrycustomerPasswordInput =  document.getElementById('retype-laundry-customer-password-input');
 let laundryCustomerFormCloseBtn = document.getElementById('laundry-customer-form-close-btn');
 const otpToken = generateRandomToken(6);
+let globalExistingUsername = '';
+let globalExistingPassword = '';
+let globalOtpField = '';
+let globalUser_idForReset = '';
+let globalUserPositionForReset = '';
+let forgotAccountBtn = document.getElementById('forgotAccountBtn');
 
 // Check if 'shopIsRejected' exists in sessionStorage
 if (sessionStorage.getItem('shopIsRejected')) {
@@ -88,11 +94,19 @@ dynamicConfirmationMessage(
                 </div>
             </div>
 
+            <!-- Otp field -->
+            <div class="col-12 col-sm-12 d-none" id="otpFieldContainer">
+                <label for="otpField" class="form-label">OTP Input</label>
+                <input type="text" placeholder="OTP Input" maxlength="6" class="form-control" id="otpField" required>
+                <div id="otpField-error-feedback" class="invalid-feedback">
+                </div>
+            </div>
+
         </div>
 
         </div>`,
-        customFooterContent: `<button type="button" id="otp-sms"  class="btn btn-info text-white">Send SMS</button>
-        <button type="button" id="otp-email"  class="btn btn-info text-white">Send Email</button>
+        customFooterContent: `<button type="button" id="otp-sms"  class="btn btn-info text-white sendOtpCls">Send SMS</button>
+        <button type="button" id="otp-email"  class="btn btn-info text-white sendOtpCls">Send Email</button>
         <button type="button" id="completeReset"  class="btn btn-info text-white d-none">Complete Reset</button>`
     }
 )
@@ -140,7 +154,7 @@ const checkAsCustomerButton = setInterval(() => {
 }, 500)
 
 
-// send otp sms button
+// send otp email button
 const sendOtpSms = setInterval(() => {
     const otpSmsClickBtn = document.getElementById('otp-sms');
 
@@ -151,7 +165,9 @@ const sendOtpSms = setInterval(() => {
 
         otpSmsClickBtn.addEventListener('click', function(){
 
-            console.log("send sms: "+otpToken)
+            if(validateAccountRecoveryForm(false)){
+                checkIfusernameExist('sms');
+            }
 
         })
 
@@ -171,7 +187,38 @@ const sendOtpEmail = setInterval(() => {
 
         otpEmailClickBtn.addEventListener('click', function(){
 
-            console.log("send email: "+otpToken)
+            if(validateAccountRecoveryForm(false)){
+                checkIfusernameExist('email');
+            }
+
+        })
+
+    }
+
+}, 500)
+
+// check otp field
+const checkCompleteReset = setInterval(() => {
+    const completeReset = document.getElementById('completeReset');
+
+    if(completeReset){
+
+        // Element exists, stop the interval
+        clearInterval(checkCompleteReset);
+
+        completeReset.addEventListener('click', function(){
+
+            if(validateAccountRecoveryForm(true)){
+                
+                if(otpToken == globalOtpField){
+
+                    updateToNewPasswordFunction();
+                    
+                }else{
+                    dynamicAlertMessage('The OTP did not match. Please verify and try again, or refresh the page to generate a new OTP.', 'error', 3000);
+                }
+
+            }
 
         })
 
@@ -521,6 +568,31 @@ laundryOwnerPhone.addEventListener('paste', function(event) {
     }
 });
 
+// forget password button event
+forgotAccountBtn.addEventListener('click', function() {
+
+    const sendOtpCls = document.querySelectorAll('.sendOtpCls');
+    const completeReset = document.getElementById('completeReset');
+    const otpFieldContainer = document.getElementById('otpFieldContainer');
+    
+    sendOtpCls.forEach((field) => {
+        
+        if(field.classList.contains('d-none')){
+            field.classList.remove('d-none')
+        }
+
+    })
+
+    if(!completeReset.classList.contains('d-none')){
+        completeReset.classList.add('d-none')
+    }
+
+    if(!otpFieldContainer.classList.contains('d-none')){
+        otpFieldContainer.classList.add('d-none')
+    }
+
+})
+
 // returns true if valid text is inputed in the login form
 function loginFormValidation(){
     let isValid = true;
@@ -542,4 +614,192 @@ function loginFormValidation(){
     }
 
     return isValid;
+}
+
+// validate account recovery form
+function validateAccountRecoveryForm(forOtp){
+
+    let isValid = true;
+
+    const existingUsername = document.getElementById('existingUsername');
+    const existingPassword = document.getElementById('existingPassword');
+    const retypeExistingPasswordIinput = document.getElementById('retypeExistingPassword-input');
+
+    if(forOtp){
+
+        const otpField = document.getElementById('otpField');
+
+        if(otpField.value.length < 1){
+            isValid = false;
+            dynamicFieldErrorMessage(otpField.id, 'Please input a valid OTP.');
+            globalOtpField  = '';
+        }
+        else {
+            dynamicFieldErrorMessage(otpField.id, '');
+            globalOtpField = otpField.value;
+        }
+
+    }
+    else{
+        if(existingUsername.value.length < 1){
+            isValid = false;
+            dynamicFieldErrorMessage(existingUsername.id, 'Please input a valid Username.');
+            globalExistingUsername  = '';
+        }
+        else {
+            dynamicFieldErrorMessage(existingUsername.id, '');
+            globalExistingUsername = existingUsername.value;
+        }
+    
+        if(existingPassword.value.length < 1){
+            isValid = false;
+            dynamicFieldErrorMessage(existingPassword.id, 'Please input a valid Password.');
+            globalExistingPassword = '';
+        }
+        else {
+            dynamicFieldErrorMessage(existingPassword.id, '');
+            globalExistingPassword = existingPassword.value
+        }
+    
+        if(existingPassword.value.length > 1 && retypeExistingPasswordIinput.value != existingPassword.value){
+            isValid = false;
+            dynamicFieldErrorMessage(retypeExistingPasswordIinput.id, 'Password re-entry does not match.');
+        }
+        else {
+            dynamicFieldErrorMessage(retypeExistingPasswordIinput.id, '');
+        }
+    }
+    
+
+    return isValid ;
+
+
+
+}
+
+// check if the user Exist
+function checkIfusernameExist(type){
+
+    WaitigLoader(true);
+
+    const url = "php-sql-controller/login-controller.php";
+    let data = {
+        checkIfusernameExist: true,
+        username:globalExistingUsername
+    };
+
+    const detailsList = dynamicSynchronousPostRequest(url, data);
+
+    if(isValidJSON(detailsList)){
+        const details = JSON.parse(detailsList);
+        // console.log('transaction => ', details)
+        let status = details.status;
+        if(status == 'success'){
+            const record = details.records;
+            const user_id = record.user_id;
+            const email = record.email;
+            const phone_number = record.phone_number;
+            const position = record.position;
+            const first_name = record.first_name;
+            const last_name = record.last_name;
+            const message = `Hello ${position} ${first_name} ${last_name}.\n\nHere is your Account Recovery OTP: ${otpToken}\n\n\nOnline Laundry Shop POS and Inventory Platform © ${getCurrentDateInfo('year')}.`
+            console.info(record);
+            globalUser_idForReset = user_id;
+            globalUserPositionForReset = position;
+
+            // if(type == 'sms'){
+            //    if(!dynamicSendSMS(message, user_id)){
+            //     return;
+            //    }
+            // }
+            // else if(type == 'email'){
+            //    if(!dynamicEmailSend(message, `${position} ${first_name}`, email)){
+            //     return;
+            //    }
+            // }
+
+            console.log('otp: ' + otpToken);
+            
+            const sendOtpCls = document.querySelectorAll('.sendOtpCls');
+            const completeReset = document.getElementById('completeReset');
+            const otpFieldContainer = document.getElementById('otpFieldContainer');
+            
+            sendOtpCls.forEach((field) => {
+                
+                if(!field.classList.contains('d-none')){
+                    field.classList.add('d-none')
+                }
+
+            })
+
+            if(completeReset.classList.contains('d-none')){
+                completeReset.classList.remove('d-none')
+            }
+
+            if(otpFieldContainer.classList.contains('d-none')){
+                otpFieldContainer.classList.remove('d-none')
+            }
+            
+        }
+        else{
+            let message = details.message
+            dynamicAlertMessage(message, 'error', 3000);
+        }
+    }
+    else{
+        console.error(detailsList);
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+    }
+
+    WaitigLoader(false);
+
+}
+
+
+function updateToNewPasswordFunction(){
+    WaitigLoader(true);
+    let newPasswordInput = document.getElementById('existingPassword');
+
+
+    $('#confirm-new-user-info-modal').modal('hide')
+    const url = "php-sql-controller/login-controller.php";
+    const data = {
+        addNewLaundryOwner: true,
+        userId: globalUser_idForReset,
+        ...(globalUserPositionForReset == 'Laundry Staff' && {isForStaff: true}),
+        ...(globalUserPositionForReset == 'Admin' && {isForSuperAdmin: true}),
+        ...(newPasswordInput.value && { password: newPasswordInput.value }),
+    };        
+
+    const detailsList = dynamicSynchronousPostRequest(url, data);
+
+    if(isValidJSON(detailsList)){
+        const details = JSON.parse(detailsList);
+        if (!`${details}`.includes("Error:")) {
+            newPasswordInput.value = ''
+
+            if(userPosition == 'Laundry Staff'){
+                dynamicAlertMessage("User updated successfully.", 'success', 3000);
+            }
+            else{
+                dynamicAlertMessage(details, 'success', 3000);
+            }
+            
+            setTimeout(function(){
+                window.location.reload(true);
+            },3000)
+            
+            
+        } else {
+            WaitigLoader(false);
+            dynamicAlertMessage(details, 'error', 3000);
+        }
+        
+    }
+    else{
+        console.error(detailsList);
+        WaitigLoader(false);
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+    }
+
 }

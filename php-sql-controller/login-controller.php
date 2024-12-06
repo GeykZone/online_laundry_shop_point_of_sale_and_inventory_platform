@@ -181,5 +181,38 @@ if(isset($inputData['addNewLaundryOwner'])){
     
 }
 
+// Check if the request is to check for username existence
+if (isset($inputData['checkIfusernameExist']) && $inputData['checkIfusernameExist'] === true) {
+    $username = $inputData['username'];
+
+    // Query to check if the username exists
+    $sql = "SELECT user_id, first_name, last_name, username, password, email, phone_number, address, position, user_activation_status 
+            FROM user 
+            WHERE username = ?";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Check if any record was found
+    if ($result->num_rows > 0) {
+        $userDetails = $result->fetch_assoc();
+
+        // Return success response with user details
+        echo json_encode([
+            'status' => 'success',
+            'records' => $userDetails
+        ]);
+    } else {
+        // Return error response if username does not exist
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Username does not exist.'
+        ]);
+    }
+    exit;
+}
+
 
 ?>

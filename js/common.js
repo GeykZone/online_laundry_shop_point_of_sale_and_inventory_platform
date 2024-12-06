@@ -1205,7 +1205,7 @@ function sideBarLogoQuery() {
         }
     }
 
-    let imageLink = 'https://cdn-icons-png.freepik.com/512/4992/4992668.png'
+    let imageLink = 'https://img.freepik.com/premium-photo/3d-render-illustration-question-mark-grey-background_357322-704.jpg'
 
     let imageQueryResult = dynamicSynchronousPostRequest(url, data);
 
@@ -1237,7 +1237,7 @@ function avatarLogoQuery() {
         data.user_main_logo = 0;
     }
 
-    let imageLink = 'https://cdn-icons-png.freepik.com/512/4992/4992668.png'
+    let imageLink = 'https://img.freepik.com/premium-photo/3d-render-illustration-question-mark-grey-background_357322-704.jpg'
 
     let imageQueryResult = dynamicSynchronousPostRequest(url, data);
 
@@ -1852,6 +1852,7 @@ function mainUserInfoUpdate(){
             userId: userId,
             ...(userPosition == 'Laundry Staff' && {isForStaff: true}),
             ...(userPosition == 'Admin' && {isForSuperAdmin: true}),
+            ...(userPosition == 'Customer' && {isForCustomer: true}),
             ...(newFirstNameInput.value && { firstName: newFirstNameInput.value }),
             ...(newLastNameInput.value && { lastName: newLastNameInput.value }),
             ...(newUsernameInput.value && { username: newUsernameInput.value }),
@@ -3501,12 +3502,13 @@ function updateTransaction() {
         ${document.getElementById('footer-text').textContent}
         `;
 
-
         if(!dynamicEmailSend(notifMessage, customerFullName ,customerEmailUsed)){
+          WaitigLoader(false)
           return;
         }
 
         if(!dynamicSendSMS(notifMessage, cusomerIdUsed)){
+          WaitigLoader(false)
           return;
         }
 
@@ -3584,8 +3586,6 @@ function dynamicEmailSend(message, name, email){
         dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
         return false;
     }
-
-   
 
 }
 

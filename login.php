@@ -1,10 +1,4 @@
-<!DOCTYPE html><!--
-* CoreUI - Free Bootstrap Admin Template
-* @version v5.1.0
-* @link https://coreui.io/product/free-bootstrap-admin-template/
-* Copyright (c) 2024 creativeLabs Łukasz Holeczek
-* Licensed under MIT (https://github.com/coreui/coreui-free-bootstrap-admin-template/blob/main/LICENSE)
--->
+
 <html lang="en">
   <head>
     <?php include ("resources.php"); ?>
@@ -235,7 +229,7 @@
                     <p>Streamline Your Laundry Business with Cutting-Edge Management and POS Solutions.</p>
                     <button data-coreui-toggle="modal" data-coreui-target="#create-user-account-modal" class="btn btn-lg btn-outline-light mt-3" id="create-customer-button"  type="button">Create User Account</button>
                     <div class="col-12 text-center">
-                      <a data-coreui-toggle="modal" data-coreui-target="#account-recovery-modal"  class="btn btn-link px-0 hoverBlack" id="" type="button" style="color: white;">Forgot Password</a>
+                      <a data-coreui-toggle="modal" data-coreui-target="#account-recovery-modal"  class="btn btn-link px-0 hoverBlack" id="forgotAccountBtn" type="button" style="color: white;">Forgot Password</a>
 
                       <style>
                         .hoverBlack:hover {
