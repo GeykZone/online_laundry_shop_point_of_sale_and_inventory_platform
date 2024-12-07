@@ -62,7 +62,7 @@ Product (KG G CUP SACHET ML) e static
 product name
 product price 30
 product quantity(stock) 100
-product unit_measurement ex KG
+product unit_measurement  (ex if type = Liquid (ML SACHET), if type = Powder (KG CUP Grams))
 product unit_measurement_amount 30 KG
 product type (ex Liquid (ML SACHET), Powder (KG CUP Grams))
 
@@ -76,10 +76,7 @@ product unit_measurement_amount 10
 formula
 
 P30 peer KG
-example ning kuha si customer ug product nga tide by 10 grams. so e divide nato ang product price into P30/10g = P3, bali P3 iyang ma bayad
-dayun kay 30KG ang unit measurement amount minusan ug 10 grams 30kg (30KG - 10g), ang amount nalang kay 29.99KG. Tapos kung ma zero na ang  unit 
-measurement amount sa product ayha ra ma kaltasan ang stock. So meaning kay ang stock nato kay 100 man tas exampla na zero na ang unit 
-measurement amount ang ma bilin nalang nga stock kay 99 nalang.
+
 
 
 -Ang una sir kay mga common info sa customer kanang tulo dayun mamili dayun siya anang lima ka dot. Ug all iyang pilion maka fillout siya ana dayun naay price ang sabon per kilo nga unsa iyang services

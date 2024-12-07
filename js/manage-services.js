@@ -122,7 +122,7 @@ service_load.addEventListener('blur', function(e){
 })
 
 
-service_unit_measurement.addEventListener('blur', function(e){
+service_unit_measurement.addEventListener('change', function(e){
 
     if(e.target.value == 'Kg' && service_load.value.length > 0 ){
         service_load.value =  currencyToNormalFormat(service_load.value)

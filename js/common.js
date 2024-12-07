@@ -2007,7 +2007,7 @@ function formatToCurrency(input) {
         maximumFractionDigits: 2
     }).format(parsedValue);
 
-    return formattedValue;
+    return !isValidCurrency(formattedValue) ? '' : formattedValue;
 }
 
 // function that check if currency is valid or not
@@ -2032,9 +2032,8 @@ function currencyToNormalFormat(currencyString) {
     let normalFormat = currencyString.replace(/[^0-9.]/g, '');
     
     // Return the number as a float or integer depending on the input
-    return parseFloat(normalFormat).toFixed(2);
+    return !isValidCurrency(normalFormat) ? '' : parseFloat(normalFormat).toFixed(2);
 }
-
 
 // function to generate random numbers
 function generateRandomNumber(length) {
@@ -2098,7 +2097,7 @@ function userInfoUpdate() {
 // function to convert any value into an integer
 function integerConverter(value) {
     const intValue = parseInt(value, 10); // Parse the value to an integer in base 10
-    return isNaN(intValue) ? 0 : intValue; // Return 0 if the value is NaN, otherwise return the integer
+    return isNaN(intValue) ? '' : intValue; // Return 0 if the value is NaN, otherwise return the integer
 }
 
 // function to format time into AM PM

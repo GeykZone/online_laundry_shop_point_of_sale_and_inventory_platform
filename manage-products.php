@@ -44,6 +44,39 @@
                     </div>
                   </div>
 
+                  <!-- Product Type -->
+                  <div class="col-md-6">
+                    <label for="product-type" class="form-label">Product Type</label>
+                    <select id="product-type" class="form-select form-select" aria-label=".form-select-sm example" >
+                      <option value="Powder">Powder</option>
+                      <option value="Liquid">Liquid</option>
+                    </select>
+                     <div id="product-type-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  <!-- Unit of Measurement -->
+                  <div class="col-md-6">
+                    <label for="product_measurement" class="form-label">Unit of Measurement</label>
+                    <select id="product_measurement" class="form-select form-select" aria-label=".form-select-sm example" >
+                      <option value="Kg">KG</option>
+                      <option value="Ml">ML</option>
+                      <option value="Cup">CUP</option>
+                      <option value="Grams">GRAMS</option>
+                      <option value="Sachet">SACHET</option>
+                    </select>
+                     <div id="product_measurement-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                   <!-- Amount Per Stock -->
+                   <div class="col-md-6">
+                    <label for="amount_per_stock" class="form-label">Amount per Stock</label>
+                    <input type="text" placeholder="Amount per Stock" maxlength="10" class="form-control" id="amount_per_stock" required>
+                    <div id="amount_per_stock-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
                   <!-- Price -->
                   <div class="col-md-6">
                     <label for="product-price" class="form-label">Price</label>
@@ -54,8 +87,8 @@
 
                   <!-- Quantity -->
                   <div class="col-md-6">
-                    <label for="product-quantity" class="form-label">Quantity (Pieces)</label>
-                    <input type="text" placeholder="Quantity" maxlength="10" class="form-control" id="product-quantity" required>
+                    <label for="product-quantity" class="form-label">Stock</label>
+                    <input type="text" placeholder="Stock" maxlength="10" class="form-control" id="product-quantity" required>
                     <div id="product-quantity-error-feedback" class="invalid-feedback">
                     </div>
                   </div>
@@ -149,7 +182,10 @@
                   <th scope="col">Image</th>
                   <th scope="col">Product Name</th>
                   <th scope="col">Brand</th>
-                  <th scope="col">Quantity</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Unit of Measurement</th>
+                  <th scope="col">Amount per Stock</th>
+                  <th scope="col">Stock</th>
                   <th scope="col">Price</th>
                   <th scope="col">Product Status</th>
                 </tr>

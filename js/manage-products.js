@@ -16,6 +16,9 @@ let productBrand = document.getElementById('product-brand');
 let productPrice = document.getElementById('product-price');
 let productQuantity = document.getElementById('product-quantity');
 let productStatus =  document.getElementById('product-status');
+let productType = document.getElementById('product-type');
+let product_measurement = document.getElementById('product_measurement');
+let amount_per_stock = document.getElementById('amount_per_stock');
 let productListTable = document.getElementById('product-list-table');
 let productListTableVar;
 manageServiceMoreSessionStorage(false, false);
@@ -81,17 +84,25 @@ createLaundryShopProductBtn.addEventListener('click', function(){
     if(!productStatusContainer.classList.contains('d-none')){
         productStatusContainer.classList.add('d-none')
         
-        if(!productImageUploadContainer.classList.contains('col-md-12')){
-            productImageUploadContainer.classList.add('col-md-12')
-            productImageUploadContainer.classList.remove('col-md-6')
+        if(productImageUploadContainer.classList.contains('col-md-12')){
+            productImageUploadContainer.classList.remove('col-md-12')
+            productImageUploadContainer.classList.add('col-md-6')
         }
     }
 
     if(updateProduct){
 
-        // serviceNameInput.value = ""
-        // serviceDescriptionInput.value = ""
-        // servicePriceInput.value = ""
+        productName.value = '';
+        productBrand.value = '';
+        productPrice.value = '';
+        productQuantity.value = '';
+        productImageUpload.value = '';
+        productImagePreview.src = '';
+        productImagePreview.style.display = 'none';
+        productImageRemoveBtn.style.display = 'none';
+        productType.value = 'Powder'
+        product_measurement.value = 'Kg'
+        amount_per_stock.value = ''
 
         updateProduct = false;
 
@@ -154,6 +165,27 @@ submitLaundryShopProductBtn.addEventListener('click', function(){
         dynamicFieldErrorMessage(productImageUpload.id, '');
     }
 
+    if((productType.value == 'Powder' && product_measurement.value != 'Kg' && product_measurement.value != 'Gram' && product_measurement.value != 'Cup') || 
+    (productType.value == 'Liquid' && product_measurement.value != 'Ml' && product_measurement.value != 'Sachet')){
+        isValid = false;
+        dynamicFieldErrorMessage(product_measurement.id,  `Invalid unit measurement for ${productType.value} type.`);
+        dynamicFieldErrorMessage(productType.id, `Invalid Type for ${product_measurement.value} unit measurement.`);
+    }
+    else {
+        dynamicFieldErrorMessage(productType.id, '');
+        dynamicFieldErrorMessage(product_measurement.id, '');
+    }
+
+
+    if(amount_per_stock.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(amount_per_stock.id, 'Please input a valid Laundry Shop Product Amount per Stock.');
+    }
+    else {
+        dynamicFieldErrorMessage(amount_per_stock.id, '');
+    }
+    
+
 
     if(isValid){
         let imageLink;
@@ -172,6 +204,9 @@ submitLaundryShopProductBtn.addEventListener('click', function(){
                         const data = {
                             productName: productName.value,
                             productBrand: productBrand.value,
+                            productType: productType.value,
+                            product_measurement: product_measurement.value,
+                            amount_per_stock: amount_per_stock.value,
                             productPrice: currencyToNormalFormat(productPrice.value),
                             productQuantity: productQuantity.value,
                             imageLink: imageLink,
@@ -235,11 +270,35 @@ productPrice.addEventListener('blur', function(e){
     
 })
 
+// conver to float
+amount_per_stock.addEventListener('blur', function(e){
+
+    if(e.target.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+        e.target.value =  currencyToNormalFormat(e.target.value)
+    }
+    else{
+        e.target.value = integerConverter(e.target.value)
+    }
+    
+})
+
 // an event that convert the value of price input into a currency
 productQuantity.addEventListener('blur', function(e){
 
     if(e.target.value.length > 0){
         e.target.value = integerConverter(e.target.value)
+    }
+    
+})
+
+// product measurement field event change
+product_measurement.addEventListener('change', function(e){
+
+    if(amount_per_stock.value.length > 0 && e.target.value != 'Cup' && e.target.value != 'Sachet'){
+        amount_per_stock.value =  currencyToNormalFormat(amount_per_stock.value)
+    }
+    else{
+        amount_per_stock.value = integerConverter(amount_per_stock.value)
     }
     
 })
@@ -287,7 +346,7 @@ if(productListTable){
                         // Specify columns to be included (0 to 8 in this case)
                         columns: function (idx, data, node) {
                             // Include columns 0 to 8
-                            return idx >= 2  && idx <= 5;
+                            return idx >= 2  && idx <= 9;
                         }
                       }
                   }
@@ -308,18 +367,19 @@ if(productListTable){
         
             "columns": [
              {
-                "targets": 0,
                 "render": function ( data, type, row, meta ) {
 
+                    // Serialize the row object to JSON and escape it for HTML
+                    const serializedRow = encodeURIComponent(JSON.stringify(row));
+
                     let actionButton;
-                    actionButton = `<button type="button" onClick="updateLaundryProduct('${row}')" class="btn btn-primary text-white" >Edit</button>`
+                    actionButton = `<button type="button" onClick="updateLaundryProduct('${serializedRow}')" class="btn btn-primary text-white" >Edit</button>`
                     return actionButton;
                             
                 },
                 
               },
               {
-                "targets": 1,
                 "render": function ( data, type, row, meta ) {
 
                     let actionButton;
@@ -333,8 +393,21 @@ if(productListTable){
               },
               null,
               null,
+              null,
+              null,
               {
-                "targets": 4,
+                "render": function ( data, type, row, meta ) {
+
+                    if(row[5] != 'Cup' && row[5] != 'Sachet'){
+                        return currencyToNormalFormat(`${data}`); 
+                    }
+                    else{
+                        return integerConverter(data);
+                    }
+                            
+                },
+              },
+              {
                 "render": function ( data, type, row, meta ) {
 
                     let actionButton;
@@ -430,11 +503,13 @@ function updateLaundryProduct(row) {
     // Given string
     let str = row;
 
+    productImageUpload.value = '';
+
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
-    let keys = ["id", "image_link", "product_name", "product_brand", "quantity", "price", "product_status"];
+    let keys = ["id", "image_link", "product_name", "product_brand", "product_type", "unit_measurement", "amount_per_stock", "quantity", "price", "product_status"];
 
     // Create a JSON object by mapping keys to values
     let jsonObj = {};
@@ -449,7 +524,9 @@ function updateLaundryProduct(row) {
     const quantity = jsonObj.quantity
     const price = jsonObj.price
     const product_status = jsonObj.product_status
-    
+    const product_type = jsonObj.product_type
+    const unit_measurement = jsonObj.unit_measurement
+    const amount_per_stock_field = jsonObj.amount_per_stock
 
     productName.value = product_name;
     productBrand.value = product_brand;
@@ -459,6 +536,13 @@ function updateLaundryProduct(row) {
     productStatus.value = product_status;
     productImagePreview.style.display = 'block';
     productImageRemoveBtn.style.display = 'none';
+    productType.value = product_type
+    product_measurement.value = unit_measurement
+    amount_per_stock.value = amount_per_stock_field
+
+    if(amount_per_stock_field == 0 || amount_per_stock_field == '0'){
+        amount_per_stock.value = ''
+    }
 
     // Select the container where the button will be added
     const container = document.getElementById('submit-laundry-shop-product-update-container');
@@ -527,7 +611,28 @@ function updateLaundryProduct(row) {
                 dynamicFieldErrorMessage(productStatus.id, '');
             }
 
+            if((productType.value == 'Powder' && product_measurement.value != 'Kg' && product_measurement.value != 'Gram' && product_measurement.value != 'Cup') || 
+            (productType.value == 'Liquid' && product_measurement.value != 'Ml' && product_measurement.value != 'Sachet')){
+                isValid = false;
+                dynamicFieldErrorMessage(product_measurement.id,  `Invalid unit measurement for ${productType.value} type.`);
+                dynamicFieldErrorMessage(productType.id, `Invalid Type for ${product_measurement.value} unit measurement.`);
+            }
+            else {
+                dynamicFieldErrorMessage(productType.id, '');
+                dynamicFieldErrorMessage(product_measurement.id, '');
+            }
+        
+        
+            if(amount_per_stock.value.length < 1){
+                isValid = false;
+                dynamicFieldErrorMessage(amount_per_stock.id, 'Please input a valid Laundry Shop Product Amount per Stock.');
+            }
+            else {
+                dynamicFieldErrorMessage(amount_per_stock.id, '');
+            }
+
             if(isValid){
+                WaitigLoader(true)
                 let imageLink;
 
                 const url = "php-sql-controller/manage-products-controller.php";
@@ -554,11 +659,24 @@ function updateLaundryProduct(row) {
                     data.productQuantity = productQuantity.value;
                 }
 
+                if (productType.value) {
+                    data.productType = productType.value;
+                }
+
+
+                if (product_measurement.value) {
+                    data.product_measurement = product_measurement.value;
+                }
+
+
+                if (amount_per_stock.value) {
+                    data.amount_per_stock = amount_per_stock.value;
+                }
+
+
                 data.shop_id = sessionStorage.getItem('sessionShopId');
                 data.submitLaundryShopProduct = true;
                 data.product_id = product_id;
-
-                WaitigLoader(true)
 
                 if(productImageUpload.value.length > 0) {
 
@@ -590,6 +708,9 @@ function updateLaundryProduct(row) {
                                         productImagePreview.src = '';
                                         productImagePreview.style.display = 'none';
                                         productImageRemoveBtn.style.display = 'none';
+                                        productType.value = 'Powder'
+                                        product_measurement.value = 'Kg'
+                                        amount_per_stock.value = ''
 
                                         WaitigLoader(false)
 
@@ -632,6 +753,9 @@ function updateLaundryProduct(row) {
                             productImagePreview.src = '';
                             productImagePreview.style.display = 'none';
                             productImageRemoveBtn.style.display = 'none';
+                            productType.value = 'Powder'
+                            product_measurement.value = 'Kg'
+                            amount_per_stock.value = ''
 
                             WaitigLoader(false)
 
@@ -662,6 +786,11 @@ function updateLaundryProduct(row) {
     updateProduct = true;
     if(productStatusContainer.classList.contains('d-none')){
         productStatusContainer.classList.remove('d-none')
+    }
+
+    if(!productImageUploadContainer.classList.contains('col-md-12')){
+        productImageUploadContainer.classList.add('col-md-12')
+        productImageUploadContainer.classList.remove('col-md-6')
     }
     $('#addLaundryShopProduct').modal('show');
 
