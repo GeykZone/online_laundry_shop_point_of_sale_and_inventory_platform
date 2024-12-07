@@ -1,10 +1,4 @@
-<!DOCTYPE html><!--
-* CoreUI - Free Bootstrap Admin Template
-* @version v5.1.0
-* @link https://coreui.io/product/free-bootstrap-admin-template/
-* Copyright (c) 2024 creativeLabs Łukasz Holeczek
-* Licensed under MIT (https://github.com/coreui/coreui-free-bootstrap-admin-template/blob/main/LICENSE)
--->
+
 <html lang="en">
   <head>
     <?php include ("resources.php"); ?>

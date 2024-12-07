@@ -28,9 +28,9 @@
 # online_laundry_shop_point_of_sale_and_inventory_platform
 
 to do
-•Password Recovery kanang ma forgot dayun ma send sa email para marecover ang acct
+•Password Recovery kanang ma forgot dayun ma send sa email para marecover ang acct 😀
 •sms verification of user kanang mo text sa owner ug laundry shop nga approve ba or dli ang ilang ge register 😀
-•auto activate laundry owner out no need na e activate ni super admin si owner dapat direct na ang kinahanglan ra e activate si laundry shop
+•auto activate laundry owner out no need na e activate ni super admin si owner dapat direct na ang kinahanglan ra e activate si laundry shop 😀
 •Staff can set treshold in every item
 •revice implementation of inventory/stocking/stockout makita ang individual transaction ayha ma total tanan
 •makita ang status sa owner  staff ug laundry shop
@@ -82,7 +82,12 @@ measurement amount sa product ayha ra ma kaltasan ang stock. So meaning kay ang 
 measurement amount ang ma bilin nalang nga stock kay 99 nalang.
 
 
-
+-Ang una sir kay mga common info sa customer kanang tulo dayun mamili dayun siya anang lima ka dot. Ug all iyang pilion maka fillout siya ana dayun naay price ang sabon per kilo nga unsa iyang services
+-Ug dry lang sir iyang pilion ang ma fill out niya ana kay services, kilo ug price dayun the rest ana kay ma default
+-Ug fold lang kay services ug price ra ang ma fillout niya ma default nanang uban
+-If package lang sir kay kini dli na siya mo bayad sa sabon kanang murag free lang ang sabon niya kay naa may laundry shop nga free sabon na. So ma defualt ani ang laundry staff, dayun kanang type sa sabon apil na kanang kilo,gram, cup sachet and ml
+-Dayun sir ug mag select powder or liquid siya sir ug powder gani iya pilion ma defualt ng Ml ug liquid iyang pilion ma default ang  kilo,gram ug cup
+-Dayun kana sa ubos sir kay dapat dha makita tanan nga ge order sa customer sir
 
 
 

@@ -149,8 +149,8 @@ if(isset($inputData['addNewLaundryOwner'])){
 
         } else {
             // Insert operation
-            $sql = "INSERT INTO user (first_name, last_name, username, password, email, phone_number, address, position) 
-                    VALUES ('$firstName', '$lastName', '$username', '$hashedPassword', '$email', '$phoneNumber', '$address', '$position')";
+            $sql = "INSERT INTO user (first_name, last_name, username, password, email, phone_number, address, position, user_activation_status) 
+                    VALUES ('$firstName', '$lastName', '$username', '$hashedPassword', '$email', '$phoneNumber', '$address', '$position', 'Active')";
 
             if ($isForStaff ||  $isForCustomer) {
                 // SQL Insert Query

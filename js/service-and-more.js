@@ -101,7 +101,7 @@ if (sessionStorage.getItem('service_more_shop_id')) {
     document.querySelector(".service-more-elements.opacity-75:nth-child(4) span").innerText = shopDetails.close_time ? convertTimeFormat(shopDetails.close_time) : "00:00 PM";
     document.querySelector(".service-more-elements.opacity-75:nth-child(5) span").innerText = shopDetails.days_open || "Loading...";
     document.querySelector(".service-more-elements.opacity-75:nth-child(6) span").innerText = shopDetails.additional_schedule_details || "N/A";
-    document.querySelector("#laundry-shoup-service-more-image").src = shopDetails.image_link != "null" ? shopDetails.image_link : "https://img.freepik.com/premium-photo/3d-render-illustration-question-mark-grey-background_357322-704.jpg" ;
+    document.querySelector("#laundry-shoup-service-more-image").src = shopDetails.image_link != "null" ? shopDetails.image_link : "https://e0.pxfuel.com/wallpapers/239/798/desktop-wallpaper-question-mark-widescreen-cool-awesome-question-mark.jpg" ;
     let nocommentsandRatingsYet = document.getElementById('no-comments-and-ratings-yet')
     let ratingListContainer = document.getElementById('comment-list-container');
     // Helper function to convert 24-hour format to AM/PM

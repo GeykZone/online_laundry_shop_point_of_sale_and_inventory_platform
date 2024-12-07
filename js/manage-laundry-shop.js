@@ -19,6 +19,7 @@ let requirement_id_global = null;
 let submitLaundryShopInfoBtn = document.getElementById('submit-laundry-shop-info-btn');
 let createLaundryShopBtn = document.getElementById('create-laundry-shop-btn');
 let isUpdate = false;
+let globalShopDetails;
 let isLaundryFormUpdate
 let globalRequirementsId;
 manageServiceMoreSessionStorage(false, false);
@@ -596,6 +597,9 @@ function openMoreDetails(row) {
     if(isValidJSON(detailsListA)){
 
         const shopDetails = JSON.parse(detailsListA); // Assuming detailsList is in JSON format
+        globalShopDetails = shopDetails;
+
+        // console.log('detailsListA : ', shopDetails)
     
         if (!shopDetails.error) {
             days_open = shopDetails.days_open
@@ -796,6 +800,8 @@ function approveOrRejectLaundryShopApplication(id_val, type){
         submitLaundryShopInfo: true,
     };
 
+    // console.log('globalShopDetails : ', globalShopDetails)
+
     let typeMsg;
 
     if(type == 'Approved'){
@@ -816,6 +822,19 @@ function approveOrRejectLaundryShopApplication(id_val, type){
             if(laundryShopTableVar){
                 laundryShopTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
             }
+
+
+            const full_name = globalShopDetails.first_name +' '+ globalShopDetails.last_name ;
+            const shop_name = globalShopDetails.shop_name;
+
+            const notifMessage = `Hello ${full_name}, your laundry shop ${shop_name} has been ${type} by the Laundry Platform Admin.\n\n\nOnline Laundry Shop POS and Inventory Platform © ${getCurrentDateInfo('year')}.`;
+            const customerEmailUsed = globalShopDetails.email;
+            const cusomerIdUsed = globalShopDetails.user_id;
+
+
+            dynamicEmailSend(notifMessage, full_name ,customerEmailUsed)
+    
+            dynamicSendSMS(notifMessage, cusomerIdUsed)
         }
         else{
             let errorMessage = jsonQueriedValue.error;

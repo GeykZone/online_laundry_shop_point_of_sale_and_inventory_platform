@@ -20,16 +20,19 @@ if(isset($inputData['submitLaundryShopService'])){
     $serviceDescription = isset($inputData['serviceDescription']) ? $inputData['serviceDescription'] : null;
     $servicePrice = isset($inputData['servicePrice']) ? $inputData['servicePrice'] : null;
     $shop_id = isset($inputData['shop_id']) ? $inputData['shop_id'] : null;
+    $serviceType = isset($inputData['serviceType']) ? $inputData['serviceType'] : null;
+    $service_unit_measurement = isset($inputData['service_unit_measurement']) ? $inputData['service_unit_measurement'] : null;
+    $service_load = isset($inputData['service_load']) ? $inputData['service_load'] : null;
     $service_id = isset($inputData['service_id']) ? $inputData['service_id'] : null; // Check if service_id is provided
     
     if ($service_id) {
 
         $service_status = isset($inputData['service_status']) ? $inputData['service_status'] : null;
 
-        $sql = "UPDATE services SET service_name = ?, description = ?, price = ?, service_status = ? WHERE shop_id = ? AND service_id = ?";
+        $sql = "UPDATE services SET service_name = ?, service_type = ?, unit_measurement = ?, service_load = ?, description = ?, price = ?, service_status = ? WHERE shop_id = ? AND service_id = ?";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssisii", $serviceName, $serviceDescription, $servicePrice, $service_status, $shop_id, $service_id);
+        $stmt->bind_param("sssdsdsii", $serviceName, $serviceType, $service_unit_measurement, $service_load, $serviceDescription, $servicePrice, $service_status, $shop_id, $service_id);
     
         if ($stmt->execute()) {
             $response['message'] = "Service updated successfully";
@@ -39,11 +42,11 @@ if(isset($inputData['submitLaundryShopService'])){
 
     } else {
         // If no shop_id is provided, perform an INSERT
-        $sql = "INSERT INTO services (service_name, description, price, shop_id) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO services (service_name, service_type, unit_measurement, service_load, description, price, shop_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
     
         // Prepare and bind parameters
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssii", $serviceName, $serviceDescription, $servicePrice, $shop_id);
+        $stmt->bind_param("sssdsdi", $serviceName,  $serviceType, $service_unit_measurement, $service_load, $serviceDescription, $servicePrice, $shop_id);
     
         // Execute the statement
         if ($stmt->execute()) {
@@ -80,15 +83,18 @@ if(isset($_GET['showLaundryServiceList'])){
     $columns = array(
         array('db' => 'service_id', 'dt' => 0, 'field' => 'service_id'),
         array('db' => 'service_name', 'dt' => 1, 'field' => 'service_name'),
-        array('db' => 'description', 'dt' => 2, 'field' => 'description'),
-        array('db' => 'price', 'dt' => 3, 'field' => 'price', 'formatter' => function($d, $row) {return formatCurrency($d);}),
-        array('db' => 'service_status', 'dt' => 4, 'field' => 'service_status'),
+        array('db' => 'service_type', 'dt' => 2, 'field' => 'service_type'),
+        array('db' => 'unit_measurement', 'dt' => 3, 'field' => 'unit_measurement'),
+        array('db' => 'service_load', 'dt' => 4, 'field' => 'service_load'),
+        array('db' => 'description', 'dt' => 5, 'field' => 'description'),
+        array('db' => 'price', 'dt' => 6, 'field' => 'price', 'formatter' => function($d, $row) {return formatCurrency($d);}),
+        array('db' => 'service_status', 'dt' => 7, 'field' => 'service_status'),
     );
     
     // Include SQL query processing class 
     require 'ssp.class.php'; 
 
-    $joinQuery = ",  `service_id`, `service_name`, `description`, `price`, `service_status` FROM `{$table}`";
+    $joinQuery = ",  `service_id`, `service_name`, `service_type`, `unit_measurement`, `service_load`, `description`, `price`, `service_status` FROM `{$table}`";
     $where = " `shop_id` = '$shop_id' ";
 
     // Output data as json format 

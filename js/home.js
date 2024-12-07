@@ -62,7 +62,7 @@ function loadMoreShops() {
 
             shops.forEach(shop => {
                 // [Add your existing code to create and append shop cards]
-                let shopLogoLink = shop.image_link || 'https://img.freepik.com/premium-photo/3d-render-illustration-question-mark-grey-background_357322-704.jpg';
+                let shopLogoLink = shop.image_link || 'https://e0.pxfuel.com/wallpapers/239/798/desktop-wallpaper-question-mark-widescreen-cool-awesome-question-mark.jpg';
                 let additionalScheduleDetails = '';
 
                 if(shop.additional_schedule_details.length > 1){

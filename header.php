@@ -514,7 +514,7 @@
 </div>
 <div class="container-fluid px-3 py-2 border-bottom d-none is-shop laundry-owner-and-staff gap-2" id="user-avatar-container">
     <ul class="header-nav d-flex align-items-center gap-2">
-        <div class="avatar avatar-md rounded bg-secondary overflow-hidden">
+        <div class="avatar avatar-md rounded overflow-hidden">
             <img class="avatar-img rounded" src="" alt="User" id="avatar-user-image">
         </div>
         <h6 class="mt-1" id="avatar-user-label">User</h6>

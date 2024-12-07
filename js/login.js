@@ -756,6 +756,7 @@ function checkIfusernameExist(type){
 }
 
 
+// update the password for account recovery
 function updateToNewPasswordFunction(){
     WaitigLoader(true);
     let newPasswordInput = document.getElementById('existingPassword');

@@ -1,10 +1,4 @@
-<!DOCTYPE html><!--
-* CoreUI - Free Bootstrap Admin Template
-* @version v5.1.0
-* @link https://coreui.io/product/free-bootstrap-admin-template/
-* Copyright (c) 2024 creativeLabs Łukasz Holeczek
-* Licensed under MIT (https://github.com/coreui/coreui-free-bootstrap-admin-template/blob/main/LICENSE)
--->
+
 <html lang="en">
   <head>
     <!-- Resources -->
@@ -45,8 +39,43 @@
                   <!-- Price -->
                   <div class="col-md-6">
                     <label for="service-price" class="form-label">Price</label>
-                    <input type="text" placeholder="Price" maxlength="10" class="form-control" id="service-price" required>
+                    <input type="text" placeholder="Price" maxlength="50" class="form-control" id="service-price" required>
                     <div id="service-price-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  <!-- Field Type -->
+                  <div class="col-md-6">
+                  <label for="service_unit_measurement" class="form-label">Unit of Measurement</label>
+                    <select id="service_unit_measurement" class="form-select form-select" aria-label=".form-select-sm example" >
+                    <option value="">none</option>
+                      <option value="Kg">KG</option>
+                      <option value="Pcs">PCS</option>
+                    </select>
+                    <div id="service_unit_measurement-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+
+                  <!-- Amount of Load -->
+                  <div class="col-md-6">
+                    <label for="service_load" class="form-label">Load Amount</label>
+                    <input type="text" placeholder="Load Amount" maxlength="50" class="form-control" id="service_load" required>
+                    <div id="service_load-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  <!-- Field Type -->
+                  <div class="col-md-6">
+                  <label for="service-type" class="form-label">Service Type</label>
+                    <select id="service-type" class="form-select form-select" aria-label=".form-select-sm example" >
+                      <option value='All Types' selected>All Types</option>
+                      <option value="Wash">Wash</option>
+                      <option value="Dry">Dry</option>
+                      <option value="Fold">Fold</option>
+                      <option value="Package">Package</option>
+                    </select>
+                    <div id="service-type-error-feedback" class="invalid-feedback">
                     </div>
                   </div>
 
@@ -79,49 +108,6 @@
               <button id="submit-laundry-shop-service-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Submit Service</button>
               <div id="submit-laundry-shop-service-update-container"></div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- sivice card modal -->
-      <div class="modal fade" id="serviceCardModal" data-coreui-backdrop="static" data-coreui-keyboard="false" tabindex="-1" aria-labelledby="serviceCardModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="serviceCardModalLabel"></h5>
-              <button type="button" id="laundry-form-close-btn" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="serviceListBody">
-
-              <!-- create laundry shop form -->
-              <!-- <div class="row g-3  needs-validation  bg-dark-subtle text-gray  mt-3 pb-3 px-3 rounded-3">
-                  Service Name
-                  <div class="col-md-6">
-                      <label for="service-name" class="form-label "><h5 class="ms-2 me-2 fa-solid fa-check-to-slot"></h5> Service Name</label>
-                      <input type="text" disabled value="Service Name" maxlength="50" class="form-control" id="service-name" required>
-                    </div>
-
-                    Price
-                    <div class="col-md-6">
-                      <label for="service-price" class="form-label"><h5 class="ms-2 me-2 fa-solid fa-check-to-slot"></h5> Price</label>
-                      <input type="text" disabled value="Price" maxlength="10" class="form-control" id="service-price" required>
-                    </div>
-
-                    Description
-                    <div class="col-md-12">
-                      <label for="service-description" class="form-label"><h5 class="ms-2 me-2 fa-solid fa-check-to-slot"></h5> Description</label>
-                      <input type="text" disabled value="Description" maxlength="255" class="form-control" id="service-description" required>
-                    </div>
-              </div> -->
-              
-              
-            </div>
-            
-            <!-- 
-            <div class="modal-footer">
-              <button id="submit-laundry-shop-service-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Submit Service</button>
-              <div id="submit-laundry-shop-service-update-container"></div>
-            </div> -->
           </div>
         </div>
       </div>
@@ -267,7 +253,7 @@
             </div>
 
             <div class="col-6 col-12-504px justify-content-end justify-content-start-504px align-items-center d-flex flex-wrap gap-2 px-0" id="nav-search-container">
-            <button id="view-service-card" class="btn btn-ghost-light text-secondary border border-1 d-flex flex-row gap-2 align-items-center laundry-owner is-shop d-none"><span class="fa-solid fa-clipboard-list"></span>View Service Card</button>
+            <!-- <button id="view-service-card" class="btn btn-ghost-light text-secondary border border-1 d-flex flex-row gap-2 align-items-center laundry-owner is-shop d-none"><span class="fa-solid fa-clipboard-list"></span>View Service Card</button> -->
             </div>
 
 
@@ -277,6 +263,9 @@
                 <tr>
                   <th scope="col">Action</th>
                   <th scope="col">Service Name</th>
+                  <th scope="col">Service Type</th>
+                  <th scope="col">Unit of Measurement</th>
+                  <th scope="col">Load Amount</th>
                   <th scope="col">Description</th>
                   <th scope="col">Price</th>
                   <th scope="col">Service Status</th>

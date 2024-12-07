@@ -7,6 +7,9 @@ let submitLaundryShopServiceBtn = document.getElementById('submit-laundry-shop-s
 let servicePriceInput = document.getElementById('service-price');
 let serviceNameInput = document.getElementById('service-name');
 let serviceStatusInput = document.getElementById('service-status');
+let serviceTypeInput =  document.getElementById('service-type');
+let service_unit_measurement = document.getElementById('service_unit_measurement')
+let service_load = document.getElementById('service_load')
 let serviceStatusInputContainer = document.getElementById('service-status-container');
 let serviceDescriptionInput = document.getElementById('service-description');
 let serviceDescriptionInputContainer = document.getElementById('service-description-container');
@@ -37,10 +40,10 @@ createLaundryShopServiceBtn.addEventListener('click', function(){
 
     if(!serviceStatusInputContainer.classList.contains('d-none')){
         serviceStatusInputContainer.classList.add('d-none')
-        
-        if(!serviceDescriptionInputContainer.classList.contains('col-md-12')){
-            serviceDescriptionInputContainer.classList.add('col-md-12')
-            serviceDescriptionInputContainer.classList.remove('col-md-6')
+
+        if(!serviceDescriptionInputContainer.classList.contains('col-md-6')){
+            serviceDescriptionInputContainer.classList.add('col-md-6')
+            serviceDescriptionInputContainer.classList.remove('col-md-12')
         }
     }
 
@@ -69,80 +72,64 @@ servicePriceInput.addEventListener('blur', function(e){
     
 })
 
-// an event that show the service list as a card
-viewServiceCard.addEventListener('click', function(){
-
-    document.getElementById('serviceCardModalLabel').innerText =  sessionStorage.getItem('sessionShopName') + ' Service List';
-
-    const url = "php-sql-controller/manage-services-controller.php";
-    const data = {
-        shop_id: sessionStorage.getItem('sessionShopId'),
-        queryServicesFromSpicificShop: true,
-    };
-
-    const detailsList = dynamicSynchronousPostRequest(url, data);
-
-    if(isValidJSON(detailsList)){
-
-        const details = JSON.parse(detailsList);
-        const serviceListBody = document.getElementById('serviceListBody');
-        serviceListBody.innerHTML = '';
-
-        if(Object.keys(details).length > 0){
-
-            details.forEach((val, index) => {
-               
-                const service_id =  val.service_id;
-                const service_name = val.service_name;
-                const price = val.price;
-                const description = val.description;
-
-
-                // Define the HTML structure using a template literal
-                const formHTML = `
-                <div class="row g-3 needs-validation bg-dark-subtle text-gray mt-3 pb-3 px-3 rounded-3">
-                <!-- Service Name -->
-                <div class="col-md-6">
-                    <label for="service-name" class="form-label">
-                    <h5 class="ms-2 me-2 fa-solid fa-check-to-slot"></h5> Service Name
-                    </label>
-                    <input type="text" disabled value="${service_name}" maxlength="50" class="form-control" id="service-name" required>
-                </div>
-
-                <!-- Price -->
-                <div class="col-md-6">
-                    <label for="service-price" class="form-label">
-                    <h5 class="ms-2 me-2 fa-solid fa-check-to-slot"></h5> Price
-                    </label>
-                    <input type="text" disabled value="${formatToCurrency(`${price}`)}" maxlength="10" class="form-control" id="service-price" required>
-                </div>
-
-                <!-- Description -->
-                <div class="col-md-12">
-                    <label for="service-description" class="form-label">
-                    <h5 class="ms-2 me-2 fa-solid fa-check-to-slot"></h5> Description
-                    </label>
-                    <input type="text" disabled value="${description}" maxlength="255" class="form-control" id="service-description" required>
-                </div>
-                </div>
-                `;
-
-                // Insert the HTML structure inside the modal body
-                serviceListBody.insertAdjacentHTML('beforeend', formHTML);
-
-            })
-
-            $('#serviceCardModal').modal('show')
-
-        }
-        
-    }
-    else{
-        console.error(detailsList);
-        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+// Add event listeners for 'keydown' (for typing) and 'paste' events
+service_load.addEventListener('keydown', function(event) {
+    // Allow backspace, delete, tab, escape, and enter
+    if (
+        event.key === 'Backspace' || 
+        event.key === 'Delete' || 
+        event.key === 'Tab' || 
+        event.key === 'Escape' || 
+        event.key === 'Enter'
+    ) {
+        return;
     }
 
+    // Allow navigation keys like arrows
+    if (event.key.startsWith('Arrow')) {
+        return;
+    }
+
+    // Allow digits (0-9), spaces, dashes, parentheses
+    const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
+
+    if (!allowedCharacters.test(event.key)) {
+        event.preventDefault(); // Prevent any other character from being input
+    }
+});
+
+// Prevent non-numeric characters when pasting
+service_load.addEventListener('paste', function(event) {
+    // Get the pasted data
+    const pasteData = event.clipboardData.getData('text');
+
+    // Allow only numbers, spaces, dashes, parentheses, and decimal points in the pasted data
+    const allowedCharacters = /^[0-9 \-\(\)\.]+$/;
+
+
+    if (!allowedCharacters.test(pasteData)) {
+        event.preventDefault(); // Prevent the paste if invalid characters are found
+    }
+});
+
+
+service_load.addEventListener('blur', function(e){
+
+    if(e.target.value.length > 0 && service_unit_measurement.value == 'Kg'){
+        e.target.value =  currencyToNormalFormat(e.target.value)
+    }
+    
 })
+
+
+service_unit_measurement.addEventListener('blur', function(e){
+
+    if(e.target.value == 'Kg' && service_load.value.length > 0 ){
+        service_load.value =  currencyToNormalFormat(service_load.value)
+    }
+    
+})
+
 
 // an event for submitting the newly created service
 submitLaundryShopServiceBtn.addEventListener('click', function(){
@@ -167,7 +154,7 @@ submitLaundryShopServiceBtn.addEventListener('click', function(){
         dynamicFieldErrorMessage(serviceDescriptionInput.id, '');
     }
 
-    // Service Description
+    // Service Price
     if(servicePriceInput.value.length < 1 || !isValidCurrency(servicePriceInput.value)){
         isValid = false;
         dynamicFieldErrorMessage(servicePriceInput.id, 'Please input a valid Laundry Shop Service Price.');
@@ -177,10 +164,48 @@ submitLaundryShopServiceBtn.addEventListener('click', function(){
     }
 
 
+    if(service_unit_measurement.value.length > 1 && service_load.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(service_load.id, '');
+        dynamicFieldErrorMessage(service_load.id, 'Please input a valid Laundry Shop Service Load Amount.');
+    }
+    else {
+
+        if(service_unit_measurement.value == 'Pcs' && service_load.value.includes('.')){
+            isValid = false;
+            dynamicFieldErrorMessage(service_load.id, '');
+            dynamicFieldErrorMessage(service_load.id, 'Invalid Load Amount for PCS Unit of Measurement Type.')
+        }
+        else if(service_unit_measurement.value.length < 1 && service_load.value.length > 1){
+            isValid = false;
+            dynamicFieldErrorMessage(service_load.id, '');
+            dynamicFieldErrorMessage(service_load.id, 'Invalid Load Amount for none Unit of Measurement Type.')
+        }
+        else if(service_load.value == NaN || service_load.value == "NaN"){
+            isValid = false;
+            dynamicFieldErrorMessage(service_load.id, '');
+            dynamicFieldErrorMessage(service_load.id, 'Please input a valid Laundry Shop Service Load Amount.');
+        }
+        else{
+            dynamicFieldErrorMessage(service_load.id, '');
+            dynamicFieldErrorMessage(service_unit_measurement.id, '');
+        }
+       
+    }
+
+
     if(isValid){
+
+        let unitMeasurement = service_unit_measurement.value;
+        if(service_unit_measurement.value.length < 1){
+            unitMeasurement = 'N/A'
+        }
         
         const url = "php-sql-controller/manage-services-controller.php";
         const data = {
+            serviceType:serviceTypeInput.value,
+            service_unit_measurement: unitMeasurement,
+            service_load: service_load.value,
             serviceName:serviceNameInput.value,
             serviceDescription:serviceDescriptionInput.value,
             servicePrice:currencyToNormalFormat(servicePriceInput.value),
@@ -201,6 +226,7 @@ submitLaundryShopServiceBtn.addEventListener('click', function(){
                 serviceNameInput.value = '';
                 serviceDescriptionInput.value = '';
                 servicePriceInput.value = '';
+                serviceTypeInput.value = 'All Types';
 
                 if(serviceListTableVar){
                     serviceListTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
@@ -362,7 +388,7 @@ if(serviceListTable){
                         // Specify columns to be included (0 to 8 in this case)
                         columns: function (idx, data, node) {
                             // Include columns 0 to 8
-                            return idx >= 1 && idx <= 4;
+                            return idx >= 1 && idx <= 7;
                         }
                       }
                   }
@@ -386,14 +412,30 @@ if(serviceListTable){
                 "targets": 0,
                 "render": function ( data, type, row, meta ) {
 
+                    // Serialize the row object to JSON and escape it for HTML
+                    const serializedRow = encodeURIComponent(JSON.stringify(row));
+
                     let actionButton;
-                    actionButton = `<button type="button" onClick="updateLaundryService('${row}')" class="btn btn-primary text-white" >Edit</button>`
+                    actionButton = `<button type="button" onClick="updateLaundryService('${serializedRow}')" class="btn btn-primary text-white" >Edit</button>`
                     return actionButton;
                             
                 },
                 
               },
               null,
+              null,
+              null,
+              {
+                "render": function ( data, type, row, meta ) {
+
+                    if(data != 0 && row[3] == 'Kg'){
+                        return currencyToNormalFormat(`${data}`);
+                    }
+
+                    return data;
+                },
+
+              },
               null,
               null,
               null
@@ -605,10 +647,10 @@ function updateLaundryService(row) {
     let str = row;
 
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
-    let keys = ["id", "shop_name", "description", "price", "service_status"];
+    let keys = ["id", "shop_name", "service_type", "unit_measurement", "service_load", "description", "price", "service_status"];
 
     // Create a JSON object by mapping keys to values
     let jsonObj = {};
@@ -616,16 +658,38 @@ function updateLaundryService(row) {
         jsonObj[key] = values[index];
     });
 
+
     const service_id = jsonObj.id;
     const shop_name = jsonObj.shop_name;
     const description = jsonObj.description;
     const price = jsonObj.price;
     const service_status = jsonObj.service_status;
+    const service_type = jsonObj.service_type;
+    const unit_measurement = jsonObj.unit_measurement;
+    let service_load_var =  jsonObj.service_load;
+
+    if(unit_measurement == 'Kg'){
+        service_load_var = currencyToNormalFormat(`${jsonObj.service_load}`) ;
+    }
 
     serviceNameInput.value = shop_name
     serviceDescriptionInput.value = description
     servicePriceInput.value = price
     serviceStatusInput.value = service_status
+    serviceTypeInput.value = service_type
+    if(unit_measurement == 'N/A'){
+        service_unit_measurement.value = '';
+    }
+    else{
+        service_unit_measurement.value = unit_measurement;
+    }
+    if(service_load_var == 0 || service_load_var == '0'){
+        service_load.value = '';
+    }
+    else{
+        service_load.value = service_load_var;
+    }
+
 
     // Select the container where the button will be added
     const container = document.getElementById('submit-laundry-shop-service-update-container');
@@ -685,11 +749,49 @@ function updateLaundryService(row) {
                 dynamicFieldErrorMessage(serviceStatusInput.id, '');
             }
 
+            //
+            if(service_unit_measurement.value.length > 1 && service_load.value.length < 1){
+                isValid = false;
+                dynamicFieldErrorMessage(service_load.id, '');
+                dynamicFieldErrorMessage(service_load.id, 'Please input a valid Laundry Shop Service Load Amount.');
+            }
+            else {
+        
+                if(service_unit_measurement.value == 'Pcs' && service_load.value.includes('.')){
+                    isValid = false;
+                    dynamicFieldErrorMessage(service_load.id, '');
+                    dynamicFieldErrorMessage(service_load.id, 'Invalid Load Amount for PCS Unit of Measurement Type.')
+                }
+                else if(service_unit_measurement.value.length < 1 && service_load.value.length > 1){
+                    isValid = false;
+                    dynamicFieldErrorMessage(service_load.id, '');
+                    dynamicFieldErrorMessage(service_load.id, 'Invalid Load Amount for none Unit of Measurement Type.')
+                }
+                else if(service_load.value == NaN || service_load.value == "NaN"){
+                    isValid = false;
+                    dynamicFieldErrorMessage(service_load.id, '');
+                    dynamicFieldErrorMessage(service_load.id, 'Please input a valid Laundry Shop Service Load Amount.');
+                }
+                else{
+                    dynamicFieldErrorMessage(service_load.id, '');
+                    dynamicFieldErrorMessage(service_unit_measurement.id, '');
+                }
+               
+            }
+
             if(isValid){
+
+                let unitMeasurement = service_unit_measurement.value;
+                if(service_unit_measurement.value.length < 1){
+                    unitMeasurement = 'N/A'
+                }
                 
                 const url = "php-sql-controller/manage-services-controller.php";
                 const data = {
                     service_status:serviceStatusInput.value,
+                    serviceType:serviceTypeInput.value,
+                    service_unit_measurement: unitMeasurement,
+                    service_load: service_load.value,
                     serviceName:serviceNameInput.value,
                     serviceDescription:serviceDescriptionInput.value,
                     servicePrice:currencyToNormalFormat(servicePriceInput.value),
@@ -711,6 +813,9 @@ function updateLaundryService(row) {
                         serviceNameInput.value = '';
                         serviceDescriptionInput.value = '';
                         servicePriceInput.value = '';
+                        serviceTypeInput.value = 'All Types'
+                        service_unit_measurement.value = '';
+                        service_load.value = '';
 
                         if(serviceListTableVar){
                             serviceListTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
@@ -735,11 +840,11 @@ function updateLaundryService(row) {
     updateService = true;
     if(serviceStatusInputContainer.classList.contains('d-none')){
         serviceStatusInputContainer.classList.remove('d-none')
-        
-        if(!serviceDescriptionInputContainer.classList.contains('col-md-6')){
-            serviceDescriptionInputContainer.classList.add('col-md-6')
-            serviceDescriptionInputContainer.classList.remove('col-md-12')
-        }
+    }
+
+    if(!serviceDescriptionInputContainer.classList.contains('col-md-12')){
+        serviceDescriptionInputContainer.classList.add('col-md-12')
+        serviceDescriptionInputContainer.classList.remove('col-md-6')
     }
     $('#addLaundryShopService').modal('show');
 

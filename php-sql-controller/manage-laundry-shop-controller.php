@@ -58,14 +58,14 @@ if(isset($_GET['showLaundryShopList'])){
         array('db' => 'shop_name', 'dt' => 1, 'field' => 'shop_name'),
         array('db' => 'shop_address', 'dt' => 2, 'field' => 'shop_address'),
         array('db' => 'contact_number', 'dt' => 3, 'field' => 'contact_number'),
-        array('db' => 'username', 'dt' => 4, 'field' => 'username'),
+        array('db' => "CONCAT(u.first_name, ' ', u.last_name)", 'dt' => 4, 'field' => 'full_name'),
         array('db' => 'requirement_status', 'dt' => 5, 'field' => 'requirement_status'),
     );
     
     // Include SQL query processing class 
     require 'ssp.class.php'; 
 
-    $joinQuery = ", s.shop_name AS shop_name, s.shop_address AS shop_address, s.contact_number AS contact_number, `s`.`requirement_status` AS requirement_status, u.username AS username, s.user_id AS shop_user_id
+    $joinQuery = ", s.shop_name AS shop_name, s.shop_address AS shop_address, s.contact_number AS contact_number, `s`.`requirement_status` AS requirement_status, u.username AS username, CONCAT(u.first_name, ' ', u.last_name) AS full_name, s.user_id AS shop_user_id
     FROM `{$table}` AS s 
     LEFT JOIN user AS u ON s.user_id = u.user_id ";
     $where = " s.user_id != '0'";
@@ -375,15 +375,37 @@ if(isset($inputData['queryRequirementsDetails'])){
 
 }
 
-// query shop details and schedule
+// Query shop details and schedule with user details
 if (isset($inputData['queryShopSchedule'])) {
     $shopId = $inputData['shopId'];
 
-    // Prepare the SQL query to get the shop schedule based on shop_id
-    $sql = "SELECT `shop_id`, `shop_name`, `shop_address`, `contact_number`, `user_id`, `requirement_status`, `days_open`, `open_time`, `close_time`, `additional_schedule_details` 
-            FROM `shop` 
-            WHERE `shop_id` = ?";
-    
+    // Prepare the SQL query with a LEFT JOIN to include user details
+    $sql = "SELECT 
+                shop.shop_id, 
+                shop.shop_name, 
+                shop.shop_address, 
+                shop.contact_number, 
+                shop.user_id, 
+                shop.requirement_status, 
+                shop.days_open, 
+                shop.open_time, 
+                shop.close_time, 
+                shop.additional_schedule_details, 
+                user.first_name, 
+                user.last_name, 
+                user.username, 
+                user.email, 
+                user.phone_number, 
+                user.address, 
+                user.position, 
+                user.user_activation_status
+            FROM 
+                shop
+            LEFT JOIN 
+                user ON shop.user_id = user.user_id
+            WHERE 
+                shop.shop_id = ?";
+
     // Prepare and bind parameters
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $shopId); // 'i' for integer type
@@ -392,7 +414,7 @@ if (isset($inputData['queryShopSchedule'])) {
     if ($stmt->execute()) {
         // Get the result
         $result = $stmt->get_result();
-        $shopDetails = $result->fetch_assoc(); // Fetch details of the shop
+        $shopDetails = $result->fetch_assoc(); // Fetch details of the shop with user info
 
         if ($shopDetails) {
             // Return shop details as a JSON response
@@ -406,6 +428,7 @@ if (isset($inputData['queryShopSchedule'])) {
 
     $stmt->close();
 }
+
 
 
 

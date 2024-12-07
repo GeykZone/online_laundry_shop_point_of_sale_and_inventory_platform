@@ -1205,7 +1205,7 @@ function sideBarLogoQuery() {
         }
     }
 
-    let imageLink = 'https://img.freepik.com/premium-photo/3d-render-illustration-question-mark-grey-background_357322-704.jpg'
+    let imageLink = 'https://e0.pxfuel.com/wallpapers/239/798/desktop-wallpaper-question-mark-widescreen-cool-awesome-question-mark.jpg'
 
     let imageQueryResult = dynamicSynchronousPostRequest(url, data);
 
@@ -1237,7 +1237,7 @@ function avatarLogoQuery() {
         data.user_main_logo = 0;
     }
 
-    let imageLink = 'https://img.freepik.com/premium-photo/3d-render-illustration-question-mark-grey-background_357322-704.jpg'
+    let imageLink = 'https://e0.pxfuel.com/wallpapers/239/798/desktop-wallpaper-question-mark-widescreen-cool-awesome-question-mark.jpg'
 
     let imageQueryResult = dynamicSynchronousPostRequest(url, data);
 
@@ -1991,7 +1991,6 @@ function retypePasswordAndUsername(isForLogo, isForInfo, isForShop){
 
 }
 
-
 // Function to format the input with peso sign without altering the original decimal precision
 function formatToCurrency(input) {
     // Remove non-numeric characters (except for the decimal point)
@@ -2033,8 +2032,9 @@ function currencyToNormalFormat(currencyString) {
     let normalFormat = currencyString.replace(/[^0-9.]/g, '');
     
     // Return the number as a float or integer depending on the input
-    return parseFloat(normalFormat);
+    return parseFloat(normalFormat).toFixed(2);
 }
+
 
 // function to generate random numbers
 function generateRandomNumber(length) {
