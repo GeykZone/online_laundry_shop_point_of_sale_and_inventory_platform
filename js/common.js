@@ -1829,6 +1829,37 @@ function mainShopLogoUpdate(){
 
 }
 
+// validate phone number
+function validatePhPhone(inputValue) {
+    const value = inputValue.trim(); // Trim any whitespace
+    const startsWithValidPrefix = value.startsWith('639') || value.startsWith('09') || value.startsWith('9');
+    const validLength = value.length === 12 || value.length === 11 || value.length === 10;
+
+    if (!startsWithValidPrefix || !validLength) {
+        return false; // Invalid phone number
+    }
+    return true; // Valid phone number
+}
+
+
+// function that if field start with 09 or 9 make that part into 639 
+function normalizePhoneNumber(inputField) {
+    let value = inputField.trim(); // Get the value and remove extra spaces
+
+    if (value.startsWith('09')) {
+        // Replace '09' with '639'
+        value = '639' + value.slice(2);
+    } else if (value.startsWith('9')) {
+        // Add '63' before '9'
+        value = '639' + value.slice(1);
+    }
+
+    // Update the input field value with the normalized phone number
+    inputField.value = value;
+
+    return value;
+}
+
 // function to update user info
 function mainUserInfoUpdate(){
 

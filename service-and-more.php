@@ -20,7 +20,7 @@
               </div>
               <div class="modal-body">
 
-                <div class="container">
+              <div class="container">
                 <div class="row g-4 mb-4" id="transaction-service-container">
                 </div>
                 <nav aria-label="Page navigation" id="service-pagination">
@@ -37,8 +37,73 @@
               
 
               <div class="modal-footer">
-                <button id="submit-laundry-shop-service-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Submit Service</button>
+                <button id="back-to-customer-form" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center">Back to Customer Form</button>
                 <div id="submit-laundry-shop-service-update-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- customer reg -->
+        <div class="modal fade" id="addCustomerModal" data-coreui-backdrop="static" data-coreui-keyboard="false" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="addCustomerModalLabel">Customer Form</h5>
+                <button type="button" id="laundry-customer-form-close-btn" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+
+                <div class="row g-3 needs-validation">
+                  <!-- First Name -->
+                  <div class="col-md-6">
+                    <label for="laundry-customer-first-name" class="form-label">First Name</label>
+                    <input type="text" placeholder="First Name" maxlength="50" class="form-control" id="laundry-customer-first-name" required>
+                    <div id="laundry-customer-first-name-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  <!-- Last Name -->
+                  <div class="col-md-6">
+                    <label for="laundry-customer-Last-name" class="form-label">Last Name</label>
+                    <input type="text" placeholder="Last Name" maxlength="50" class="form-control" id="laundry-customer-Last-name" required>
+                    <div id="laundry-customer-Last-name-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  <!-- Email -->
+                  <div class="col-md-6">
+                    <label for="laundry-customer-email" class="form-label">Email</label>
+                    <input type="text" placeholder="Email" maxlength="100" class="form-control" id="laundry-customer-email" required>
+                    <div id="laundry-customer-email-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  <!-- Phone -->
+                  <div class="col-md-6">
+                    <label for="laundry-customer-phone" class="form-label">Phone</label>
+                    <input type="text" placeholder="Phone" maxlength="15" class="form-control" id="laundry-customer-phone" required>
+                    <div id="laundry-customer-phone-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  <!-- Address -->
+                  <div class="col-md-12">
+                    <label for="laundry-customer-adress" class="form-label">Address</label>
+                    <input type="text" placeholder="Address" maxlength="255" class="form-control" id="laundry-customer-adress" required>
+                    <div id="laundry-customer-adress-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
+                  
+
+                </div>
+                
+                
+              </div>
+              <div class="modal-footer">
+                <!-- <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button> -->
+                <button type="button" class="btn btn-primary" id="add-laundry-customer-submit-btn">Next</button>
               </div>
             </div>
           </div>
@@ -173,7 +238,7 @@
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                  <button id="open-transaction-creation-modal" class="btn btn-primary me-md-2  d-none customer" data-coreui-toggle="modal" data-coreui-target="#createTransactionMadal" type="button">Create Transaction <span class="fa-solid fa-money-check ms-2"></span></button>
+                  <button id="open-transaction-creation-modal" class="btn btn-primary me-md-2  d-none customer" data-coreui-toggle="modal" data-coreui-target="#addCustomerModal" type="button">Create Transaction <span class="fa-solid fa-money-check ms-2"></span></button>
                 </div>
 
               </div>

@@ -1291,10 +1291,20 @@ function validateAddingLaundryShopForm(requirements){
         // Contact
         if(laundryShopContactNumber.value.length < 1){
             isValid = false;
-            dynamicFieldErrorMessage(laundryShopContactNumber.id, 'Please input a valid Shop Name.');
+            dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
+            dynamicFieldErrorMessage(laundryShopContactNumber.id, 'Please input a valid Phone Number.');
         }
         else {
-            dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
+
+            if(!validatePhPhone(laundryShopContactNumber.value)){
+                isValid = false;
+                dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
+                dynamicFieldErrorMessage(laundryShopContactNumber.id, 'The Phone number must be a Ph number and must start with 639, 09, or 9.');
+            }
+            else{
+                dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
+            }
+            
         }
 
         // Address 
@@ -1339,6 +1349,8 @@ function validateAddingLaundryShopForm(requirements){
         })
 
         if(isValid){
+
+            laundryShopContactNumber.value = normalizePhoneNumber(laundryShopContactNumber.value);
 
             if(Object.keys(requirements).length < 1){
                 dynamicAlertMessage('You can\'t add a Laundry Shop yet. The super admin hasn\'t set any requirements.', 'warning', 3000);
@@ -1446,10 +1458,19 @@ function validateUpdatingLaundryShopForm(details){
     // Contact
     if(laundryShopContactNumber.value.length < 1){
         isValid = false;
+        dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
         dynamicFieldErrorMessage(laundryShopContactNumber.id, 'Please input a valid Shop Name.');
     }
     else {
-        dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
+
+        if(!validatePhPhone(laundryShopContactNumber.value)){
+            isValid = false;
+            dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
+            dynamicFieldErrorMessage(laundryShopContactNumber.id, 'The Phone number must be a Ph number and must start with 639, 09, or 9.');
+        }
+        else{
+            dynamicFieldErrorMessage(laundryShopContactNumber.id, '');
+        }
     }
 
     // Address 
@@ -1482,6 +1503,8 @@ function validateUpdatingLaundryShopForm(details){
             dynamicAlertMessage('You can\'t add a Laundry Shop yet. The super admin hasn\'t set any requirements.', 'warning', 3000);
             return;
         }
+
+        laundryShopContactNumber.value = normalizePhoneNumber(laundryShopContactNumber.value);
 
         const url = "php-sql-controller/manage-laundry-shop-controller.php";
         const data = {

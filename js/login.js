@@ -325,10 +325,19 @@ addLaundryOwnerSubmitBtn.addEventListener('click', function(){
      //laundryOwnerPhone
      if(laundryOwnerPhone.value.length < 1){
         isValid = false;
+        dynamicFieldErrorMessage(laundryOwnerPhone.id, '');
         dynamicFieldErrorMessage(laundryOwnerPhone.id, 'Please input a valid Address.');
     }
     else {
-        dynamicFieldErrorMessage(laundryOwnerPhone.id, '');
+        if(!validatePhPhone(laundryOwnerPhone.value)){
+            isValid = false;
+            dynamicFieldErrorMessage(laundryOwnerPhone.id, '');
+            dynamicFieldErrorMessage(laundryOwnerPhone.id, 'The Phone number must be a Ph number and must start with 639, 09, or 9.');
+        }
+        else{
+            dynamicFieldErrorMessage(laundryOwnerPhone.id, '');
+        }
+        
     }
 
     //laundryOwnerPassword
@@ -350,6 +359,8 @@ addLaundryOwnerSubmitBtn.addEventListener('click', function(){
 
     if(isValid){
 
+        laundryOwnerPhone.value = normalizePhoneNumber(laundryOwnerPhone.value);
+
         laundryFormCloseBtn.click();
 
         const url = "php-sql-controller/login-controller.php";
@@ -368,7 +379,7 @@ addLaundryOwnerSubmitBtn.addEventListener('click', function(){
         .then((response) => {
             if(isValidJSON(response)){
 
-                if(JSON.parse(response) == 'New Laundry Owner added successfully.'){
+                if(JSON.parse(response).message == 'New Laundry Owner added successfully.'){
                     dynamicAlertMessage('New Laundry Owner added successfully.', 'success', 3000);
 
                     laundryOwnerFirstName.value = '';
@@ -497,7 +508,7 @@ addLaundrycustomerSubmitBtn.addEventListener('click', function(){
         .then((response) => {
             if(isValidJSON(response)){
 
-                if(JSON.parse(response) == 'New Laundry Owner added successfully.'){
+                if(JSON.parse(response).message == 'New Laundry Owner added successfully.'){
                     dynamicAlertMessage('New Laundry Customer added successfully.', 'success', 3000);
 
                     laundrycustomerFirstName.value = ''

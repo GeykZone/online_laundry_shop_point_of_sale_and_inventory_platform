@@ -18,7 +18,7 @@ if (isset($inputData['queryServices']) && $inputData['queryServices'] == true) {
     $totalPages = ceil($totalCount / $limit);
 
     // Query the services from the database with LIMIT and OFFSET for pagination
-    $sql = "SELECT `service_id`, `service_name`, `description`, `price`, `shop_id`, `service_status` 
+    $sql = "SELECT `service_id`, `service_name`, `service_type`, `unit_measurement`, `service_load`, `description`, `price`, `shop_id`, `service_status` 
             FROM `services` 
             WHERE `service_status` = 'active'  AND `shop_id` = '$shop_id'
             LIMIT $limit OFFSET $offset";

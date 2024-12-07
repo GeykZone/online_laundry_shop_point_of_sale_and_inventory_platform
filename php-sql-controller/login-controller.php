@@ -166,7 +166,12 @@ if(isset($inputData['addNewLaundryOwner'])){
             } elseif ($userId != 'empty') {
                 $response = "User updated successfully.";
             } else {
-                $response = "New Laundry Owner added successfully.";
+                // Return the ID of the newly inserted record
+                $newRecordId = $conn->insert_id;
+                $response = [
+                    'message' => "New Laundry Owner added successfully.",
+                    'newRecordId' => $newRecordId
+                ];
             }
             
         } else {

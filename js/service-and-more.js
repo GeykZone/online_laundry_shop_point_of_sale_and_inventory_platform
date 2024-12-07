@@ -42,8 +42,17 @@ let emptyDiscountIdentifier = document.getElementById('empty-discount-identifier
 let selectedDiscounts = JSON.parse(sessionStorage.getItem('selectedDiscounts')) || [];
 let clothesWeightInput = document.getElementById('clothes-weight-input');
 let finalizeTransactionBtn = document.getElementById('finalize-transaction-btn');
+let addLaundrycustomerSubmitBtn = document.getElementById('add-laundry-customer-submit-btn');
+let laundrycustomerFirstName = document.getElementById('laundry-customer-first-name');
+let laundrycustomerLastName = document.getElementById('laundry-customer-Last-name');
+let laundrycustomerUsername = document.getElementById('laundry-customer-username');
+let laundrycustomerEmail = document.getElementById('laundry-customer-email');
+let laundrycustomerAddress = document.getElementById('laundry-customer-adress');
+let laundrycustomerPhone = document.getElementById('laundry-customer-phone');
+let backToCustomerForm = document.getElementById('back-to-customer-form');
 let estimatedPayable;
 let ratingLength = 0;
+let globalNewCustomerId = '';
 
 // confirm transaction
 dynamicConfirmationMessage( 
@@ -61,7 +70,6 @@ dynamicConfirmationMessage(
         </div>`
     }
 )
-
 
 // put a values on the shop card if session shop id exist
 if (sessionStorage.getItem('service_more_shop_id')) {
@@ -203,9 +211,132 @@ else{
 }
 
 // event listener when the transaction creation modal show it the service also ge queried
-openTransactionCreationModal.addEventListener('click', function(){
-    serviceContainer.innerHTML = '';
-    loadServicesForPage(page);
+backToCustomerForm.addEventListener('click', function(){
+    // serviceContainer.innerHTML = '';
+    // loadServicesForPage(page);
+
+    $('#addCustomerModal').modal('show');
+    $('#createTransactionMadal').modal('hide');
+})
+
+// click button event for submiting new laundry customer
+addLaundrycustomerSubmitBtn.addEventListener('click', function(){
+    let isValid = true;
+
+    //laundryOwnerFirstName
+    if(laundrycustomerFirstName.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(laundrycustomerFirstName.id, 'Please input a valid First Name.');
+    }
+    else {
+        dynamicFieldErrorMessage(laundrycustomerFirstName.id, '');
+    }
+
+    //laundrycustomerLastName
+    if(laundrycustomerLastName.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(laundrycustomerLastName.id, 'Please input a valid Last Name.');
+    }
+    else {
+        dynamicFieldErrorMessage(laundrycustomerLastName.id, '');
+    }
+
+    //laundrycustomerEmail
+    if(laundrycustomerEmail.value.length < 1 || !isValidEmail(laundrycustomerEmail)){
+        isValid = false;
+        dynamicFieldErrorMessage(laundrycustomerEmail.id, 'Please input a valid Email.');
+    }
+    else {
+        dynamicFieldErrorMessage(laundrycustomerEmail.id, '');
+    }
+
+     //laundrycustomerAddress
+     if(laundrycustomerAddress.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(laundrycustomerAddress.id, 'Please input a valid Address.');
+    }
+    else {
+        dynamicFieldErrorMessage(laundrycustomerAddress.id, '');
+    }
+
+
+     //laundrycustomerPhone
+     if(laundrycustomerPhone.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(laundrycustomerPhone.id, '');
+        dynamicFieldErrorMessage(laundrycustomerPhone.id, 'Please input a valid Phone number.');
+    }
+    else {
+
+        if(!validatePhPhone(laundrycustomerPhone.value)){
+            isValid = false;
+            dynamicFieldErrorMessage(laundrycustomerPhone.id, '');
+            dynamicFieldErrorMessage(laundrycustomerPhone.id, 'The Phone number must be a Ph number and must start with 639, 09, or 9.');
+        }
+        else{
+            dynamicFieldErrorMessage(laundrycustomerPhone.id, '');
+        }
+
+       
+    }
+
+    if(isValid){
+
+        // laundryCustomerFormCloseBtn.click();
+
+        laundrycustomerPhone.value = normalizePhoneNumber(laundrycustomerPhone.value);
+
+        const url = "php-sql-controller/login-controller.php";
+        const data = {
+            addNewLaundryOwner: true,
+            isForCustomer: true,
+            firstName:laundrycustomerFirstName.value,
+            lastName:laundrycustomerLastName.value,
+            username:`${laundrycustomerFirstName.value}-${laundrycustomerLastName.value}-${generateRandomNumber(6)}`,
+            password:generateRandomNumber(6),
+            email:laundrycustomerEmail.value,
+            phoneNumber:laundrycustomerPhone.value,
+            address:laundrycustomerAddress.value
+        };
+      
+        dynamicPostRequest(url,data )
+        .then((response) => {
+            if(isValidJSON(response)){
+
+                if(JSON.parse(response).newRecordId){
+                    // dynamicAlertMessage('New Laundry Customer added successfully.', 'success', 3000);
+                    globalNewCustomerId = JSON.parse(response).newRecordId;
+
+                    serviceContainer.innerHTML = '';
+                    loadServicesForPage(page);
+
+                    $('#addCustomerModal').modal('hide');
+                    $('#createTransactionMadal').modal('show');
+
+                    // laundrycustomerFirstName.value = ''
+                    // laundrycustomerLastName.value = ''
+                    // laundrycustomerEmail.value = ''
+                    // laundrycustomerPhone.value = ''
+                    // laundrycustomerAddress.value = ''
+                }
+                else
+                {
+                    let errorMessage = JSON.parse(response);
+                    dynamicAlertMessage(errorMessage, 'error', 3000);
+                }
+            }
+            else{
+                let errorMessage = 'Something went wrong please check your console for error logs';
+                console.error(response);
+                dynamicAlertMessage(errorMessage, 'error', 3000);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+
+    }
+   
 })
 
 // event listener for checkout
@@ -344,8 +475,6 @@ backToProductModalBtn.addEventListener('click', (e) => {
     $('#selectOrderProductModal').modal('show')
     $('#transactionFinalization').modal('hide')
 });
-
-
 
 const checkCancelFinalize =  setInterval(function(){
     let cancelFinalize = document.getElementById('cancel-finalize');
@@ -639,6 +768,19 @@ function loadServicesForPage(pageNumber) {
     if (services.length > 0) {
         moreServicesAvailable = true; // Reset flag if services are found
         services.forEach(service => {
+
+            let perAmount = '';
+            if(service.unit_measurement != 'N/A'){
+                
+                let serviceLoad = service.service_load;
+
+                if(service.unit_measurement == 'Kg'){
+                    serviceLoad = currencyToNormalFormat(service.service_load)
+                }
+
+                perAmount = ` (${serviceLoad}${service.unit_measurement})`;
+            }
+
             const serviceItem = document.createElement('div');
             serviceItem.classList.add('col-md-4');
             serviceItem.innerHTML = `
@@ -646,8 +788,9 @@ function loadServicesForPage(pageNumber) {
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title" id="service_name_${service.service_id}">${service.service_name}</h5>
                         <p class="card-text opacity-75" id="service_description_${service.service_id}">Description: ${service.description || 'No description available'}</p>
-                        <p class="card-text opacity-75" id="service_price_${service.service_id}">Price: ${formatToCurrency(service.price)}</p>
-                        <div class="d-grid gap-2">
+                        <span class="card-text opacity-75" id="service_price_${service.service_id}">Price: ${formatToCurrency(service.price)}${perAmount}</span>
+                        <span class="card-text opacity-75" id="service_type_${service.service_id}">Type: ${service.service_type}</span>
+                        <div class="d-grid gap-2 mt-3">
                             <button class="btn btn-primary" id="select-service-btn-${service.service_id}" type="button">Select Service</button>
                         </div>
                     </div>
