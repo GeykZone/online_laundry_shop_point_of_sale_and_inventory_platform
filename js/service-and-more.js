@@ -889,13 +889,27 @@ function updatePagination(currentPage, totalPages) {
 
 // function to load and for selecting product for the selected service
 function loadAndSelectProduct(service){
-    $('#createTransactionMadal').modal('hide')
-    $('#selectOrderProductModal').modal('show')
-    productPage = 1; 
-    productListContainer.innerHTML = '';
-    selectedServiceGlobalVar = service;
 
-    loadProductsForCurrentPage(productPage)
+    const serviceType = service.service_type;
+
+    if(['Fold', 'Dry', 'Package' ].includes(serviceType)){
+
+        alert('no need product')
+
+    }
+    else{
+
+        $('#createTransactionMadal').modal('hide')
+        $('#selectOrderProductModal').modal('show')
+        productPage = 1; 
+        productListContainer.innerHTML = '';
+        selectedServiceGlobalVar = service;
+    
+        console.log('service : ', service   )
+    
+        loadProductsForCurrentPage(productPage)
+    }
+
 
 }
 

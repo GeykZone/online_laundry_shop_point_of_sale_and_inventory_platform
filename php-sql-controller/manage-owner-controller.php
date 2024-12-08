@@ -31,12 +31,13 @@ if(isset($_GET['showLaundryOwnerList'])){
         array('db' => 'phone_number', 'dt' => 5, 'field' => 'phone_number'),
         array('db' => 'address', 'dt' => 6, 'field' => 'address'),
         array('db' => 'user_activation_status', 'dt' => 7, 'field' => 'user_activation_status'),
+        array('db' => 'active_status', 'dt' => 8, 'field' => 'active_status'),
     );
     
     // Include SQL query processing class 
     require 'ssp.class.php'; 
 
-    $joinQuery = ", user_id, first_name, last_name, username, email, phone_number, address, user_activation_status FROM `{$table}`";
+    $joinQuery = ", user_id, first_name, last_name, username, email, phone_number, address, user_activation_status, active_status FROM `{$table}`";
     $where = " position = 'Laundry Owner'";
 
     // Output data as json format 

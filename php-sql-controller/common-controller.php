@@ -10,6 +10,34 @@ function clearToken(){
     echo json_encode('login.php');
 }
 
+// udate to offline user
+if (isset($inputData['queryUserTosSetOffline']) && $inputData['queryUserTosSetOffline'] === true) {
+    // Set the timezone to the Philippines
+    date_default_timezone_set('Asia/Manila');
+    $currentDateTime = date('Y-m-d H:i:s');
+    
+    // SQL to update active_status based on last_activity
+    $sql = "UPDATE user 
+            SET active_status = 'Offline' 
+            WHERE TIMESTAMPDIFF(MINUTE, last_activity, ?) >= 3";  // mark ass offline if 3 minutes inactive
+    
+    $stmt = $conn->prepare($sql);
+    
+    if ($stmt === false) {
+        die("Error preparing the SQL statement: " . $conn->error);
+    }
+    
+    $stmt->bind_param("s", $currentDateTime);
+    if ($stmt->execute()) {
+        $response = ["status" => "success", "message" => "Users updated to Offline."];
+    } else {
+        $response = ["status" => "error", "message" => $conn->error];
+    }
+
+    echo json_encode($response);
+    exit;
+}
+
 // delete the login token if it is already expired
 if (isset($inputData['check_login_token'])){
     // Set the time zone to Philippines

@@ -435,7 +435,7 @@ if(laundryShopTable){
             },
             order: [[1,'asc']],
             
-            responsive: true,
+            responsive: false,
             fixedHeader: true,
             searching: true, // Disable default server-side search
             dom: 'Blfrtip',

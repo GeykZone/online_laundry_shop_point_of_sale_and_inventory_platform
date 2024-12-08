@@ -766,7 +766,6 @@ function checkIfusernameExist(type){
 
 }
 
-
 // update the password for account recovery
 function updateToNewPasswordFunction(){
     WaitigLoader(true);

@@ -66,6 +66,7 @@
                   <th scope="col">Phone</th> 
                   <th scope="col">Address</th>
                   <th scope="col">Activation Status</th>
+                  <th scope="col">Active Status</th>
                 </tr>
               </thead>
               <tbody class="table-group-divider">

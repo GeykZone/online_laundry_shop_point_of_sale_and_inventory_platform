@@ -66,12 +66,13 @@ if(isset($_GET['showStaffList'])){
         array('db' => 'phone_number', 'dt' => 5, 'field' => 'phone_number'),
         array('db' => 'address', 'dt' => 6, 'field' => 'address'),
         array('db' => 'user_activation_status', 'dt' => 7, 'field' => 'user_activation_status'),
+        array('db' => 'active_status', 'dt' => 8, 'field' => 'active_status'),
     );
     
     // Include SQL query processing class 
     require 'ssp.class.php'; 
 
-    $joinQuery = ", u.user_id AS user_id, u.first_name AS first_name, u.last_name AS last_name, u.username AS username, 
+    $joinQuery = ",  u.active_status AS active_status, u.user_id AS user_id, u.first_name AS first_name, u.last_name AS last_name, u.username AS username, 
     u.email AS email, u.phone_number AS phone_number,  u.position AS position, u.address AS address, u.user_activation_status AS user_activation_status  
     FROM `{$table}` AS lss 
     LEFT JOIN user AS u ON lss.user_id = u.user_id 

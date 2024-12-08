@@ -230,7 +230,7 @@ if(staffTable){
             },
             order: [[1,'asc']],
             
-            responsive: true,
+            responsive: false,
             fixedHeader: true,
             searching: true, // Disable default server-side search
             dom: 'Blfrtip',
@@ -245,7 +245,7 @@ if(staffTable){
                       // Specify columns to be included (0 to 8 in this case)
                       columns: function (idx, data, node) {
                           // Include columns 0 to 8
-                          return idx >= 1 && idx <= 7;
+                          return idx >= 1 && idx <= 8;
                       }
                     }
                 }
@@ -281,13 +281,17 @@ if(staffTable){
                         buttonType = 'btn-success'
                     }
 
+                     // Serialize the row object to JSON and escape it for HTML
+                     const serializedRow = encodeURIComponent(JSON.stringify(row));
+
                     let actionButton;
-                    actionButton = `<button type="button" onClick="activateDeactivateLaundryStaff('${row}')" class="btn ${buttonType} text-white" >${actionButtonText}</button> `
+                    actionButton = `<button type="button" onClick="activateDeactivateLaundryStaff('${serializedRow}')" class="btn ${buttonType} text-white" >${actionButtonText}</button> `
                     return actionButton;
                             
                 },
                 
              },
+              null,
               null,
               null,
               null,
@@ -371,7 +375,7 @@ function activateDeactivateLaundryStaff(row) {
     let str = row;
 
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
     let keys = ["id", "firstName", "lastName", "username", "email", "phoneNumber", "address", "activation_status"];
@@ -406,7 +410,7 @@ function activateDeactivateLaundryStaff(row) {
     .then((response) => {
         if(isValidJSON(response)){
 
-            if(JSON.parse(response) == 'User activation status updated successfully.'){
+            if(JSON.parse(response).includes('User activation status updated successfully.')){
                 if(staffDataTableVar){
                     staffDataTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
                 }

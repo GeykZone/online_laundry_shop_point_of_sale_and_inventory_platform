@@ -99,6 +99,7 @@ if(isset($inputData['addNewLaundryOwner'])){
         $userId = isset($inputData['userId']) ? $inputData['userId'] : 'empty'; // Assuming you have a userId for the update
         $isForSuperAdmin = isset($inputData['isForSuperAdmin']) ? (bool) $inputData['isForSuperAdmin'] : false;
         $isForCustomer = isset($inputData['isForCustomer']) ? (bool) $inputData['isForCustomer'] : false;
+        $status = isset($inputData['status']) ? $conn->real_escape_string($inputData['status']) : null;
 
         if($isForSuperAdmin){
             $userId = 0;
@@ -116,6 +117,13 @@ if(isset($inputData['addNewLaundryOwner'])){
             // Update operation
             $setClauses = [];
             
+            if ($status !== null) {
+                date_default_timezone_set('Asia/Manila');
+                $currentDatedatetime = date('Y-m-d H:i:s');
+
+                $setClauses[] = "last_activity = '$currentDatedatetime'";
+                $setClauses[] = "active_status = '$status'";
+            }
             if ($firstName !== null) {
                 $setClauses[] = "first_name = '$firstName'";
             }

@@ -204,12 +204,51 @@ const checkLogoutConfirmButon = setInterval(() => {
                 if(isValidJSON(response)){
 
                     if(JSON.parse(response) == 'Logout successfully.'){
-                        setTimeout(function(){
-                            sessionStorage.clear();
-                            WaitigLoader(false);
-                            window.location.href = 'login.php';
-                        },3000)
-                        dynamicAlertMessage('Logout successfully.', 'success', 3000);
+
+
+
+                        if((userId != undefined && userId != null)){
+                            const url = "php-sql-controller/login-controller.php";
+                            const data = {
+                                addNewLaundryOwner: true,
+                                userId: userId,
+                                status: 'Offline'
+                            };    
+                            
+                            if(userId == 0 || userId == '0'){
+                                
+                                data.isForSuperAdmin = true;
+                            }
+
+                            if(userPosition == "Laundry Staff"){
+                                data.isForStaff = true;
+                            }
+
+                            const detailsList = dynamicSynchronousPostRequest(url, data);
+                            if(isValidJSON(detailsList)){
+                                const details = JSON.parse(detailsList);
+                                if (!`${details}`.includes("Error:")) {
+                                   
+                                    setTimeout(function(){
+                                        sessionStorage.clear();
+                                        WaitigLoader(false);
+                                        window.location.href = 'login.php';
+                                    },3000)
+                                    dynamicAlertMessage('Logout successfully.', 'success', 3000);
+                    
+                                } else {
+                                    WaitigLoader(false);
+                                    dynamicAlertMessage(details, 'error', 3000);
+                                }
+                                
+                            }
+                            else{
+                                console.error(detailsList);
+                                WaitigLoader(false);
+                                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                            }
+                    
+                        }
                     }
                     else
                     {
@@ -1425,6 +1464,97 @@ function showHideFunctions() {
     changeMainLogoConfiguration();
     changeSHopLogoConfiguratiion();
 
+ 
+
+}
+
+// Add an event listener for mouse movement
+document.addEventListener("click", (event) => {
+    const x = event.clientX; // X-coordinate of the mouse pointer
+    const y = event.clientY; // Y-coordinate of the mouse pointer
+
+    // Log the coordinates to the console
+    // console.log('My Id : '+ userId.length)
+
+    if((userId != undefined && userId != null)){
+        const url = "php-sql-controller/login-controller.php";
+        const data = {
+            addNewLaundryOwner: true,
+            userId: userId,
+            status: 'Online'
+        };    
+        
+        if(userId == 0 || userId == '0'){
+            
+            data.isForSuperAdmin = true;
+        }
+
+        if(userPosition == "Laundry Staff"){
+            data.isForStaff = true;
+        }
+
+        const detailsList = dynamicSynchronousPostRequest(url, data);
+        if(isValidJSON(detailsList)){
+            const details = JSON.parse(detailsList);
+            if (!`${details}`.includes("Error:")) {
+                // console.log('info', details);
+
+                updateStatusToOffline();
+
+            } else {
+                WaitigLoader(false);
+                dynamicAlertMessage(details, 'error', 3000);
+            }
+            
+        }
+        else{
+            console.error(detailsList);
+            WaitigLoader(false);
+            dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+        }
+
+    }
+});
+
+
+function updateStatusToOffline(){
+
+    const url = "php-sql-controller/common-controller.php";
+    const data = {
+        queryUserTosSetOffline: true, // Flag to trigger the backend action
+    };
+
+    // Call the custom POST function
+    const response = dynamicSynchronousPostRequest(url, data);
+
+    // Handle the response
+    if (isValidJSON(response)) {
+        const result = JSON.parse(response);
+        if (result.status === "success") {
+            // console.info("User statuses updated successfully.");
+            try {
+                if(typeof laundryOwnerDataTableVar !== undefined){
+                    laundryOwnerDataTableVar.ajax.reload(null, false); 
+                }
+            } catch (error) {
+            }
+
+
+            try {
+                if(typeof staffDataTableVar !== undefined){
+                    staffDataTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
+                }
+            } catch (error) {
+                
+            }
+
+        } else {
+            console.error("Failed to update user statuses:", result.message);
+        }
+    } else {
+        console.error("Invalid response from server:", response);
+    }
+
 }
 
 // email checker function
@@ -1840,7 +1970,6 @@ function validatePhPhone(inputValue) {
     }
     return true; // Valid phone number
 }
-
 
 // function that if field start with 09 or 9 make that part into 639 
 function normalizePhoneNumber(inputField) {

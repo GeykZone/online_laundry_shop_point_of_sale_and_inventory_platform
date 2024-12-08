@@ -31,7 +31,7 @@ if(laundryOwnerTable){
             },
             order: [[1,'asc']],
             
-            responsive: true,
+            responsive: false,
             fixedHeader: true,
             searching: true, // Disable default server-side search
             dom: 'Blfrtip',
@@ -46,7 +46,7 @@ if(laundryOwnerTable){
                       // Specify columns to be included (0 to 8 in this case)
                       columns: function (idx, data, node) {
                           // Include columns 0 to 8
-                          return idx >= 1 && idx <= 7;
+                          return idx >= 1 && idx <= 8;
                       }
                     }
                 }
@@ -91,6 +91,7 @@ if(laundryOwnerTable){
                         return actionButton;
                     }
                 },
+              null,
               null,
               null,
               null,
@@ -210,7 +211,7 @@ function activateDeactivateLaundryOwner(row) {
     .then((response) => {
         if(isValidJSON(response)){
 
-            if(JSON.parse(response) == 'User activation status updated successfully.'){
+            if(JSON.parse(response).includes('User activation status updated successfully.')){
                 if(laundryOwnerDataTableVar){
                     laundryOwnerDataTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
                 }
