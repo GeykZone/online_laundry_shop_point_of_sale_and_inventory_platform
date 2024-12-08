@@ -40,7 +40,7 @@ if (isset($inputData['queryServices']) && $inputData['queryServices'] == true) {
 // query  products with pagination
 if (isset($inputData['queryProducts']) && $inputData['queryProducts'] == true) {
     $page = isset($inputData['currentPage']) ? intval($inputData['currentPage']) : 1;
-    $limit = 5; // Number of products per page
+    $limit = 2; // Number of products per page
     $offset = ($page - 1) * $limit;
     $shop_id = $inputData['shop_id'];
 
@@ -53,7 +53,8 @@ if (isset($inputData['queryProducts']) && $inputData['queryProducts'] == true) {
     $totalPages = ceil($totalCount / $limit);
 
     // Query the products from the database with LIMIT and OFFSET for pagination
-    $sql = "SELECT `product_id`, `product_name`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`, `product_status` 
+    $sql = "SELECT `product_id`, `product_name`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`, `product_status`, `unit_measurement`, `amount_per_stock`,
+            `product_type`, `amount_per_price`
             FROM `product` 
             WHERE `product_status` = 'Active' AND `shop_id` = '$shop_id'
             LIMIT $limit OFFSET $offset";

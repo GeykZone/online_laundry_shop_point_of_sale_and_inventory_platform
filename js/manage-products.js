@@ -19,6 +19,7 @@ let productStatus =  document.getElementById('product-status');
 let productType = document.getElementById('product-type');
 let product_measurement = document.getElementById('product_measurement');
 let amount_per_stock = document.getElementById('amount_per_stock');
+let amount_per_price = document.getElementById('amount_per_price');
 let productListTable = document.getElementById('product-list-table');
 let productListTableVar;
 manageServiceMoreSessionStorage(false, false);
@@ -84,9 +85,9 @@ createLaundryShopProductBtn.addEventListener('click', function(){
     if(!productStatusContainer.classList.contains('d-none')){
         productStatusContainer.classList.add('d-none')
         
-        if(productImageUploadContainer.classList.contains('col-md-12')){
-            productImageUploadContainer.classList.remove('col-md-12')
-            productImageUploadContainer.classList.add('col-md-6')
+        if(!productImageUploadContainer.classList.contains('col-md-12')){
+            productImageUploadContainer.classList.add('col-md-12')
+            productImageUploadContainer.classList.remove('col-md-6')
         }
     }
 
@@ -103,6 +104,7 @@ createLaundryShopProductBtn.addEventListener('click', function(){
         productType.value = 'Powder'
         product_measurement.value = 'Kg'
         amount_per_stock.value = ''
+        amount_per_price.value = ''
 
         updateProduct = false;
 
@@ -184,8 +186,16 @@ submitLaundryShopProductBtn.addEventListener('click', function(){
     else {
         dynamicFieldErrorMessage(amount_per_stock.id, '');
     }
-    
 
+
+    if(amount_per_price.value.length < 1){
+        isValid = false;
+        dynamicFieldErrorMessage(amount_per_price.id, 'Please input a valid Laundry Shop Product Amount per Price.');
+    }
+    else {
+        dynamicFieldErrorMessage(amount_per_price.id, '');
+    }
+    
 
     if(isValid){
         let imageLink;
@@ -207,6 +217,7 @@ submitLaundryShopProductBtn.addEventListener('click', function(){
                             productType: productType.value,
                             product_measurement: product_measurement.value,
                             amount_per_stock: amount_per_stock.value,
+                            amount_per_price:amount_per_price.value,
                             productPrice: currencyToNormalFormat(productPrice.value),
                             productQuantity: productQuantity.value,
                             imageLink: imageLink,
@@ -282,6 +293,18 @@ amount_per_stock.addEventListener('blur', function(e){
     
 })
 
+// conver to float
+amount_per_price.addEventListener('blur', function(e){
+
+    if(e.target.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+        e.target.value =  currencyToNormalFormat(e.target.value)
+    }
+    else{
+        e.target.value = integerConverter(e.target.value)
+    }
+    
+})
+
 // an event that convert the value of price input into a currency
 productQuantity.addEventListener('blur', function(e){
 
@@ -299,6 +322,14 @@ product_measurement.addEventListener('change', function(e){
     }
     else{
         amount_per_stock.value = integerConverter(amount_per_stock.value)
+    }
+
+
+    if(amount_per_price.value.length > 0 && e.target.value != 'Cup' && e.target.value != 'Sachet'){
+        amount_per_price.value =  currencyToNormalFormat(amount_per_price.value)
+    }
+    else{
+        amount_per_price.value = integerConverter(amount_per_price.value)
     }
     
 })
@@ -346,7 +377,7 @@ if(productListTable){
                         // Specify columns to be included (0 to 8 in this case)
                         columns: function (idx, data, node) {
                             // Include columns 0 to 8
-                            return idx >= 2  && idx <= 9;
+                            return idx >= 2  && idx <= 10;
                         }
                       }
                   }
@@ -426,6 +457,18 @@ if(productListTable){
                 },
               },
               null,
+              {
+                "render": function ( data, type, row, meta ) {
+
+                    if(row[5] != 'Cup' && row[5] != 'Sachet'){
+                        return currencyToNormalFormat(`${data}`); 
+                    }
+                    else{
+                        return integerConverter(data);
+                    }
+                            
+                },
+              },
               null
             ],
           });    
@@ -509,7 +552,7 @@ function updateLaundryProduct(row) {
     let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
-    let keys = ["id", "image_link", "product_name", "product_brand", "product_type", "unit_measurement", "amount_per_stock", "quantity", "price", "product_status"];
+    let keys = ["id", "image_link", "product_name", "product_brand", "product_type", "unit_measurement", "amount_per_stock", "quantity", "price", "amount_per_price", "product_status"];
 
     // Create a JSON object by mapping keys to values
     let jsonObj = {};
@@ -527,6 +570,7 @@ function updateLaundryProduct(row) {
     const product_type = jsonObj.product_type
     const unit_measurement = jsonObj.unit_measurement
     const amount_per_stock_field = jsonObj.amount_per_stock
+    const amount_per_price_field = jsonObj.amount_per_price
 
     productName.value = product_name;
     productBrand.value = product_brand;
@@ -539,6 +583,21 @@ function updateLaundryProduct(row) {
     productType.value = product_type
     product_measurement.value = unit_measurement
     amount_per_stock.value = amount_per_stock_field
+    amount_per_price.value = amount_per_price_field
+
+    if(amount_per_stock.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+        amount_per_stock.value =  currencyToNormalFormat(amount_per_stock.value)
+    }
+    else{
+        amount_per_stock.value = integerConverter(amount_per_stock.value)
+    }
+
+    if(amount_per_price.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+        amount_per_price.value =  currencyToNormalFormat(amount_per_price.value)
+    }
+    else{
+        amount_per_price.value = integerConverter(amount_per_price.value)
+    }
 
     if(amount_per_stock_field == 0 || amount_per_stock_field == '0'){
         amount_per_stock.value = ''
@@ -631,6 +690,16 @@ function updateLaundryProduct(row) {
                 dynamicFieldErrorMessage(amount_per_stock.id, '');
             }
 
+
+            if(amount_per_price.value.length < 1){
+                isValid = false;
+                dynamicFieldErrorMessage(amount_per_price.id, 'Please input a valid Laundry Shop Product Amount per Price.');
+            }
+            else {
+                dynamicFieldErrorMessage(amount_per_price.id, '');
+            }
+        
+
             if(isValid){
                 WaitigLoader(true)
                 let imageLink;
@@ -673,6 +742,9 @@ function updateLaundryProduct(row) {
                     data.amount_per_stock = amount_per_stock.value;
                 }
 
+                if (amount_per_price.value) {
+                    data.amount_per_price = amount_per_price.value;
+                }
 
                 data.shop_id = sessionStorage.getItem('sessionShopId');
                 data.submitLaundryShopProduct = true;
@@ -711,6 +783,7 @@ function updateLaundryProduct(row) {
                                         productType.value = 'Powder'
                                         product_measurement.value = 'Kg'
                                         amount_per_stock.value = ''
+                                        amount_per_price.value = ''
 
                                         WaitigLoader(false)
 
@@ -788,9 +861,9 @@ function updateLaundryProduct(row) {
         productStatusContainer.classList.remove('d-none')
     }
 
-    if(!productImageUploadContainer.classList.contains('col-md-12')){
-        productImageUploadContainer.classList.add('col-md-12')
-        productImageUploadContainer.classList.remove('col-md-6')
+    if(productImageUploadContainer.classList.contains('col-md-12')){
+        productImageUploadContainer.classList.remove('col-md-12')
+        productImageUploadContainer.classList.add('col-md-6')
     }
     $('#addLaundryShopProduct').modal('show');
 

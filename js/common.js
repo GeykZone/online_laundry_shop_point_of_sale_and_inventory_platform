@@ -4126,37 +4126,113 @@ function updateAddMoreProductPagination(currentProductPage, totalProductPages) {
 }
 
 // calculate cost kilo gram to gram
-function calculateCostKiloGramToGram(pricePerKg, weightInGrams) {
-    console.log(`Price per kilogram: ₱${pricePerKg}`);
+function calculateCostKiloGramToGram(pricePerBaseKg, weightInGrams, baseKg) {
+    console.log(`Price per ${baseKg} kilogram(s): ${formatToCurrency(`${pricePerBaseKg}`)}`);
     console.log(`Weight in grams: ${weightInGrams} grams`);
+    
+    // Convert the price to price per 1 kg
+    let pricePerKg = pricePerBaseKg / baseKg;
+    console.log(`Converted price per kilogram: ${formatToCurrency(`${pricePerKg}`)}`);
     
     // Convert grams to kilograms
     let weightInKg = weightInGrams / 1000;
-    console.log(`Converted weight in kilograms: ${weightInKg.toFixed(3)} kg`);
+    console.log(`Converted weight in kilograms: ${currencyToNormalFormat(`${weightInKg}`)} kg`);
     
     // Calculate total cost
     let totalCost = pricePerKg * weightInKg;
-    console.log(`Total cost calculation: ₱${pricePerKg} x ${weightInKg.toFixed(3)} = ₱${totalCost.toFixed(2)}`);
+    console.log(`Total cost calculation: ${formatToCurrency(`${pricePerKg}`)} x ${currencyToNormalFormat(`${weightInKg}`)} = ${formatToCurrency(`${totalCost}`)}`);
     
     return totalCost;
 }
 
-// calculate cost kilo to cups
-function calculatCostKiloGramToCup(pricePerKg, cups, gramsPerCup) {
-    console.log(`Price per kilogram: ₱${pricePerKg}`);
+
+// Calculate cost based on custom base kilograms and cups
+function calculatCostKiloGramToCup(pricePerBaseKg, cups, baseKg) {
+    let gramsPerCup = 120; // Powdered Soap (Laundry Detergent): Typically ranges from 100-120 grams per cup, depending on the brand and granule density.
+    
+    console.log(`Price per ${baseKg} kilogram(s): ${formatToCurrency(`${pricePerBaseKg}`)}`);
     console.log(`Number of cups: ${cups}`);
-    console.log(`Grams per cup: ${gramsPerCup}`);
+    console.log(`Estimated grams per cup: ${gramsPerCup} (based on Standard Powdered Soap)`);
+    
+    // Convert the price to price per 1 kg
+    let pricePerKg = pricePerBaseKg / baseKg;
+    console.log(`Converted price per kilogram: ${formatToCurrency(`${pricePerKg}`)}`);
     
     // Convert cups to weight in kilograms
     let totalWeightKg = (cups * gramsPerCup) / 1000;
-    console.log(`Total weight in kilograms: ${totalWeightKg.toFixed(3)} kg`);
+    console.log(`Total weight in kilograms: ${currencyToNormalFormat(`${totalWeightKg}`)} kg`);
     
     // Calculate total cost
     let totalCost = pricePerKg * totalWeightKg;
-    console.log(`Total cost calculation: ₱${pricePerKg} x ${totalWeightKg.toFixed(3)} = ₱${totalCost.toFixed(2)}`);
+    console.log(`Total cost calculation: ${formatToCurrency(`${pricePerKg}`)} x ${currencyToNormalFormat(`${totalWeightKg}`)}kg = ${formatToCurrency(`${totalCost}`)}`);
     
     return totalCost;
 }
+
+
+// Calculate KG stock after purchase
+function calculateStockAfterPurchase(stock, baseKg, customerBuyKg) {
+    console.log(`Initial stock (in ${baseKg} kg units): ${stock}`);
+    console.log(`Base unit weight: ${baseKg} kg`);
+    console.log(`Customer wants to buy: ${customerBuyKg} kg`);
+
+    let remainingCustomerBuyKg = customerBuyKg; // Amount the customer still wants
+    let remainingStock = stock; // Remaining stock in baseKg units
+
+    // Process the purchase
+    while (remainingCustomerBuyKg > 0 && remainingStock > 0) {
+        if (remainingCustomerBuyKg >= baseKg) {
+            // If customer needs a full unit or more
+            remainingCustomerBuyKg -= baseKg;
+            remainingStock -= 1; // Reduce one stock unit
+        } else {
+            // If customer needs less than one stock unit
+            // No full stock unit is consumed, so we break here
+            break;
+        }
+        console.log(`Remaining customer buy: ${remainingCustomerBuyKg} kg, Remaining stock: ${remainingStock} units`);
+    }
+
+    return {
+        updatedStock: remainingStock,
+        remainingCustomerBuyKg: remainingCustomerBuyKg, // Return any unfulfilled amount
+    };
+}
+//ex: let result = calculateStockAfterPurchase(99, 0.5, 3);
+//ex: console.log(`Updated stock: ${result.updatedStock} units`);
+//ex: console.log(`Unfulfilled customer buy: ${result.remainingCustomerBuyKg} kg`);
+
+
+// Calculate G stock after purchase
+function calculateStockAfterPurchaseInGrams(stock, baseGrams, customerBuyGrams) {
+    console.log(`Initial stock (in ${baseGrams} grams units): ${stock}`);
+    console.log(`Base unit weight: ${baseGrams} grams`);
+    console.log(`Customer wants to buy: ${customerBuyGrams} grams`);
+
+    let remainingCustomerBuyGrams = customerBuyGrams; // Amount the customer still wants in grams
+    let remainingStock = stock; // Remaining stock in baseGrams units
+
+    // Process the purchase
+    while (remainingCustomerBuyGrams > 0 && remainingStock > 0) {
+        if (remainingCustomerBuyGrams >= baseGrams) {
+            // If customer needs a full unit or more
+            remainingCustomerBuyGrams -= baseGrams;
+            remainingStock -= 1; // Reduce one stock unit
+        } else {
+            break;
+        }
+        console.log(`Remaining customer buy: ${remainingCustomerBuyGrams} grams, Remaining stock: ${remainingStock} units`);
+    }
+
+    return {
+        updatedStock: remainingStock,
+        remainingCustomerBuyGrams: remainingCustomerBuyGrams, // Return any unfulfilled amount
+    };
+}
+// let result = calculateStockAfterPurchaseInGrams(100, 1000, 3000); // 100 units, each 2000 grams, customer wants 1500 grams
+// console.log(`Updated stock: ${result.updatedStock} units`);
+// console.log(`Unfulfilled customer buy: ${result.remainingCustomerBuyGrams} grams`)
+
 
 
 

@@ -26,6 +26,7 @@ if(isset($inputData['submitLaundryShopProduct'])){
     $productType = isset($inputData['productType']) && $inputData['productType'] !== '' ? $inputData['productType'] : null; 
     $product_measurement = isset($inputData['product_measurement']) && $inputData['product_measurement'] !== '' ? $inputData['product_measurement'] : null; 
     $amount_per_stock = isset($inputData['amount_per_stock']) && $inputData['amount_per_stock'] !== '' ? $inputData['amount_per_stock'] : null; 
+    $amount_per_price = isset($inputData['amount_per_price']) && $inputData['amount_per_price'] !== '' ? $inputData['amount_per_price'] : null; 
     
     if ($product_id) {
         $service_status = isset($inputData['service_status']) && $inputData['service_status'] !== '' ? $inputData['service_status'] : null;
@@ -54,6 +55,11 @@ if(isset($inputData['submitLaundryShopProduct'])){
         if ($amount_per_stock !== null) {
             $setClause[] = "amount_per_stock = ?";
             $params[] = $amount_per_stock;
+            $types .= 'd';
+        }
+        if ($amount_per_price !== null) {
+            $setClause[] = "amount_per_price = ?";
+            $params[] = $amount_per_price;
             $types .= 'd';
         }
         if ($productPrice !== null) {
@@ -112,12 +118,12 @@ if(isset($inputData['submitLaundryShopProduct'])){
         }
     } else {
         // If no product_id is provided, perform an INSERT
-        $sql = "INSERT INTO `product`(`product_name`, `product_type`, `unit_measurement`, `amount_per_stock`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO `product`(`product_name`, `product_type`, `unit_measurement`, `amount_per_stock`,  `amount_per_price`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`) 
+                VALUES (?, ?, ?, ?, ?, ?, ?,  ?, ?, ?)";
     
         // Prepare and bind parameters
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssddissi", $productName, $productType, $product_measurement, $amount_per_stock, $productPrice,  $productQuantity, $imageLink, $productBrand, $shop_id);
+        $stmt->bind_param("sssdddissi", $productName, $productType, $product_measurement, $amount_per_stock,  $amount_per_price, $productPrice,  $productQuantity, $imageLink, $productBrand, $shop_id);
     
         // Execute the statement
         if ($stmt->execute()) {
@@ -159,14 +165,15 @@ if (isset($_GET['showLaundryProductList'])) {
         array('db' => 'amount_per_stock', 'dt' => 6, 'field' => 'amount_per_stock'),
         array('db' => 'quantity', 'dt' => 7, 'field' => 'quantity'),
         array('db' => 'price', 'dt' => 8, 'field' => 'price', 'formatter' => function($d, $row) {return formatCurrency($d);}),
-        array('db' => 'product_status', 'dt' => 9, 'field' => 'product_status'),
+        array('db' => 'amount_per_price', 'dt' => 9, 'field' => 'amount_per_price'),
+        array('db' => 'product_status', 'dt' => 10, 'field' => 'product_status'),
     );
 
     // Include SQL query processing class 
     require 'ssp.class.php';
 
     // SQL Join and Where conditions, ensuring correct structure
-    $joinQuery = ", product_id, product_name, product_type, unit_measurement, amount_per_stock, price, quantity, image_link, product_brand, shop_id, product_status FROM `{$table}`";  // No need for join if you're just selecting from one table
+    $joinQuery = ", product_id, product_name, product_type, unit_measurement, amount_per_stock, amount_per_price, price, quantity, image_link, product_brand, shop_id, product_status FROM `{$table}`";  // No need for join if you're just selecting from one table
     $where = "shop_id = '$shop_id'";
 
     // Output data as json format 

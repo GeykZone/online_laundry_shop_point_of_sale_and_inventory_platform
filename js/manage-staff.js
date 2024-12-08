@@ -72,7 +72,16 @@ addStaffSubmitBtn.addEventListener('click', function(){
         dynamicFieldErrorMessage(staffPhone.id, 'Please input a valid Address.');
     }
     else {
-        dynamicFieldErrorMessage(staffPhone.id, '');
+
+        if(!validatePhPhone(staffPhone.value)){
+            isValid = false;
+            dynamicFieldErrorMessage(staffPhone.id, '');
+            dynamicFieldErrorMessage(staffPhone.id, 'The Phone number must be a Ph number and must start with 639, 09, or 9.');
+        }
+        else{
+            dynamicFieldErrorMessage(staffPhone.id, '');
+        }
+        
     }
 
 

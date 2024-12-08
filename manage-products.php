@@ -77,6 +77,14 @@
                     </div>
                   </div>
 
+                   <!-- Amount Per Price -->
+                   <div class="col-md-6">
+                    <label for="amount_per_price" class="form-label">Amount per Price</label>
+                    <input type="text" placeholder="Amount per Price" maxlength="10" class="form-control" id="amount_per_price" required>
+                    <div id="amount_per_price-error-feedback" class="invalid-feedback">
+                    </div>
+                  </div>
+
                   <!-- Price -->
                   <div class="col-md-6">
                     <label for="product-price" class="form-label">Price</label>
@@ -187,6 +195,7 @@
                   <th scope="col">Amount per Stock</th>
                   <th scope="col">Stock</th>
                   <th scope="col">Price</th>
+                  <th scope="col">Amount per Price</th>
                   <th scope="col">Product Status</th>
                 </tr>
               </thead>

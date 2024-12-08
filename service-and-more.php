@@ -137,6 +137,7 @@
               
 
               <div class="modal-footer">
+              <button id="back-to-service-list" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Back to Service List</button>
                 <button id="checkout" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Checkout <i class="fa-solid fa-cart-arrow-down"></i></button>
                 <div id="submit-laundry-shop-service-update-container"></div>
               </div>

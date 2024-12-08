@@ -50,9 +50,11 @@ let laundrycustomerEmail = document.getElementById('laundry-customer-email');
 let laundrycustomerAddress = document.getElementById('laundry-customer-adress');
 let laundrycustomerPhone = document.getElementById('laundry-customer-phone');
 let backToCustomerForm = document.getElementById('back-to-customer-form');
+let backToServiceList = document.getElementById('back-to-service-list');
 let estimatedPayable;
 let ratingLength = 0;
 let globalNewCustomerId = '';
+let order_measurement_change = false;
 
 // confirm transaction
 dynamicConfirmationMessage( 
@@ -219,6 +221,15 @@ backToCustomerForm.addEventListener('click', function(){
     $('#createTransactionMadal').modal('hide');
 })
 
+// event listener when the transaction creation modal show it the service also ge queried
+backToServiceList.addEventListener('click', function(){
+    // serviceContainer.innerHTML = '';
+    // loadServicesForPage(page);
+
+    $('#createTransactionMadal').modal('show');
+    $('#selectOrderProductModal').modal('hide');
+})
+
 // click button event for submiting new laundry customer
 addLaundrycustomerSubmitBtn.addEventListener('click', function(){
     let isValid = true;
@@ -362,30 +373,53 @@ checkoutButton.addEventListener('click', (e) => {
                 const productId = product.id;
                 const productQuantity = product.quantity;
 
-                const url = "php-sql-controller/service-and-more-controller.php";
-                const data = {
-                    productId: productId,
-                    productQuantity: productQuantity,
-                    verifyQuantity: true,
-                };
+                // const url = "php-sql-controller/service-and-more-controller.php";
+                // const data = {
+                //     productId: productId,
+                //     productQuantity: productQuantity,
+                //     verifyQuantity: true,
+                // };
 
-                // Synchronous request to check quantity from the database
-                const detailsList = dynamicSynchronousPostRequest(url, data);
+                // // Synchronous request to check quantity from the database
+                // const detailsList = dynamicSynchronousPostRequest(url, data);
 
-                if (isValidJSON(detailsList)) {
-                    const details = JSON.parse(detailsList);
+                // if (isValidJSON(detailsList)) {
+                //     const details = JSON.parse(detailsList);
 
-                    // Check if the queried quantity is less than the requested productQuantity
-                    if (details.quantity < productQuantity) {
+                //     // Check if the queried quantity is less than the requested productQuantity
+                //     if (details.quantity < productQuantity) {
+                //         isValid = false;
+                //         errorMessage = `Insufficient stock for Product ID ${productId}. Requested: ${productQuantity}, Available: ${details.quantity}`;
+                //     }
+                // } else {
+                //     isValid = false;
+                //     console.error(detailsList);
+                //     errorMessage = 'Something went wrong. Please see the error logs for additional information.';
+                // }
+
+                const quantityInput = document.getElementById(`quantityInput${productId}`);
+                const quantityInputLabel = document.getElementById(`quantityInputLabel${productId}`);
+
+                try {
+                    if(quantityInput.value.length < 1){
                         isValid = false;
-                        errorMessage = `Insufficient stock for Product ID ${productId}. Requested: ${productQuantity}, Available: ${details.quantity}`;
+                        dynamicFieldErrorMessage(quantityInput.id, `Please input a valid ${quantityInputLabel.textContent}.`);
                     }
-                } else {
+                    else {
+                        dynamicFieldErrorMessage(quantityInput.id, '');
+                    }
+
+                } catch (error) {
+                    errorMessage = error;
                     isValid = false;
-                    console.error(detailsList);
-                    errorMessage = 'Something went wrong. Please see the error logs for additional information.';
                 }
+
             });
+
+
+            if(errorMessage){
+                dynamicAlertMessage('Some of the selected products have fields that are not filled in.', 'warning', 3000)
+            }
 
             // Final validation check
             if (isValid) {
@@ -462,7 +496,6 @@ checkoutButton.addEventListener('click', (e) => {
             }
             else{
                 WaitigLoader(false)
-                dynamicAlertMessage(errorMessage, 'error', 3000); 
             }
 
         }
@@ -778,7 +811,7 @@ function loadServicesForPage(pageNumber) {
                     serviceLoad = currencyToNormalFormat(service.service_load)
                 }
 
-                perAmount = ` (${serviceLoad}${service.unit_measurement})`;
+                perAmount = ` (${serviceLoad}${service.unit_measurement.toUpperCase()})`;
             }
 
             const serviceItem = document.createElement('div');
@@ -941,6 +974,41 @@ function loadProductsForCurrentPage(pageNumber) {
             }
             const productCard = document.createElement('div');
             productCard.classList.add('col-md-4');
+
+            let optionList = `
+            <option value="Kg">KG</option>
+            <option value="Ml">ML</option>
+            <option value="Cup">CUP</option>
+            <option value="Grams">GRAMS</option>
+            <option value="Sachet">SACHET</option>
+            `
+
+            if(product.unit_measurement.includes('Kg')){
+                optionList = `<option value="Kg">KG</option>
+                <option value="Cup">CUP</option>
+                <option value="Grams">GRAMS</option>`
+            }
+            else if(product.unit_measurement.includes('Ml'))[
+                optionList = `
+                <option value="Ml">ML</option>
+                `
+            ]
+            else if(product.unit_measurement.includes('Grams'))[
+                optionList = `
+                <option value="Grams">GRAMS</option>
+                `
+            ]
+            else if(product.unit_measurement.includes('Cup'))[
+                optionList = `
+                <option value="Cup">CUP</option>
+                `
+            ]
+            else if(product.unit_measurement.includes('Sachet'))[
+                optionList = `
+                <option value="Sachet">SACHET</option>
+                `
+            ]
+
             productCard.innerHTML = `
                 <div class="card d-flex flex-column">
                     <div class="overflow-hidden shadow-sm" style="height: 300px;">
@@ -949,10 +1017,29 @@ function loadProductsForCurrentPage(pageNumber) {
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">${product.product_name}</h5>
                         <p class="card-text opacity-75">Brand: ${product.product_brand}</p>
-                        <p class="card-text opacity-75">Price: ${formatToCurrency(product.price)}</p>
-                        <p class="card-text opacity-75 ">Quantity: <span class="text-${bgColor}">${product.quantity}</span></p>
-                        <div class="d-flex align-items-center">
-                            <input type="number" class="form-control me-2" id="quantityInput${product.product_id}" value="1" min="1" style="width: 70px;">
+                        <p class="card-text opacity-75">Type: ${product.product_type}</p>
+                        <p class="card-text opacity-75">Price: ${formatToCurrency(product.price)} (${product.amount_per_price}${product.unit_measurement.toUpperCase()})</p>
+                        <p class="card-text opacity-75 ">Stock: <span class="text-${bgColor}">${product.quantity}</span></p>
+                        <p class="card-text opacity-75">Amount per Stock: ${product.amount_per_stock}${product.unit_measurement.toUpperCase()}</p>
+                        <div class="d-flex flex-column gap-3">
+                            
+                            <!-- Unit of Measurement -->
+                            <div class="">
+                                <label for="order_measurement${product.product_id}" class="form-label">Unit of Measurement</label>
+                                    <select id="order_measurement${product.product_id}" class="form-select form-select" aria-label=".form-select-sm example" >
+                                        ${optionList}
+                                    </select>
+                                <div id="order_measurement${product.product_id}-error-feedback" class="invalid-feedback">
+                                </div>
+                            </div>
+
+                            <div class="">
+                                <label for="quantityInput${product.product_id}" id="quantityInputLabel${product.product_id}" class="form-label">Order Amount per ${product.unit_measurement.toUpperCase()}</label>
+                                <input type="number" placeholder="Order Amount per ${product.unit_measurement.toUpperCase()}" class="form-control me-2" id="quantityInput${product.product_id}"  min="1">
+                                <div id="quantityInput${product.product_id}-error-feedback" class="invalid-feedback">
+                                </div>
+                            </div>
+
                             <label style="min-width:50px; width:auto; max-width:500px;" type="button" class="btn btn-info d-flex justify-content-center flex-row-reverse gap-2 text-white" for="productSelect${product.product_id}">
                                 <input class="form-check-input" type="checkbox" value="${product.product_id}" id="productSelect${product.product_id}" ${selectedProductIds.some(item => item.id === product.product_id) ? 'checked' : ''}>
                                 <span id="product-check-label${product.product_id}">${selectedProductIds.some(item => item.id === product.product_id) ? 'Selected' : 'Select'}</span>
@@ -968,20 +1055,48 @@ function loadProductsForCurrentPage(pageNumber) {
             // Add event listener for the checkbox to track selections
             const checkbox = document.getElementById(`productSelect${product.product_id}`);
             const quantityInput = document.getElementById(`quantityInput${product.product_id}`);
+            const order_measurement_field = document.getElementById(`order_measurement${product.product_id}`);
+            const quantityInputLabel = document.getElementById(`quantityInputLabel${product.product_id}`);
 
             // Restore quantity if the product is already selected
             const selectedProduct = selectedProductIds.find(item => item.id === product.product_id);
             if (selectedProduct) {
                 quantityInput.value = selectedProduct.quantity; // Restore previous quantity
+                order_measurement_field.value = selectedProduct.order_measurement; // Restore previous quantity
+
+                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Cup' && order_measurement_field.value != 'Sachet'){
+                    quantityInput.value =  currencyToNormalFormat(quantityInput.value)
+                }
+                else{
+                    quantityInput.value = integerConverter(quantityInput.value)
+                }
             }
+
+            quantityInputLabel.textContent = `Order Amount per ${order_measurement_field.value.toUpperCase()}`
+            quantityInput.placeholder = `Order Amount per ${order_measurement_field.value.toUpperCase()}`
+
+            order_measurement_field.addEventListener('change', function(){
+
+                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Cup' && order_measurement_field.value != 'Sachet'){
+                    quantityInput.value =  currencyToNormalFormat(quantityInput.value)
+                }
+                else{
+                    quantityInput.value = integerConverter(quantityInput.value)
+                }
+
+                quantityInputLabel.textContent = `Order Amount per ${order_measurement_field.value.toUpperCase()}`
+                quantityInput.placeholder = `Order Amount per ${order_measurement_field.value.toUpperCase()}`
+            })
 
             // Update selection when checkbox is changed
             checkbox.addEventListener('change', (e) => {
                 if (e.target.checked) {
                     const quantity = quantityInput.value; // Get quantity from input
+                    const order_measurement = order_measurement_field.value;
                     selectedProductIds.push(
                         { id: product.product_id,
                           quantity: quantity,
+                          order_measurement: order_measurement,
                           product_name: product.product_name, 
                           product_image: product.image_link,
                           product_brand: product.product_brand,
@@ -992,9 +1107,6 @@ function loadProductsForCurrentPage(pageNumber) {
                     selectedProductIds = selectedProductIds.filter(item => item.id !== product.product_id); // Remove product from selection
                     document.getElementById(`product-check-label${product.product_id}`).textContent = 'Select';
                 }
-
-                // Log selectedProductIds for debugging
-                // console.log('selectedProductIds => ' + JSON.stringify(selectedProductIds));
             });
 
             // Add event listener to update quantity when input value changes
@@ -1005,9 +1117,26 @@ function loadProductsForCurrentPage(pageNumber) {
                 if (selectedProduct) {
                     selectedProduct.quantity = quantity; // Update the quantity in the selectedProductIds array
                 }
+            });
+
+            quantityInput.addEventListener('blur', () => {
+
+                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Cup' && order_measurement_field.value != 'Sachet'){
+                    quantityInput.value =  currencyToNormalFormat(quantityInput.value)
+                }
+                else{
+                    quantityInput.value = integerConverter(quantityInput.value)
+                }
+            });
+            
+            order_measurement_field.addEventListener('input', () => {
+                const order_measurement = order_measurement_field.value; // Get the updated quantity
+                const selectedProduct = selectedProductIds.find(item => item.id === product.product_id); // Find the selected product
+
+                if (selectedProduct) {
+                    selectedProduct.order_measurement = order_measurement; // Update the quantity in the selectedProductIds array
+                }
                 
-                // Log selectedProductIds for debugging
-                // console.log('selectedProductIds => ' + JSON.stringify(selectedProductIds));
             });
         });
     } else {
