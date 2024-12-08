@@ -83,6 +83,16 @@ P30 peer KG
 -Dayun sir ug mag select powder or liquid siya sir ug powder gani iya pilion ma defualt ng Ml ug liquid iyang pilion ma default ang  kilo,gram ug cup
 -Dayun kana sa ubos sir kay dapat dha makita tanan nga ge order sa customer sir
 
+stack in out formula
+
+stock 100
+
+price P30 per 1KG
+
+customer buy 2KG
+
+1KG - 2KG = -1KG => 100Stock - 1Stock = 99Stock => 1KG - 1KG = 0KG => 99Stock - 1Stock = 98Stock => 1Kg
+
 
 
 
