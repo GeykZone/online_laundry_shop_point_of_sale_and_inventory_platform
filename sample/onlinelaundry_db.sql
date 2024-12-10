@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 05, 2024 at 05:48 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Generation Time: Dec 10, 2024 at 10:37 AM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.2.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -36,14 +36,6 @@ CREATE TABLE `discount` (
   `shop_id` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `discount`
---
-
-INSERT INTO `discount` (`discount_id`, `discount_name`, `discount_percent`, `discount_description`, `discount_status`, `shop_id`) VALUES
-(29, 'test A', '20', 'qwqwq', 'Active', 127),
-(30, 'test B', '10', 'asasas', 'Active', 127);
-
 -- --------------------------------------------------------
 
 --
@@ -56,14 +48,6 @@ CREATE TABLE `discounted_transactions` (
   `discount_id` bigint(20) NOT NULL,
   `discounted_transaction_status` char(55) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `discounted_transactions`
---
-
-INSERT INTO `discounted_transactions` (`discounted_transaction_id`, `transaction_id`, `discount_id`, `discounted_transaction_status`) VALUES
-(38, 55, 29, 'Approved'),
-(39, 55, 30, 'Approved');
 
 -- --------------------------------------------------------
 
@@ -100,6 +84,8 @@ CREATE TABLE `hashing_settings` (
 --
 
 INSERT INTO `hashing_settings` (`secret_key`, `secret_iv`) VALUES
+('jnfkjsnfknszfnkjscfsgrggmerm', 'mfweje8483f9jrfjfsijfisfs'),
+('jnfkjsnfknszfnkjscfsgrggmerm', 'mfweje8483f9jrfjfsijfisfs'),
 ('jnfkjsnfknszfnkjscfsgrggmerm', 'mfweje8483f9jrfjfsijfisfs'),
 ('jnfkjsnfknszfnkjscfsgrggmerm', 'mfweje8483f9jrfjfsijfisfs');
 
@@ -149,13 +135,6 @@ CREATE TABLE `login_token` (
   `expiration_date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `login_token`
---
-
-INSERT INTO `login_token` (`login_token_id`, `token`, `user_id`, `expiration_date`) VALUES
-(128, 'YzcrSC8zUFJnS3hNR3NsazgreGNhWE5pT0F5L2JGbnhyajRKNzBsSE9mNW9SblZrUjE0QjNrdVg5V2Q1b3RwOQ==', 92, '2025-01-02 22:04:00');
-
 -- --------------------------------------------------------
 
 --
@@ -168,16 +147,10 @@ CREATE TABLE `order_products` (
   `transaction_id` bigint(20) NOT NULL,
   `product_id` bigint(20) NOT NULL,
   `order_date` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `item_quantity` bigint(11) NOT NULL
+  `item_quantity` float NOT NULL,
+  `unit_measurement` char(50) NOT NULL,
+  `order_product_price` float NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `order_products`
---
-
-INSERT INTO `order_products` (`order_products_id`, `order_name`, `transaction_id`, `product_id`, `order_date`, `item_quantity`) VALUES
-(68, 'test product - test', 55, 15, '2024-12-05 00:02:23', 1),
-(69, 'cppasas - test', 55, 16, '2024-12-05 00:02:23', 1);
 
 -- --------------------------------------------------------
 
@@ -193,16 +166,27 @@ CREATE TABLE `product` (
   `image_link` char(255) NOT NULL,
   `product_brand` char(50) NOT NULL,
   `shop_id` bigint(20) NOT NULL,
-  `product_status` char(50) NOT NULL DEFAULT 'Active'
+  `product_status` char(50) NOT NULL DEFAULT 'Active',
+  `unit_measurement` char(50) NOT NULL DEFAULT 'Kg',
+  `amount_per_stock` float NOT NULL,
+  `product_type` char(50) NOT NULL DEFAULT 'Powder',
+  `amount_per_price` float NOT NULL,
+  `base_stock` float NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `product`
+-- Table structure for table `product_log`
 --
 
-INSERT INTO `product` (`product_id`, `product_name`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`, `product_status`) VALUES
-(15, 'test product', 250, 98, 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2FScreenshot%202023-11-20%20132433.png?alt=media&token=27fbb97c-b554-40c8-8f25-26352c507635', 'test', 127, 'Active'),
-(16, 'cppasas', 250, 97, 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2FScreenshot%202023-11-20%20132433.png?alt=media&token=27fbb97c-b554-40c8-8f25-26352c507635', 'test', 127, 'Active');
+CREATE TABLE `product_log` (
+  `product_log_id` bigint(20) NOT NULL,
+  `product_id` bigint(20) NOT NULL,
+  `changes_details` varchar(535) NOT NULL,
+  `change_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `user_id` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -216,15 +200,11 @@ CREATE TABLE `services` (
   `description` text NOT NULL,
   `price` float NOT NULL,
   `shop_id` bigint(20) NOT NULL,
-  `service_status` char(50) NOT NULL DEFAULT 'Active'
+  `service_status` char(50) NOT NULL DEFAULT 'Active',
+  `service_type` char(50) NOT NULL DEFAULT 'All Types',
+  `unit_measurement` char(50) NOT NULL DEFAULT 'N/A',
+  `service_load` float NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `services`
---
-
-INSERT INTO `services` (`service_id`, `service_name`, `description`, `price`, `shop_id`, `service_status`) VALUES
-(23, 'test service', 'Per Kilo', 30, 127, 'Active');
 
 -- --------------------------------------------------------
 
@@ -251,8 +231,7 @@ CREATE TABLE `shop` (
 --
 
 INSERT INTO `shop` (`shop_id`, `shop_name`, `shop_address`, `contact_number`, `user_id`, `requirement_status`, `days_open`, `open_time`, `close_time`, `additional_schedule_details`, `overall_rating`) VALUES
-(0, 'default_dont_delete', 'default_dont_delete', 'default_dont_delete', 0, 'Approved', 'default_dont_delete', '00:00:00', '00:00:00', 'default_dont_delete', 0),
-(127, 'Test A', 'Oroqueta City, Misamis Occidental Philippines', '09700780041', 92, 'Approved', 'Monday, Tuesday, Wednesday, Thursday, Friday, Saturday', '08:00:00', '16:00:00', '', 0);
+(0, 'default_dont_delete', 'default_dont_delete', 'default_dont_delete', 0, 'Approved', 'default_dont_delete', '00:00:00', '00:00:00', 'default_dont_delete', 0);
 
 -- --------------------------------------------------------
 
@@ -324,14 +303,6 @@ CREATE TABLE `submitted_requirements` (
   `shop_id` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `submitted_requirements`
---
-
-INSERT INTO `submitted_requirements` (`submitted_requirements_id`, `laundry_shop_requirements_id`, `details`, `image_link`, `shop_id`) VALUES
-(67, 15, '122222', 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2Fqr.png?alt=media&token=53a0834a-a714-4cdf-b086-08e8a5f16dc5', 127),
-(68, 16, '121', 'https://firebasestorage.googleapis.com/v0/b/onlinelaundryshoppos.appspot.com/o/image-files%2F462553817_2074191979644403_865619313457853401_n.jpg?alt=media&token=08925b26-14ea-4ec8-b5a5-183bdb27554f', 127);
-
 -- --------------------------------------------------------
 
 --
@@ -355,13 +326,6 @@ CREATE TABLE `transactions` (
   `last_update_date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `transactions`
---
-
-INSERT INTO `transactions` (`transaction_id`, `shop_id`, `user_id`, `transaction_name`, `transaction_date`, `pick_up_date`, `total`, `transaction_status`, `clothes_weight`, `service_id`, `initial`, `transaction_changes_other_details`, `notification_is_read`, `last_update_date`) VALUES
-(55, 127, 0, 'undefined - test service - Transaction', '2024-12-05 00:02:23', '2024-12-05 21:22:25', 381.6, 'Picked-Up', 0, 23, 30, '', 'False', '2024-12-05 21:22:25');
-
 -- --------------------------------------------------------
 
 --
@@ -378,17 +342,17 @@ CREATE TABLE `user` (
   `phone_number` char(20) NOT NULL,
   `address` char(255) NOT NULL,
   `position` char(50) NOT NULL,
-  `user_activation_status` char(50) NOT NULL DEFAULT 'Inactive'
+  `user_activation_status` char(50) NOT NULL DEFAULT 'Inactive',
+  `active_status` char(50) NOT NULL DEFAULT 'Offline',
+  `last_activity` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`user_id`, `first_name`, `last_name`, `username`, `password`, `email`, `phone_number`, `address`, `position`, `user_activation_status`) VALUES
-(0, 'Admin_First_Name', 'Admin_Last_Name', 'Admin', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'matildogeykson@gmail.com', '639700780041', 'Test Address', 'Admin', 'Active'),
-(92, 'Geykson', 'Maravillas', 'geykson', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'donna@alphasys.com.au', '639700780041', 'Oroquieta City, Misamis Occidental, Philippines', 'Laundry Owner', 'Active'),
-(94, 'Geykson', 'Maravillas', 'customerTest', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'donna@alphasys.com.au', '09700780041', 'Oroquieta City, Misamis Occidental, Philippines', 'Customer', 'Active');
+INSERT INTO `user` (`user_id`, `first_name`, `last_name`, `username`, `password`, `email`, `phone_number`, `address`, `position`, `user_activation_status`, `active_status`, `last_activity`) VALUES
+(0, 'Admin_First_Name', 'Admin_Last_Name', 'Admin', 'aTZvdWMwaFVjSUhxdXorRFNLdEkrZz09', 'matildogeykson@gmail.com', '639700780041', 'Test Address', 'Admin', 'Active', 'Offline', '2024-12-08 17:03:26');
 
 --
 -- Indexes for dumped tables
@@ -452,6 +416,14 @@ ALTER TABLE `order_products`
 ALTER TABLE `product`
   ADD PRIMARY KEY (`product_id`),
   ADD KEY `shop_id` (`shop_id`);
+
+--
+-- Indexes for table `product_log`
+--
+ALTER TABLE `product_log`
+  ADD PRIMARY KEY (`product_log_id`),
+  ADD KEY `product_id` (`product_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `services`
@@ -521,13 +493,13 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `discount`
 --
 ALTER TABLE `discount`
-  MODIFY `discount_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `discount_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `discounted_transactions`
 --
 ALTER TABLE `discounted_transactions`
-  MODIFY `discounted_transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `discounted_transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `laundry_shop_requirements`
@@ -539,67 +511,73 @@ ALTER TABLE `laundry_shop_requirements`
 -- AUTO_INCREMENT for table `laundry_shop_staff`
 --
 ALTER TABLE `laundry_shop_staff`
-  MODIFY `laundry_shop_staff_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `laundry_shop_staff_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `login_token`
 --
 ALTER TABLE `login_token`
-  MODIFY `login_token_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=131;
+  MODIFY `login_token_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=160;
 
 --
 -- AUTO_INCREMENT for table `order_products`
 --
 ALTER TABLE `order_products`
-  MODIFY `order_products_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `order_products_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `product`
 --
 ALTER TABLE `product`
-  MODIFY `product_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `product_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
+-- AUTO_INCREMENT for table `product_log`
+--
+ALTER TABLE `product_log`
+  MODIFY `product_log_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
-  MODIFY `service_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `service_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `shop`
 --
 ALTER TABLE `shop`
-  MODIFY `shop_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `shop_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
 
 --
 -- AUTO_INCREMENT for table `shop_logo`
 --
 ALTER TABLE `shop_logo`
-  MODIFY `shop_logo_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `shop_logo_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `shop_rating`
 --
 ALTER TABLE `shop_rating`
-  MODIFY `shop_rating_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `shop_rating_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `submitted_requirements`
 --
 ALTER TABLE `submitted_requirements`
-  MODIFY `submitted_requirements_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+  MODIFY `submitted_requirements_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `transaction_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
 
 --
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `user_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
+  MODIFY `user_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=361;
 
 --
 -- Constraints for dumped tables
@@ -643,6 +621,13 @@ ALTER TABLE `order_products`
 --
 ALTER TABLE `product`
   ADD CONSTRAINT `product_shop_id` FOREIGN KEY (`shop_id`) REFERENCES `shop` (`shop_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `product_log`
+--
+ALTER TABLE `product_log`
+  ADD CONSTRAINT `product_log_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `product_log_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `services`

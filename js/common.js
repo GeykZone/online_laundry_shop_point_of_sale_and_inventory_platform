@@ -590,6 +590,7 @@ const checkchangeConfirmTransactionUpdate = setInterval(() => {
 
         clearInterval(checkchangeConfirmTransactionUpdate);
         changeConfirmTransactionUpdate.addEventListener('click', function(){
+            WaitigLoader(true)
             updateTransaction();
         })
     }
@@ -678,6 +679,10 @@ const checratingInput = setInterval(() => {
             }
         });
 
+        ratingInput.addEventListener('blur', function(e) {
+            e.target.value =  currencyToNormalFormat(e.target.value)
+        })
+
         let submitRatingButton = document.getElementById('submit-rating-button');
         let commentBoxForRating = document.getElementById('comment-box-for-rating')
         submitRatingButton.addEventListener('click', function(){
@@ -696,19 +701,17 @@ const checratingInput = setInterval(() => {
 
 
             if(isValid){
-                
+                WaitigLoader(true)
                 // insert rating
                 const url = "php-sql-controller/common-controller.php";
                 const data = {
                     insertRating: true,
                     rating_created_date: getPhilippineDateTime(),
-                    rate: ratingInput.value,
+                    rate: currencyToNormalFormat(`${ratingInput.value}`),
                     comment: commentBoxForRating.value,
                     shop_id: sessionStorage.getItem('service_more_shop_id'),
                     user_id: sessionStorage.getItem('raterId')
                 };
-
-                console.log(data)
 
                 const detailsList = dynamicSynchronousPostRequest(url, data);
 
@@ -720,16 +723,19 @@ const checratingInput = setInterval(() => {
                         let message = details.message
                         dynamicAlertMessage(message, 'success', 3000);
                         setTimeout(function(){
+                            WaitigLoader(false)
                             window.location.href = 'customer-home.php';
                         },2000)
                     }
                     else{
+                        WaitigLoader(false)
                         let message = details.message
                         WaitigLoader(false)
                         dynamicAlertMessage(message, 'error', 3000);
                     }
                 }
                 else{
+                    WaitigLoader(false)
                     console.error(detailsList);
                     WaitigLoader(false)
                     dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
@@ -1388,9 +1394,7 @@ function showHideFunctions() {
 
         })
 
-        setInterval(function(){
-            listenToTRansaction()
-        },1000)
+        listenToTransaction();
         
     }
 
@@ -1470,9 +1474,7 @@ function showHideFunctions() {
         avatarUserLabel.textContent = capitalizeWords(userPosition)+" "+capitalizeWords(userUserName);
 
 
-        setInterval(function(){
-            listenToTRansaction()
-        },1000)
+        listenToTransaction();
        
     }
 
@@ -1484,92 +1486,96 @@ function showHideFunctions() {
 }
 
 // Add an event listener for mouse movement
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
     const x = event.clientX; // X-coordinate of the mouse pointer
     const y = event.clientY; // Y-coordinate of the mouse pointer
 
-    // Log the coordinates to the console
-    // console.log('My Id : '+ userId.length)
-
-    if((userId != undefined && userId != null)){
+    if (userId !== undefined && userId !== null) {
         const url = "php-sql-controller/login-controller.php";
         const data = {
             addNewLaundryOwner: true,
             userId: userId,
-            status: 'Online'
-        };    
-        
-        if(userId == 0 || userId == '0'){
-            
+            status: "Online",
+        };
+
+        if (userId === 0 || userId === "0") {
             data.isForSuperAdmin = true;
         }
 
-        if(userPosition == "Laundry Staff"){
+        if (userPosition === "Laundry Staff") {
             data.isForStaff = true;
         }
 
-        const detailsList = dynamicSynchronousPostRequest(url, data);
-        if(isValidJSON(detailsList)){
-            const details = JSON.parse(detailsList);
-            if (!`${details}`.includes("Error:")) {
-                // console.log('info', details);
-
-                updateStatusToOffline();
-
+        try {
+            const detailsList = await dynamicPostRequest(url, data); // Async call
+            if (isValidJSON(detailsList)) {
+                const details = JSON.parse(detailsList);
+                if (!`${details}`.includes("Error:")) {
+                    updateStatusToOffline(); // Call next async function
+                } else {
+                    dynamicAlertMessage(details, "error", 3000);
+                }
             } else {
-                WaitigLoader(false);
-                dynamicAlertMessage(details, 'error', 3000);
+                console.error(detailsList);
+                dynamicAlertMessage(
+                    "Something went wrong. Please see the error logs for additional information.",
+                    "error",
+                    3000
+                );
             }
-            
+        } catch (error) {
+            console.error("Error during request:", error);
+            dynamicAlertMessage("Request failed. Please try again.", "error", 3000);
         }
-        else{
-            console.error(detailsList);
-            WaitigLoader(false);
-            dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
-        }
-
     }
 });
 
+// Asynchronous request handler
+async function dynamicPostRequest(url, data) {
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
 
-function updateStatusToOffline(){
-
-    const url = "php-sql-controller/common-controller.php";
-    const data = {
-        queryUserTosSetOffline: true, // Flag to trigger the backend action
-    };
-
-    // Call the custom POST function
-    const response = dynamicSynchronousPostRequest(url, data);
-
-    // Handle the response
-    if (isValidJSON(response)) {
-        const result = JSON.parse(response);
-        if (result.status === "success") {
-            // console.info("User statuses updated successfully.");
-            try {
-                if(typeof laundryOwnerDataTableVar !== undefined){
-                    laundryOwnerDataTableVar.ajax.reload(null, false); 
-                }
-            } catch (error) {
-            }
-
-
-            try {
-                if(typeof staffDataTableVar !== undefined){
-                    staffDataTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
-                }
-            } catch (error) {
-                
-            }
-
-        } else {
-            console.error("Failed to update user statuses:", result.message);
-        }
-    } else {
-        console.error("Invalid response from server:", response);
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
+    return response.text(); // Return response as text
+}
+
+async function updateStatusToOffline() {
+    const url = "php-sql-controller/common-controller.php";
+    const data = {
+        queryUserTosSetOffline: true,
+    };
+
+    try {
+        const response = await dynamicPostRequest(url, data);
+        if (isValidJSON(response)) {
+            const result = JSON.parse(response);
+            if (result.status === "success") {
+                try {
+                    if (typeof laundryOwnerDataTableVar !== undefined) {
+                        laundryOwnerDataTableVar.ajax.reload(null, false);
+                    }
+                } catch (error) {}
+
+                try {
+                    if (typeof staffDataTableVar !== undefined) {
+                        staffDataTableVar.ajax.reload(null, false);
+                    }
+                } catch (error) {}
+            } else {
+                console.error("Failed to update user statuses:", result.message);
+            }
+        } else {
+            console.error("Invalid response from server:", response);
+        }
+    } catch (error) {
+        console.error("Error during request:", error);
+    }
 }
 
 // email checker function
@@ -2355,8 +2361,8 @@ function reverseDiscount(discountedPrice, discountPercentage) {
 }
 
 // function to listen to transaction
-function listenToTRansaction() {
-    const notifBadgeMessage =  document.getElementById('notif-badge-message');
+function listenToTransaction() {
+    const notifBadgeMessage = document.getElementById('notif-badge-message');
     const url = "php-sql-controller/common-controller.php";
     const data = {
         listenToTransaction: true,
@@ -2364,112 +2370,58 @@ function listenToTRansaction() {
         userId: userId,
     };
 
-    if(sessionStorage.getItem('viewAsLaundryShop') && sessionStorage.getItem('viewAsLaundryShop') == 'true'){
+    if (sessionStorage.getItem('viewAsLaundryShop') === 'true') {
         data.shop_id = sessionStorage.getItem('sessionShopId');
     }
 
-    let transactionListTableContainer = document.getElementById('transaction-list-table-container')
-    let transactionListInfoMessage = document.getElementById('transaction-list-info-message')
+    let transactionListTableContainer = document.getElementById('transaction-list-table-container');
+    let transactionListInfoMessage = document.getElementById('transaction-list-info-message');
 
     const detailsList = dynamicSynchronousPostRequest(url, data);
 
-    if(isValidJSON(detailsList)){
-
+    if (isValidJSON(detailsList)) {
         const details = JSON.parse(detailsList);
 
-        if(Object.keys(details).length > 0){
-            let status = details.status;
-           
-            if(status == 'success'){
-                const totalcount = parseInt(details.total_count);
-                
-                if(totalcount > 0){
-                    
-                    if(notifBadgeMessage.classList.contains('d-none')){
-                        notifBadgeMessage.classList.remove('d-none');
-                    }
-                    listinerErrors = 0;
+        if (Object.keys(details).length > 0 && details.status === 'success') {
+            const totalcount = parseInt(details.total_count, 10);
+            
+            if (totalcount > 0) {
+                notifBadgeMessage.classList.remove('d-none');
+                notifBadgeMessage.textContent = totalcount >= 99 ? '99+' : totalcount;
 
-                    if(totalcount >= 99){
-                        notifBadgeMessage.textContent = '99+';
-                    }
-                    else{
-                        notifBadgeMessage.textContent = totalcount;
-                    }
+                transactionListInfoMessage.classList.add('d-none');
+                transactionListTableContainer.classList.remove('d-none');
 
-                    if(!transactionListInfoMessage.classList.contains('d-none')){
-                        transactionListInfoMessage.classList.add('d-none');
-                    }
-
-                    if(transactionListTableContainer.classList.contains('d-none')){
-                        transactionListTableContainer.classList.remove('d-none');
-                    }
-
-                    const notifCustomerTransactionTable = document.getElementById('notif-customer-transaction-table');
-                    if ($.fn.DataTable.isDataTable(`#${notifCustomerTransactionTable.id}`) && savedCount != totalcount) {
-                            // If table exists, reload its data without resetting the page
-                            $(`#${notifCustomerTransactionTable.id}`).DataTable().ajax.reload(null, false);
-
-                            savedCount = totalcount;
-                    }
-                    
+                const notifCustomerTransactionTable = document.getElementById('notif-customer-transaction-table');
+                if ($.fn.DataTable.isDataTable(`#${notifCustomerTransactionTable.id}`) && savedCount !== totalcount) {
+                    $(`#${notifCustomerTransactionTable.id}`).DataTable().ajax.reload(null, false);
+                    savedCount = totalcount;
                 }
-                else{
-                    notifBadgeMessage.classList.add('d-none');
-                    notifBadgeMessage.textContent = 0;
-
-                    if(transactionListInfoMessage.classList.contains('d-none')){
-                        transactionListInfoMessage.classList.remove('d-none');
-                    }
-
-                    if(!transactionListTableContainer.classList.contains('d-none')){
-                        transactionListTableContainer.classList.add('d-none');
-                    }
-                }
-
+            } else {
+                handleEmptyTransactionState();
             }
-            else{
-
-                listinerErrors += 1;
-                
-                if(listinerErrors == 1){
-                    let errMessage = details.message;
-                    console.error(errMessage);
-                    if(!notifBadgeMessage.classList.contains('d-none')){
-                        notifBadgeMessage.classList.add('d-none');
-                        notifBadgeMessage.textContent = 0;
-
-                        if(transactionListInfoMessage.classList.contains('d-none')){
-                            transactionListInfoMessage.classList.remove('d-none');
-                        }
-    
-                        if(!transactionListTableContainer.classList.contains('d-none')){
-                            transactionListTableContainer.classList.add('d-none');
-                        }
-                    }
-                }
-                
-            }
+        } else {
+            handleEmptyTransactionState();
         }
-        
-    }
-    else{
+    } else {
         console.error(detailsList);
-        if(!notifBadgeMessage.classList.contains('d-none')){
-            notifBadgeMessage.classList.add('d-none');
-            notifBadgeMessage.textContent = 0;
-
-            if(transactionListInfoMessage.classList.contains('d-none')){
-                transactionListInfoMessage.classList.remove('d-none');
-            }
-
-            if(!transactionListTableContainer.classList.contains('d-none')){
-                transactionListTableContainer.classList.add('d-none');
-            }
-        }
+        handleEmptyTransactionState();
     }
 
+    // Re-run the function after a delay
+    setTimeout(listenToTransaction, 1000);
 }
+
+function handleEmptyTransactionState() {
+    // notifBadgeMessage.classList.add('d-none');
+    // notifBadgeMessage.textContent = 0;
+
+    // transactionListInfoMessage.classList.remove('d-none');
+    // transactionListTableContainer.classList.add('d-none');
+}
+
+// Initial call
+
 
 // function to load the notification table
 function notifTransationTable() {
@@ -3055,8 +3007,15 @@ function formulateChangesForTransaction() {
 
     let clothesQuantityWeightVal = notifyCheckoutClothesWeightInput.value;
 
+    console.log(selectedServiceGlobalVar)
+
     summaryMessage +=`Service Calculation Summary:\n`
-    summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.service_price}`)} (${currencyToNormalFormat(`${selectedServiceGlobalVar.service_load}`)}${selectedServiceGlobalVar.service_unit_measurement.toUpperCase()})\n`;
+    if(selectedServiceGlobalVar.service_unit_measurement == 'N/A' && (selectedServiceGlobalVar.service_load == 0 || selectedServiceGlobalVar.service_load == '0')){
+        summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.service_price}`)}\n`;
+    }
+    else{
+        summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.service_price}`)} (${currencyToNormalFormat(`${selectedServiceGlobalVar.service_load}`)}${selectedServiceGlobalVar.service_unit_measurement.toUpperCase()})\n`;
+    }
     if(notifyCheckoutClothesWeightInput.value.length < 1){
         if(selectedServiceGlobalVar.service_unit_measurement == 'Kg'){
             clothesQuantityWeightVal = 1;
@@ -3069,11 +3028,14 @@ function formulateChangesForTransaction() {
     if(selectedServiceGlobalVar.service_unit_measurement == 'Kg'){
         summaryMessage += `${notifyCheckoutClothesWeightInput.placeholder}: ${currencyToNormalFormat(`${clothesQuantityWeightVal}`)}KG\n`;
     }
-    else{
+    else if(selectedServiceGlobalVar.service_unit_measurement == 'Pcs'){
         summaryMessage += `${notifyCheckoutClothesWeightInput.placeholder}: ${clothesQuantityWeightVal}PCS\n`;
     }
 
     let totalServiceCost = calculatePricePerKg(selectedServiceGlobalVar.service_price, selectedServiceGlobalVar.service_load, clothesQuantityWeightVal);
+    if(selectedServiceGlobalVar.service_unit_measurement == 'N/A' && (selectedServiceGlobalVar.service_load == 0 || selectedServiceGlobalVar.service_load == '0')){
+        totalServiceCost = selectedServiceGlobalVar.service_price;
+    }
     summaryMessage += `Service Total Cost: ${formatToCurrency(`${totalServiceCost}`)}`;
     
     let singleItemPrice = totalServiceCost
@@ -3279,7 +3241,7 @@ function formulateChangesForTransaction() {
 }
 
 function updateTransaction() {
-    WaitigLoader(true)
+   
     console.log(finalTransactionObject)
     let isSuccessful = true;
     const changesDescription = finalTransactionObject.changesDescription;
@@ -3529,21 +3491,17 @@ function updateTransaction() {
         const notifMessage = `Hello ${customerFullName}, notice from ${sessionStorage.getItem('sessionShopName')}\n\nLaundry Transaction Details:\nLaundry Transaction Status: ${transactionStatus}\n\n${summaryMessage}\n\n${document.getElementById('footer-text').textContent}
         `;
 
-        // if(!dynamicEmailSend(notifMessage, customerFullName ,customerEmailUsed)){
-        //   WaitigLoader(false)
-        // }
+        if(!dynamicEmailSend(notifMessage, customerFullName ,customerEmailUsed)){}
 
-        // if(!dynamicSendSMS(notifMessage, cusomerIdUsed)){
-        //   WaitigLoader(false)
-        // }
+        if(!dynamicSendSMS(notifMessage, cusomerIdUsed)){}
 
         console.log(notifMessage)
 
         dynamicAlertMessage('Transaction is updated successfully.', 'success', 3000);
         
         setTimeout(function(){
-            // WaitigLoader(false)
-            // window.location.reload();
+            WaitigLoader(false)
+            window.location.reload();
         },2000)
        
        

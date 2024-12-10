@@ -691,7 +691,7 @@ function validateAccountRecoveryForm(forOtp){
 // check if the user Exist
 function checkIfusernameExist(type){
 
-    WaitigLoader(true);
+    WaitigLoader(true)
 
     const url = "php-sql-controller/login-controller.php";
     let data = {
@@ -718,16 +718,12 @@ function checkIfusernameExist(type){
             globalUser_idForReset = user_id;
             globalUserPositionForReset = position;
 
-            // if(type == 'sms'){
-            //    if(!dynamicSendSMS(message, user_id)){
-            //     return;
-            //    }
-            // }
-            // else if(type == 'email'){
-            //    if(!dynamicEmailSend(message, `${position} ${first_name}`, email)){
-            //     return;
-            //    }
-            // }
+            if(type == 'sms'){
+               if(!dynamicSendSMS(message, user_id)){}
+            }
+            else if(type == 'email'){
+               if(!dynamicEmailSend(message, `${position} ${first_name}`, email)){}
+            }
 
             console.log('otp: ' + otpToken);
             
@@ -750,19 +746,23 @@ function checkIfusernameExist(type){
             if(otpFieldContainer.classList.contains('d-none')){
                 otpFieldContainer.classList.remove('d-none')
             }
+
+            WaitigLoader(false);
             
         }
         else{
+            WaitigLoader(false);
             let message = details.message
             dynamicAlertMessage(message, 'error', 3000);
         }
     }
     else{
+        WaitigLoader(false);
         console.error(detailsList);
         dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
     }
 
-    WaitigLoader(false);
+ 
 
 }
 

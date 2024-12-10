@@ -554,6 +554,7 @@ if(laundryShopTable){
 
 // to show more details of laundry shop
 function openMoreDetails(row) { 
+    WaitigLoader(true)
     
     // Given string
     let str = row;
@@ -602,6 +603,7 @@ function openMoreDetails(row) {
         // console.log('detailsListA : ', shopDetails)
     
         if (!shopDetails.error) {
+            WaitigLoader(false)
             days_open = shopDetails.days_open
             open_time = shopDetails.open_time;
             close_time = shopDetails.close_time;
@@ -622,10 +624,12 @@ function openMoreDetails(row) {
             document.getElementById("additional-schedule-detail").value = additionalSchedValue;
 
         } else {
+            WaitigLoader(false)
             dynamicAlertMessage(shopDetails.error, 'error', 3000);
         }
     }
     else{
+        WaitigLoader(false)
         console.error(detailsListA);
         dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
     }

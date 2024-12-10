@@ -111,7 +111,7 @@ if (sessionStorage.getItem('service_more_shop_id')) {
 
     // Set the equivalent numeric rating value
     let ratingValueElement = document.getElementById("shop-rating-equivalent-value");
-    ratingValueElement.textContent = ratingValue.toFixed(1);  // Set the value to one decimal place
+    ratingValueElement.textContent = currencyToNormalFormat(`${ratingValue}`);  // Set the value to one decimal place
 
     // Now, populate the fields with the values from shopDetails
     document.querySelector("#service-and-more-shop-name").innerText = shopDetails.shop_name || "Laundry Shop Name";
@@ -325,7 +325,7 @@ addLaundrycustomerSubmitBtn.addEventListener('click', function(){
     }
 
     if(isValid){
-
+        WaitigLoader(true)
         // laundryCustomerFormCloseBtn.click();
 
         laundrycustomerPhone.value = normalizePhoneNumber(laundrycustomerPhone.value);
@@ -346,7 +346,7 @@ addLaundrycustomerSubmitBtn.addEventListener('click', function(){
         dynamicPostRequest(url,data )
         .then((response) => {
             if(isValidJSON(response)){
-
+               
                 if(JSON.parse(response).newRecordId){
                     // dynamicAlertMessage('New Laundry Customer added successfully.', 'success', 3000);
                     globalNewCustomerId = JSON.parse(response).newRecordId;
@@ -364,29 +364,31 @@ addLaundrycustomerSubmitBtn.addEventListener('click', function(){
                         $('#addCustomerModal').modal('hide');
                         $('#createTransactionMadal').modal('show');
                     }
-
-                   
-
                     // laundrycustomerFirstName.value = ''
                     // laundrycustomerLastName.value = ''
                     // laundrycustomerEmail.value = ''
                     // laundrycustomerPhone.value = ''
                     // laundrycustomerAddress.value = ''
+
+                    WaitigLoader(false)
                 }
                 else
                 {
                     let errorMessage = JSON.parse(response);
                     dynamicAlertMessage(errorMessage, 'error', 3000);
+                    WaitigLoader(false)
                 }
             }
             else{
                 let errorMessage = 'Something went wrong please check your console for error logs';
                 console.error(response);
                 dynamicAlertMessage(errorMessage, 'error', 3000);
+                WaitigLoader(false)
             }
         })
         .catch((error) => {
             console.error("Error:", error);
+            WaitigLoader(false)
         });
 
     }
@@ -846,7 +848,12 @@ function calculateTransaction(){
         let clothesQuantityWeightVal = clothesWeightInput.value;
 
         summaryMessage +=`Service Calculation Summary:\n`
-        summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.price}`)} (${currencyToNormalFormat(`${selectedServiceGlobalVar.service_load}`)}${selectedServiceGlobalVar.unit_measurement.toUpperCase()})\n`;
+        if(selectedServiceGlobalVar.unit_measurement == 'N/A' && (selectedServiceGlobalVar.service_load == 0 || selectedServiceGlobalVar.service_load == '0')){
+            summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.price}`)}\n`;
+        }
+        else{
+            summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.price}`)} (${currencyToNormalFormat(`${selectedServiceGlobalVar.service_load}`)}${selectedServiceGlobalVar.unit_measurement.toUpperCase()})\n`;
+        }
         if(clothesWeightInput.value.length < 1){
             if(selectedServiceGlobalVar.unit_measurement == 'Kg'){
                 clothesQuantityWeightVal = 1;
@@ -860,12 +867,15 @@ function calculateTransaction(){
         if(selectedServiceGlobalVar.unit_measurement == 'Kg'){
             summaryMessage += `${clothesWeightInput.placeholder}: ${currencyToNormalFormat(`${clothesQuantityWeightVal}`)}KG\n`;
         }
-        else{
+        else if(selectedServiceGlobalVar.unit_measurement == 'Pcs'){
             summaryMessage += `${clothesWeightInput.placeholder}: ${clothesQuantityWeightVal}PCS\n`;
         }
 
 
         let totalServiceCost = calculatePricePerKg(selectedServiceGlobalVar.price, selectedServiceGlobalVar.service_load, clothesQuantityWeightVal);
+        if(selectedServiceGlobalVar.unit_measurement == 'N/A' && (selectedServiceGlobalVar.service_load == 0 || selectedServiceGlobalVar.service_load == '0')){
+            totalServiceCost = selectedServiceGlobalVar.price;
+        }
         summaryMessage += `Service Total Cost: ${formatToCurrency(`${totalServiceCost}`)}`;
         // console.log('singleItemPrice = ', selectedServiceGlobalVar)
 
