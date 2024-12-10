@@ -440,15 +440,18 @@ if (isset($inputData['queryTransaction'])) {
             t.transaction_changes_other_details, t.notification_is_read, t.last_update_date,
 
             op.order_products_id, op.order_name, op.product_id AS order_product_id, 
-            op.order_date, op.item_quantity,
+            op.order_date, op.item_quantity, op.unit_measurement AS op_unit_measurement,
+            op.order_product_price,
 
             dt.discounted_transaction_id, dt.discount_id, dt.discounted_transaction_status,
 
             p.product_id, p.product_name, p.price AS product_price, p.quantity AS product_quantity, 
-            p.image_link, p.product_brand, p.product_status,
+            p.image_link, p.product_brand, p.product_status, p.unit_measurement AS product_unit_measurement,
+            p.amount_per_stock AS product_amount_per_stock, p.product_type, p.amount_per_price, p.base_stock,
 
             s.service_id AS svc_service_id, s.service_name, s.description AS service_description,
-            s.price AS service_price, s.service_status,
+            s.price AS service_price, s.service_status, s.service_type, s.unit_measurement AS service_unit_measurement,
+            s.service_load,
 
             d.discount_id AS disc_discount_id, d.discount_name, d.discount_percent, 
             d.discount_description, d.discount_status,
@@ -527,6 +530,7 @@ if (isset($inputData['queryTransaction'])) {
                 'order_name' => $item['order_name'],
                 'order_product_id' => $item['order_product_id'],
                 'order_date' => $item['order_date'],
+                'op_unit_measurement' => $item['op_unit_measurement'],
                 'item_quantity' => $item['item_quantity'],
                 'product_id' => $item['product_id'],
                 'product_name' => $item['product_name'],
@@ -534,7 +538,13 @@ if (isset($inputData['queryTransaction'])) {
                 'product_quantity' => $item['product_quantity'],
                 'image_link' => $item['image_link'],
                 'product_brand' => $item['product_brand'],
-                'product_status' => $item['product_status']
+                'product_status' => $item['product_status'],
+                'product_unit_measurement' => $item['product_unit_measurement'],
+                'product_amount_per_stock' => $item['product_amount_per_stock'],
+                'product_type' => $item['product_type'],
+                'amount_per_price' => $item['amount_per_price'],
+                'order_product_price' => $item['order_product_price'],
+                'base_stock' => $item['base_stock'],
             ];
         }
 
@@ -545,7 +555,10 @@ if (isset($inputData['queryTransaction'])) {
                 'service_name' => $item['service_name'],
                 'service_description' => $item['service_description'],
                 'service_price' => $item['service_price'],
-                'service_status' => $item['service_status']
+                'service_status' => $item['service_status'],
+                'service_type' => $item['service_type'],
+                'service_unit_measurement' => $item['service_unit_measurement'],
+                'service_load' => $item['service_load']
             ];
         }
 
@@ -809,6 +822,59 @@ if(isset($inputData['sendEmail'])){
     $response = getEmailApiConfig();
     echo json_encode($response);
 }
+
+
+// save log details
+if (isset($inputData['saveLog']) && $inputData['saveLog'] === true) {
+    // Extract parameters from input data
+    $productId = $inputData['product_id'] ?? null;
+    $userId = $inputData['userid'] ?? null;
+    $saveLogDetails = $inputData['saveLogDetails'] ?? null;
+
+    // Validate required fields
+    if (!$productId || !$userId || !$saveLogDetails) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Required fields are missing (product_id, userid, saveLogDetails).'
+        ]);
+        exit;
+    }
+
+    // Prepare SQL to insert data into the product_log table
+    $insertSql = "INSERT INTO `product_log` (`product_id`, `changes_details`, `user_id`) 
+                  VALUES (?, ?, ?)";
+
+    $stmt = $conn->prepare($insertSql);
+
+    if ($stmt === false) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'SQL statement preparation failed: ' . $conn->error
+        ]);
+        exit;
+    }
+
+    // Bind parameters to the SQL statement
+    $stmt->bind_param("iss", $productId, $saveLogDetails, $userId);
+
+    // Execute the statement
+    if ($stmt->execute()) {
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Log saved successfully.',
+            'log_id' => $stmt->insert_id // Return the ID of the newly inserted log
+        ]);
+    } else {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Log insertion failed: ' . $stmt->error
+        ]);
+    }
+
+    // Close the statement
+    $stmt->close();
+}
+
 
 
 

@@ -331,6 +331,16 @@ discountPercentInput.addEventListener('keydown', function(event) {
     }
 });
 
+
+discountPercentInput.addEventListener('blur', function(e){
+
+    if(e.target.value.length > 0){
+        e.target.value = currencyToNormalFormat(e.target.value)
+    }
+    
+})
+
+
 // Prevent non-numeric characters when pasting
 discountPercentInput.addEventListener('paste', function(event) {
     // Get the pasted data
@@ -569,9 +579,11 @@ if(discountManageTable){
                         BTNType = 'btn-secondary'
                     }
 
+                    const serializedRow = encodeURIComponent(JSON.stringify(row));
+
                     let actionButton;
-                    actionButton = `<button type="button" onClick="updateDiscount('${row}')" class="btn btn-primary text-white" >Edit</button> `
-                    actionButton += `<button type="button" onClick="activeDeactivateDiscount('${row}')" class="btn ${BTNType} text-white" >${activeBTN}</button> `
+                    actionButton = `<button type="button" onClick="updateDiscount('${serializedRow}')" class="btn btn-primary text-white" >Edit</button> `
+                    actionButton += `<button type="button" onClick="activeDeactivateDiscount('${serializedRow}')" class="btn ${BTNType} text-white" >${activeBTN}</button> `
                     return actionButton;
                             
                 },
@@ -952,7 +964,7 @@ function activeDeactivateDiscount(row){
     let str = row;
 
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
     let keys = ["discount_id", "discount_name", "discount_percent", "discount_description", "discount_status"];
@@ -984,7 +996,7 @@ function updateDiscount(row){
     let str = row;
 
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
     let keys = ["discount_id", "discount_name", "discount_percent", "discount_description", "discount_status"];

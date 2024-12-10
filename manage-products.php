@@ -96,7 +96,7 @@
                   <!-- Quantity -->
                   <div class="col-md-6">
                     <label for="product-quantity" class="form-label">Stock</label>
-                    <input type="text" placeholder="Stock" maxlength="10" class="form-control" id="product-quantity" required>
+                    <input type="text" disabled placeholder="Stock" maxlength="10" class="form-control" id="product-quantity" required>
                     <div id="product-quantity-error-feedback" class="invalid-feedback">
                     </div>
                   </div>
@@ -132,6 +132,7 @@
             
 
             <div class="modal-footer">
+              <button id="add-stock" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center">Add Stock +1</button>
               <button id="submit-laundry-shop-product-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Submit Product</button>
               <div id="submit-laundry-shop-product-update-container"></div>
             </div>
@@ -207,6 +208,59 @@
 
             
             <div class="col-12 mt-3 px-0 dataTables_wrapper" id="nav-footer-container">
+            </div>
+
+            
+          </div>
+        </div>
+
+
+        <div class="card mt-4">
+          <h5 class="card-header">Product Activity Logs</h5>
+          <div class="card-body row px-5 py-4 product-logs-container" >
+            <!-- <h5 class="card-title">Special title treatment</h5>
+            <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
+
+            <style>
+              @media (max-width: 504px) {
+                #nav-btn-container, #nav-search-container {
+                  flex: 0 0 100%;
+                  max-width: 100%;
+                }
+                
+                #nav-search-container {
+                  justify-content: flex-start !important;
+                  margin-top: 20px;
+                }
+              }
+            </style>
+            
+
+            <div class="col-6 col-12-504px align-items-center d-flex flex-wrap gap-2 px-0" id="xnav-btn-container">
+            </div>
+
+            <div class="col-6 col-12-504px justify-content-end justify-content-start-504px align-items-center d-flex flex-wrap gap-2 px-0" id="xnav-search-container">
+            </div>
+
+
+            <div class="col-12 d-flex flex-wrap gap-4 px-0 overflow-x-auto overflow-y-auto py-0 rounded-3 border-2 border mt-4" id="product-logs-table-container">
+            <table class="table table-striped nowrap content-table" id="product-logs-table" width="100%">
+              <thead class=" table-dark">
+                <tr>
+                  <th scope="col">Product Name</th>
+                  <th scope="col">Updated By</th>
+                  <th scope="col">Date Changed</th>
+                  <th scope="col">Log Details</th>
+                </tr>
+              </thead>
+              <tbody class="table-group-divider">
+              </tbody>
+            </table>
+            </div>
+
+
+            
+            <div class="col-12 mt-3 px-0 dataTables_wrapper" id="xnav-footer-container">
             </div>
 
             

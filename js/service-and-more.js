@@ -51,10 +51,13 @@ let laundrycustomerAddress = document.getElementById('laundry-customer-adress');
 let laundrycustomerPhone = document.getElementById('laundry-customer-phone');
 let backToCustomerForm = document.getElementById('back-to-customer-form');
 let backToServiceList = document.getElementById('back-to-service-list');
+let backToServiceListNP = document.getElementById('back-to-service-list-np');
+const rateShopBTNVAr = document.getElementById('rate-shop');
 let estimatedPayable;
 let ratingLength = 0;
 let globalNewCustomerId = '';
 let order_measurement_change = false;
+let customerRate = false;
 
 // confirm transaction
 dynamicConfirmationMessage( 
@@ -65,10 +68,17 @@ dynamicConfirmationMessage(
         otherButtonText : 'Confirm Transaction',
         hideCancelButton: true,
         customFooterContent: `<button type="button" id="cancel-finalize" class="btn btn-danger text-white" data-coreui-dismiss="modal">Cancel</button>`,
-        customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
-        
-        <h5> Your estimated payable amount is <span id="confirmMessagePayblleAmount"></span>. Please note that this amount may change based on staff review of your eligibility for payment criteria. </h5>
+        customBodyContent : `<div class=" d-flex h-100 flex-column gap-3 justify-content-center align-items-center">
 
+            <h6>By confirming this transaction, you acknowledge and accept the following calculation summary.</h6>
+            <textarea disabled class="border-0 shadow-sm w-100 bg-light p-3 text-secondary" name="" id="summary-message" cols="30" rows="10"></textarea>
+
+            <style>
+            textarea#summary-message {
+                min-height: 350px;
+                max-height: 500px;
+              }
+            </style>
         </div>`
     }
 )
@@ -134,7 +144,7 @@ if (sessionStorage.getItem('service_more_shop_id')) {
         ratingCard.className = 'card';
     
         ratingCard.innerHTML = `
-            <h5 class="card-header">Customer</h5>
+            <h5 class="card-header">${ratingData.user_name}</h5>
             <div class="card-body">
                 <h5 class="card-title">${ratingData.comment}</h5>
                 <h6 class="Stars" style="--rating: ${ratingData.rate};" aria-label="Rating: ${ratingData.rate} out of 5 stars"></h6>
@@ -206,6 +216,10 @@ if (sessionStorage.getItem('service_more_shop_id')) {
     
     // Initial load of ratings
     fetchRatingsForShop();  // Load the first set of ratings on page load
+
+    openTransactionCreationModal.addEventListener('click', function(){
+        customerRate = false;
+    })
     
 }
 else{
@@ -228,7 +242,26 @@ backToServiceList.addEventListener('click', function(){
 
     $('#createTransactionMadal').modal('show');
     $('#selectOrderProductModal').modal('hide');
+
+
+
 })
+
+// event listener when the transaction creation modal show it the service also ge queried
+backToServiceListNP.addEventListener('click', function(){
+    // serviceContainer.innerHTML = '';
+    // loadServicesForPage(page);
+
+    $('#createTransactionMadal').modal('show');
+    $('#transactionFinalization').modal('hide');
+})
+
+rateShopBTNVAr.addEventListener('click', function(){
+    $('#addCustomerModal').modal('show');
+
+    customerRate = true;
+})
+
 
 // click button event for submiting new laundry customer
 addLaundrycustomerSubmitBtn.addEventListener('click', function(){
@@ -317,12 +350,22 @@ addLaundrycustomerSubmitBtn.addEventListener('click', function(){
                 if(JSON.parse(response).newRecordId){
                     // dynamicAlertMessage('New Laundry Customer added successfully.', 'success', 3000);
                     globalNewCustomerId = JSON.parse(response).newRecordId;
+                    sessionStorage.setItem('raterId', globalNewCustomerId);
 
                     serviceContainer.innerHTML = '';
                     loadServicesForPage(page);
 
-                    $('#addCustomerModal').modal('hide');
-                    $('#createTransactionMadal').modal('show');
+                    if(customerRate){
+                        $('#addCustomerModal').modal('hide');
+                        $('#createTransactionMadal').modal('hide');
+                        $('#rateShop').modal('show');
+                    }
+                    else{
+                        $('#addCustomerModal').modal('hide');
+                        $('#createTransactionMadal').modal('show');
+                    }
+
+                   
 
                     // laundrycustomerFirstName.value = ''
                     // laundrycustomerLastName.value = ''
@@ -360,145 +403,70 @@ checkoutButton.addEventListener('click', (e) => {
         dynamicAlertMessage('Please select at least one product before proceeding to checkout.', 'warning', 3000)
     } else {
 
-
-        if (selectedProductIds.some(product => parseInt(product.quantity, 10) === 0)) {
-            dynamicAlertMessage("One or more selected products have a quantity of 0.", 'error', 3000);
-            WaitigLoader(false)
-        } else {
-
-            let isValid = true;
-            let errorMessage;
+        let isValid = true;
 
             selectedProductIds.forEach((product) => {
-                const productId = product.id;
-                const productQuantity = product.quantity;
 
-                // const url = "php-sql-controller/service-and-more-controller.php";
-                // const data = {
-                //     productId: productId,
-                //     productQuantity: productQuantity,
-                //     verifyQuantity: true,
-                // };
-
-                // // Synchronous request to check quantity from the database
-                // const detailsList = dynamicSynchronousPostRequest(url, data);
-
-                // if (isValidJSON(detailsList)) {
-                //     const details = JSON.parse(detailsList);
-
-                //     // Check if the queried quantity is less than the requested productQuantity
-                //     if (details.quantity < productQuantity) {
-                //         isValid = false;
-                //         errorMessage = `Insufficient stock for Product ID ${productId}. Requested: ${productQuantity}, Available: ${details.quantity}`;
-                //     }
-                // } else {
-                //     isValid = false;
-                //     console.error(detailsList);
-                //     errorMessage = 'Something went wrong. Please see the error logs for additional information.';
-                // }
-
-                const quantityInput = document.getElementById(`quantityInput${productId}`);
-                const quantityInputLabel = document.getElementById(`quantityInputLabel${productId}`);
-
-                try {
-                    if(quantityInput.value.length < 1){
-                        isValid = false;
-                        dynamicFieldErrorMessage(quantityInput.id, `Please input a valid ${quantityInputLabel.textContent}.`);
-                    }
-                    else {
-                        dynamicFieldErrorMessage(quantityInput.id, '');
-                    }
-
-                } catch (error) {
-                    errorMessage = error;
+            
+                if(product.amount_per_stock == 0 || product.stock == 0){
+                    dynamicAlertMessage("One or more selected product is out of stock.", 'error', 3000);
                     isValid = false;
+                }
+
+                if(product.quantity < 1){
+                    product.quantity = product.amount_per_price;
+
+                    if(product.order_measurement == 'Cup' && product.original_unit_measurement == 'Kg'){
+                        product.quantity = convertKgToGramsAndCups(product.amount_per_price).cups;
+                    }
+                    else if(product.order_measurement == 'Grams' && product.original_unit_measurement == 'Kg'){
+                        product.quantity = convertKgToGramsAndCups(product.amount_per_price).grams;
+                    }
+                }
+
+                if(product.order_measurement == 'Kg' && product.original_unit_measurement == 'Kg'){
+                    product.estimatedPrice = calculatePricePerKg(product.price, product.amount_per_price, product.quantity);
+                }
+                else if(product.order_measurement == 'Grams' && product.original_unit_measurement == 'Kg'){
+                    product.estimatedPrice = calculateCostKiloGramToGram(product.price, product.quantity, product.amount_per_price);
+                }
+                else if(product.order_measurement == 'Cup' && product.original_unit_measurement == 'Kg'){
+                    product.estimatedPrice = calculatCostKiloGramToCup(product.price, product.quantity, product.amount_per_price);
+                }
+
+                if(product.order_measurement == 'Grams' && product.original_unit_measurement == 'Grams'){
+                    product.estimatedPrice = calculatePricePerGram(product.price, product.amount_per_price, product.quantity);
+                }
+
+                if(product.order_measurement == 'Cup' && product.original_unit_measurement == 'Cup'){
+                    product.estimatedPrice = calculatePricePerCup(product.price, product.amount_per_price, product.quantity);
+                }
+
+                if(product.order_measurement == 'Ml' && product.original_unit_measurement == 'Ml'){
+                    product.estimatedPrice = calculatePricePerMl(product.price, product.amount_per_price, product.quantity);
+                }
+
+                if(product.order_measurement == 'Sachet' && product.original_unit_measurement == 'Sachet'){
+                    product.estimatedPrice = calculatePricePerSachet(product.price, product.amount_per_price, product.quantity);
                 }
 
             });
 
-
-            if(errorMessage){
-                dynamicAlertMessage('Some of the selected products have fields that are not filled in.', 'warning', 3000)
-            }
+           
 
             // Final validation check
             if (isValid) {
-                
-                console.log('Proceeding to checkout with selected products:', selectedProductIds);
+                WaitigLoader(false)
+                // console.log('Proceeding to checkout with selected products:', selectedProductIds);
                 $('#selectOrderProductModal').modal('hide')
-                $('#transactionFinalization').modal('show')
-        
-                // id
-                // quantity
-                // product_name
-                // product_image
-        
+                $('#transactionFinalization').modal('show')        
                 
-                if(Object.keys(selectedProductIds).length > 0){
-                    WaitigLoader(false)
-        
-                    if(Object.keys(selectedProductIds).length > 1 ){
-                        document.getElementById('selected-product-container-label').textContent = 'Selected Products';
-                    }
-                    else{
-                        document.getElementById('selected-product-container-label').textContent = 'Selected Product';
-                    }
-        
-                    selectedProductsContainer.innerHTML = '';
-                    selectedProductIds.forEach((product) => {
-        
-                        const productPrice = product.price;
-                        const productBrand = product.product_brand;
-                        const productImage = product.product_image;
-                        const productName = product.product_name;
-                        const productQuantity = product.quantity;
-        
-                        // Create the card HTML dynamically
-                        const productCardHTML = `
-                        <div class=" col-12 col-md-6">
-                            <div class="card">
-                            <div class="card-header">
-                                ${productName}
-                            </div>
-                            <div class="card-body d-flex gap-3">
-                                <div class="rounded-3 overflow-hidden shadow" style="width: 100px;">
-                                <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
-                                </div>
-                                <div>
-                                <p>Brand: ${productBrand}</p>
-                                <p>Price: ${formatToCurrency(productPrice)}</p>
-                                <p>Selected Quantity: ${productQuantity}</p> <!-- You can replace 1 with a dynamic value if needed -->
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        `;
-        
-                        // Insert the card into the selectedProductsContainer
-                        selectedProductsContainer.innerHTML += productCardHTML;
-        
-                    }) 
-        
-                    document.getElementById('check-out-selected-service').textContent = selectedServiceGlobalVar.service_name
-                    document.getElementById('check-out-selected-service-description').textContent = selectedServiceGlobalVar.description
-                    document.getElementById('check-out-selected-service-price').textContent =  formatToCurrency(selectedServiceGlobalVar.price)
-        
-                }
-        
-                discountPage = 1; 
-                discountContainer.innerHTML = ''; // Clear previous content if needed
-                discountContainer.innerHTML = `
-                <div class="d-flex justify-content-flex-start" id="empty-discount-identifier">
-                    <p>Shop does not have any discount yet.</p>
-                </div>`;
-                loadDiscounts();
+                finalizeTransactionFunction();
 
             }
             else{
                 WaitigLoader(false)
             }
-
-        }
 
     }
 });
@@ -507,6 +475,39 @@ checkoutButton.addEventListener('click', (e) => {
 backToProductModalBtn.addEventListener('click', (e) => {
     $('#selectOrderProductModal').modal('show')
     $('#transactionFinalization').modal('hide')
+
+    selectedProductIds.forEach((product) => {
+
+        const quantityInput = document.getElementById(`quantityInput${product.id}`);
+        if(quantityInput.value.length < 1){
+            
+            quantityInput.value = product.quantity;
+            product.quantity = product.quantity;
+
+            if(product.order_measurement == 'Cup' && product.original_unit_measurement == 'Kg'){
+                product.quantity = convertKgToGramsAndCups(product.amount_per_price).cups;
+            }
+            else if(product.order_measurement == 'Grams' && product.original_unit_measurement == 'Kg'){
+                product.quantity = convertKgToGramsAndCups(product.amount_per_price).grams;
+            }
+        }
+            
+    //    try {
+    //     const quantityInput = document.getElementById(`quantityInput${product.id}`);
+    //     quantityInput.value = product.amount_per_price;
+
+    //     if(product.order_measurement == 'Cup'){
+    //         quantityInput.value = convertKgToGramsAndCups(product.amount_per_price).cups;
+    //     }
+    //     else if(product.order_measurement == 'Grams'){
+    //         quantityInput.value = convertKgToGramsAndCups(product.amount_per_price).grams;
+    //     }
+    //    } catch (error) {
+        
+    //    }
+
+
+    });
 });
 
 const checkCancelFinalize =  setInterval(function(){
@@ -521,54 +522,7 @@ const checkCancelFinalize =  setInterval(function(){
 
 // event listener to check finalization of checkout
 finalizeTransactionBtn.addEventListener('click', function(){
-
-    if(transactionFinalizationValidation()){
-        
-        // console.log(`service : `,selectedServiceGlobalVar,` \n product: `,selectedProductIds,` \n discounts: `,selectedDiscounts,``)
-
-        // Define initial prices
-        const singleItemPrice = parseFloat(selectedServiceGlobalVar.price);
-        // console.log('singleItemPrice = '+singleItemPrice)
-
-        const totalProductPrice = selectedProductIds.reduce((total, product) => {
-            return total + parseFloat(product.price) * parseInt(product.quantity, 10);
-        }, 0);
-        // console.log('totalProductPrice = '+totalProductPrice)
-
-        // Calculate subtotal
-        let subtotal = singleItemPrice + totalProductPrice;
-        // console.log('singleItemPrice + totalProductPrice = '+ subtotal)
-
-        // Initialize discount variables
-        let discount1 = selectedDiscounts[0] ? parseFloat(selectedDiscounts[0].discount_percent) / 100 : null;
-        let discount2 = selectedDiscounts[1] ? parseFloat(selectedDiscounts[1].discount_percent) / 100 : null;
-
-        // console.log('discount1 = ' +discount1);
-        // console.log('discount2 = ' +discount2);
-
-        // Check if the first discount is present, else alert and stop
-        if (discount1 !== null) {
-            // Apply the first discount
-            let afterFirstDiscount = subtotal * (1 - discount1);
-            console.log('afterFirstDiscount = ' +afterFirstDiscount)
-            subtotal = afterFirstDiscount
-
-            // Check if the second discount is present
-            if (discount2 !== null) {
-                // Apply the second discount to the result of the first discount
-                let finalPrice = afterFirstDiscount * (1 - discount2);
-                console.log('afterFirstDiscount = ' +finalPrice)
-                subtotal = finalPrice
-            }
-        }
-
-        document.getElementById('confirmMessagePayblleAmount').textContent = formatToCurrency(`${subtotal}`)
-        estimatedPayable = subtotal;
-        $('#finalize-transaction-confirm-modal').modal('show');
-        $('#transactionFinalization').modal('hide')
-        console.log('Toatal = ' + subtotal); 
-    }
-
+    calculateTransaction();
 })
 
 // Add event listeners for 'keydown' (for typing) and 'paste' events
@@ -611,6 +565,21 @@ clothesWeightInput.addEventListener('paste', function(event) {
     }
 });
 
+// an event that convert the value of price input into a currency
+clothesWeightInput.addEventListener('blur', function(e){
+
+    if(e.target.value.length > 0){
+
+        if(selectedServiceGlobalVar.unit_measurement == 'Kg'){
+            e.target.value = currencyToNormalFormat(e.target.value)
+        }
+        else{
+            e.target.value = integerConverter(e.target.value);
+        }
+    }
+    
+})
+
 // event listener to confirm transaction 
 const confirmTransactionCheck = setInterval(() => {
     let confirmTransaction = document.getElementById('confirm-transaction-now');
@@ -625,14 +594,13 @@ const confirmTransactionCheck = setInterval(() => {
             const products = selectedProductIds;
             const discount = selectedDiscounts;
             let transactionId;
-            let orderProductId;
 
             const service = selectedServiceGlobalVar;
             const clothsWeight = clothesWeightInput.value;
             const payable = estimatedPayable;
             const shop_id = sessionStorage.getItem('service_more_shop_id');
-            const user_id = userId;
-            const transaction_name = `${userUserName} - ${service.service_name} - Transaction`;
+            const user_id = globalNewCustomerId;
+            const transaction_name = `${laundrycustomerFirstName.value}-${laundrycustomerLastName.value}-${service.service_name}-Transaction`;
 
             // insert transaction
             const url = "php-sql-controller/service-and-more-controller.php";
@@ -673,7 +641,8 @@ const confirmTransactionCheck = setInterval(() => {
 
 
             //insert order product
-            if(transactionId){
+            if(Object.keys(selectedProductIds).length > 0){
+                let orderProductId;
 
                 products.forEach((product) => {
                     const productId = product.id;
@@ -686,7 +655,9 @@ const confirmTransactionCheck = setInterval(() => {
                         transaction_id: transactionId,
                         product_id: productId,
                         order_date: getPhilippineDateTime(),
-                        item_quantity: product.quantity
+                        item_quantity: product.quantity,
+                        unit_measurement: product.order_measurement,
+                        estimatedPrice: product.estimatedPrice
                     };
         
                     const detailsList = dynamicSynchronousPostRequest(url, data);
@@ -717,76 +688,254 @@ const confirmTransactionCheck = setInterval(() => {
 
 
             //insert discount if exist
-            if(orderProductId){
+            if (Object.keys(selectedDiscounts).length > 0) {
 
-                if (Object.keys(selectedDiscounts).length > 0) {
+                let discountInserted = true;
+                let message;
 
-                    let discountInserted = true;
-                    let message;
+                discount.forEach((discount) => {
+                    const discountId = discount.discount_id;
 
-                    discount.forEach((discount) => {
-                        const discountId = discount.discount_id;
+                    console.log(discountId)
 
-                        console.log(discountId)
-    
-                        const url = "php-sql-controller/service-and-more-controller.php";
-                        const data = {
-                            insertDiscountedTransaction: true,
-                            transaction_id: transactionId,
-                            discount_id: discountId,
-                            discounted_transaction_status: 'Pending'
-                        };
-            
-                        const detailsList = dynamicSynchronousPostRequest(url, data);
-            
-                        if(isValidJSON(detailsList)){
-                            const details = JSON.parse(detailsList);
-                            console.log('discounted transaction => ', details)
-                            let status = details.status;
-                            if(status != 'success'){
-                                discountInserted = false;
-                                message = details.message;
-                                WaitigLoader(false)
-                            }
-                        }
-                        else{
-                            WaitigLoader(false)
-                            console.error(detailsList);
+                    const url = "php-sql-controller/service-and-more-controller.php";
+                    const data = {
+                        insertDiscountedTransaction: true,
+                        transaction_id: transactionId,
+                        discount_id: discountId,
+                        discounted_transaction_status: 'Pending'
+                    };
+        
+                    const detailsList = dynamicSynchronousPostRequest(url, data);
+        
+                    if(isValidJSON(detailsList)){
+                        const details = JSON.parse(detailsList);
+                        console.log('discounted transaction => ', details)
+                        let status = details.status;
+                        if(status != 'success'){
                             discountInserted = false;
-                            dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                            message = details.message;
+                            WaitigLoader(false)
                         }
-    
-    
-                    })
-
-                    if(discountInserted){
-                        WaitigLoader(false)
-                        dynamicAlertMessage('Transaction has been successfully processed.', 'success', 3000);
-
-                        setTimeout(function(){
-                            window.location.reload();
-                        },2000)
                     }
                     else{
                         WaitigLoader(false)
-                        dynamicAlertMessage(message, 'error', 3000);
+                        console.error(detailsList);
+                        discountInserted = false;
+                        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
                     }
-                    
-                } else {
+
+
+                })
+
+                if(discountInserted){
                     WaitigLoader(false)
                     dynamicAlertMessage('Transaction has been successfully processed.', 'success', 3000);
+
                     setTimeout(function(){
-                        window.location.reload();
+                        // window.location.reload();
                     },2000)
                 }
+                else{
+                    WaitigLoader(false)
+                    dynamicAlertMessage(message, 'error', 3000);
+                }
                 
-
+            } else {
+                WaitigLoader(false)
+                dynamicAlertMessage('Transaction has been successfully processed.', 'success', 3000);
+                setTimeout(function(){
+                    window.location.reload();
+                },2000)
             }
 
         })
 
     }
 }, 100);
+
+// finalize transaction
+function finalizeTransactionFunction(){
+    if(Object.keys(selectedProductIds).length > 0){
+
+        document.getElementById('selected-product-container-label').classList.remove('d-none');
+
+        if(Object.keys(selectedProductIds).length > 1 ){
+            document.getElementById('selected-product-container-label').textContent = 'Selected Products';
+        }
+        else{
+            document.getElementById('selected-product-container-label').textContent = 'Selected Product';
+        }
+
+        selectedProductsContainer.innerHTML = '';
+        selectedProductIds.forEach((product) => {
+
+            const productPrice = product.price;
+            const productBrand = product.product_brand;
+            const productImage = product.product_image;
+            const productName = product.product_name;
+            let productQuantity = product.quantity;
+
+            if(product.order_measurement == 'Cup'){
+                productQuantity = parseInt(productQuantity);
+            }
+
+            // Create the card HTML dynamically
+            const productCardHTML = `
+            <div class=" col-12 col-md-6">
+                <div class="card">
+                <div class="card-header">
+                    ${productName}
+                </div>
+                <div class="card-body d-flex gap-3">
+                    <div class="rounded-3 overflow-hidden d-flex align-items-center shadow" style="width: 100px;">
+                         <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+                    </div>
+                    <div>
+                    <p>Brand: ${productBrand}</p>
+                    <p>Type: ${product.product_type}</p>
+                    <p>Price: ${formatToCurrency(productPrice)} (${product.amount_per_price}${product.original_unit_measurement.toUpperCase()})</p>
+                    <p>Ordered Amount: ${productQuantity} ${product.order_measurement.toUpperCase()}</p> <!-- You can replace 1 with a dynamic value if needed -->
+                    <p>Ordered Estimated Price: ${formatToCurrency(`${product.estimatedPrice}`)}</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+            `;
+
+            // Insert the card into the selectedProductsContainer
+            selectedProductsContainer.innerHTML += productCardHTML;
+
+        }) 
+    }
+    else{
+        document.getElementById('selected-product-container-label').classList.add('d-none');
+    }
+
+    document.getElementById('check-out-selected-service').textContent = selectedServiceGlobalVar.service_name
+    document.getElementById('check-out-selected-service-description').textContent = selectedServiceGlobalVar.description
+    document.getElementById('check-out-selected-service-price').textContent =  formatToCurrency(selectedServiceGlobalVar.price)
+
+    if(selectedServiceGlobalVar.unit_measurement == 'Kg'){
+        document.getElementById('esitimated-clothes-weight-label').textContent = `Estimated Clothes Weight (Kg)`
+        clothesWeightInput.placeholder = `Estimated Clothes Weight (Kg)`
+    }
+    else{
+        document.getElementById('esitimated-clothes-weight-label').textContent = `Estimated Clothes Quantity`
+        clothesWeightInput.placeholder = `Estimated Clothes Quantity`
+    }
+
+    discountPage = 1; 
+    discountContainer.innerHTML = ''; // Clear previous content if needed
+    discountContainer.innerHTML = `
+    <div class="d-flex justify-content-flex-start" id="empty-discount-identifier">
+        <p>Shop does not have any discount yet.</p>
+    </div>`;
+    loadDiscounts();
+}
+
+// calculate transaction to finalize
+function calculateTransaction(){
+    
+    if(transactionFinalizationValidation()){
+
+        let summaryMessage = ``;
+
+        // console.log(selectedServiceGlobalVar)
+
+        let clothesQuantityWeightVal = clothesWeightInput.value;
+
+        summaryMessage +=`Service Calculation Summary:\n`
+        summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.price}`)} (${currencyToNormalFormat(`${selectedServiceGlobalVar.service_load}`)}${selectedServiceGlobalVar.unit_measurement.toUpperCase()})\n`;
+        if(clothesWeightInput.value.length < 1){
+            if(selectedServiceGlobalVar.unit_measurement == 'Kg'){
+                clothesQuantityWeightVal = 1;
+            }
+            else{
+                clothesQuantityWeightVal = 10;
+            }
+        }
+
+
+        if(selectedServiceGlobalVar.unit_measurement == 'Kg'){
+            summaryMessage += `${clothesWeightInput.placeholder}: ${currencyToNormalFormat(`${clothesQuantityWeightVal}`)}KG\n`;
+        }
+        else{
+            summaryMessage += `${clothesWeightInput.placeholder}: ${clothesQuantityWeightVal}PCS\n`;
+        }
+
+
+        let totalServiceCost = calculatePricePerKg(selectedServiceGlobalVar.price, selectedServiceGlobalVar.service_load, clothesQuantityWeightVal);
+        summaryMessage += `Service Total Cost: ${formatToCurrency(`${totalServiceCost}`)}`;
+        // console.log('singleItemPrice = ', selectedServiceGlobalVar)
+
+        const singleItemPrice = totalServiceCost;
+        let subtotal = singleItemPrice;
+
+        // console.log('selectedProductIds : ', selectedProductIds)
+
+        if(Object.keys(selectedProductIds).length > 0){
+            
+            summaryMessage += `\n\nProduct Calculation Summary: \n`;
+            let totalProductPrice = selectedProductIds.reduce((total, product, index) => {
+                summaryMessage += `${product.product_name} ${formatToCurrency(`${product.estimatedPrice}`)}`;
+                // Add "+" only if it's not the last product
+                if (index < selectedProductIds.length - 1) {
+                    summaryMessage += " +\n";
+                }
+            
+                return total + product.estimatedPrice;
+            }, 0);
+            summaryMessage += `\nTotal: ${formatToCurrency(`${totalProductPrice}`)}`;
+
+            // Calculate subtotal
+            subtotal = singleItemPrice + totalProductPrice;
+            summaryMessage += `\n\nService Total Cost: ${formatToCurrency(`${selectedServiceGlobalVar.price}`)} +\n`;
+            summaryMessage += `Product Total Cost: ${formatToCurrency(`${totalProductPrice}`)}`
+            summaryMessage += `\nTotal Cost (Without Discount): ${formatToCurrency(`${subtotal}`)}`;
+        }
+        
+       
+
+        // Initialize discount variables
+        let discount1 = selectedDiscounts[0] ? parseFloat(selectedDiscounts[0].discount_percent) / 100 : null;
+        let discount2 = selectedDiscounts[1] ? parseFloat(selectedDiscounts[1].discount_percent) / 100 : null;
+
+        // console.log('discount1 = ' +discount1);
+        // console.log('discount2 = ' +discount2);
+
+        // Check if the first discount is present, else alert and stop
+        if (discount1 !== null) {
+
+            summaryMessage += `\n\nDiscount Calculation Summary:\n`
+            // Apply the first discount
+            let afterFirstDiscount = subtotal * (1 - discount1);
+            summaryMessage += `Discount 1: ${formatToCurrency(`${subtotal}`)} * (1 - ${discount1})\n`
+            subtotal = afterFirstDiscount
+            summaryMessage += `Total (Discount 1): ${formatToCurrency(`${subtotal}`)}`
+           
+
+            // Check if the second discount is present
+            if (discount2 !== null) {
+                // Apply the second discount to the result of the first discount
+                let finalPrice = afterFirstDiscount * (1 - discount2);
+                summaryMessage += `\nDiscount 2: ${formatToCurrency(`${subtotal}`)} * (1 - ${discount2})\n`
+                subtotal = finalPrice
+                summaryMessage += `Total (Discount 2): ${formatToCurrency(`${subtotal}`)}`
+               
+            }
+        }
+
+        summaryMessage += `\n\nOverall Total Payable: ${formatToCurrency(`${subtotal}`)}`;
+        console.log(summaryMessage);
+        document.getElementById('summary-message').value = summaryMessage
+        estimatedPayable = currencyToNormalFormat(`${subtotal}`);
+        console.log('estimatedPayable : '+ estimatedPayable)
+        $('#finalize-transaction-confirm-modal').modal('show');
+        $('#transactionFinalization').modal('hide')
+    }
+
+}
 
 // function to load all services from a shop
 function loadServicesForPage(pageNumber) {
@@ -807,7 +956,7 @@ function loadServicesForPage(pageNumber) {
                 
                 let serviceLoad = service.service_load;
 
-                if(service.unit_measurement == 'Kg'){
+                if(service.unit_measurement == 'Kg' || service.unit_measurement == 'Cup'){
                     serviceLoad = currencyToNormalFormat(service.service_load)
                 }
 
@@ -924,21 +1073,42 @@ function updatePagination(currentPage, totalPages) {
 function loadAndSelectProduct(service){
 
     const serviceType = service.service_type;
+    selectedServiceGlobalVar = service;
 
     if(['Fold', 'Dry', 'Package' ].includes(serviceType)){
+        selectedProductIds = [];
 
-        alert('no need product')
+        if(!backToProductModalBtn.classList.contains('d-none')){
+            backToProductModalBtn.classList.add('d-none')
+        }
 
+        if(backToServiceListNP.classList.contains('d-none')){
+            backToServiceListNP.classList.remove('d-none')
+        }
+
+        $('#selectOrderProductModal').modal('hide')
+        $('#createTransactionMadal').modal('hide')
+        $('#transactionFinalization').modal('show')  
+
+        finalizeTransactionFunction();
+          
     }
     else{
 
+        if(backToProductModalBtn.classList.contains('d-none')){
+            backToProductModalBtn.classList.remove('d-none')
+        }
+
+        if(!backToServiceListNP.classList.contains('d-none')){
+            backToServiceListNP.classList.add('d-none')
+        }
+        
         $('#createTransactionMadal').modal('hide')
         $('#selectOrderProductModal').modal('show')
         productPage = 1; 
         productListContainer.innerHTML = '';
-        selectedServiceGlobalVar = service;
     
-        console.log('service : ', service   )
+        // console.log('service : ', service   )
     
         loadProductsForCurrentPage(productPage)
     }
@@ -1064,7 +1234,7 @@ function loadProductsForCurrentPage(pageNumber) {
                 quantityInput.value = selectedProduct.quantity; // Restore previous quantity
                 order_measurement_field.value = selectedProduct.order_measurement; // Restore previous quantity
 
-                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Cup' && order_measurement_field.value != 'Sachet'){
+                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Sachet'){
                     quantityInput.value =  currencyToNormalFormat(quantityInput.value)
                 }
                 else{
@@ -1077,7 +1247,7 @@ function loadProductsForCurrentPage(pageNumber) {
 
             order_measurement_field.addEventListener('change', function(){
 
-                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Cup' && order_measurement_field.value != 'Sachet'){
+                if(quantityInput.value.length > 0  && order_measurement_field.value != 'Sachet'){
                     quantityInput.value =  currencyToNormalFormat(quantityInput.value)
                 }
                 else{
@@ -1095,9 +1265,14 @@ function loadProductsForCurrentPage(pageNumber) {
                     const order_measurement = order_measurement_field.value;
                     selectedProductIds.push(
                         { id: product.product_id,
+                          stock:product.quantity,
                           quantity: quantity,
                           order_measurement: order_measurement,
+                          original_unit_measurement: product.unit_measurement,
                           product_name: product.product_name, 
+                          amount_per_price:product.amount_per_price,
+                          amount_per_stock:product.amount_per_stock,
+                          product_type: product.product_type,
                           product_image: product.image_link,
                           product_brand: product.product_brand,
                           price: product.price
@@ -1121,7 +1296,7 @@ function loadProductsForCurrentPage(pageNumber) {
 
             quantityInput.addEventListener('blur', () => {
 
-                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Cup' && order_measurement_field.value != 'Sachet'){
+                if(quantityInput.value.length > 0 && order_measurement_field.value != 'Sachet'){
                     quantityInput.value =  currencyToNormalFormat(quantityInput.value)
                 }
                 else{

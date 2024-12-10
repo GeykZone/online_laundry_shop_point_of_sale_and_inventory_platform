@@ -27,6 +27,7 @@ if(isset($inputData['submitLaundryShopProduct'])){
     $product_measurement = isset($inputData['product_measurement']) && $inputData['product_measurement'] !== '' ? $inputData['product_measurement'] : null; 
     $amount_per_stock = isset($inputData['amount_per_stock']) && $inputData['amount_per_stock'] !== '' ? $inputData['amount_per_stock'] : null; 
     $amount_per_price = isset($inputData['amount_per_price']) && $inputData['amount_per_price'] !== '' ? $inputData['amount_per_price'] : null; 
+    $dontUpdateBaseStock = isset($inputData['dontUpdateBaseStock']) && $inputData['dontUpdateBaseStock'] !== '' ? $inputData['dontUpdateBaseStock'] : null; 
     
     if ($product_id) {
         $service_status = isset($inputData['service_status']) && $inputData['service_status'] !== '' ? $inputData['service_status'] : null;
@@ -56,6 +57,15 @@ if(isset($inputData['submitLaundryShopProduct'])){
             $setClause[] = "amount_per_stock = ?";
             $params[] = $amount_per_stock;
             $types .= 'd';
+
+            if($dontUpdateBaseStock == null){
+
+                $setClause[] = "base_stock = ?";
+                $params[] = $amount_per_stock;
+                $types .= 'd';
+            }
+
+            
         }
         if ($amount_per_price !== null) {
             $setClause[] = "amount_per_price = ?";
@@ -118,12 +128,12 @@ if(isset($inputData['submitLaundryShopProduct'])){
         }
     } else {
         // If no product_id is provided, perform an INSERT
-        $sql = "INSERT INTO `product`(`product_name`, `product_type`, `unit_measurement`, `amount_per_stock`,  `amount_per_price`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`) 
-                VALUES (?, ?, ?, ?, ?, ?, ?,  ?, ?, ?)";
+        $sql = "INSERT INTO `product`(`product_name`, `base_stock`, `product_type`, `unit_measurement`, `amount_per_stock`,  `amount_per_price`, `price`, `quantity`, `image_link`, `product_brand`, `shop_id`) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?)";
     
         // Prepare and bind parameters
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssdddissi", $productName, $productType, $product_measurement, $amount_per_stock,  $amount_per_price, $productPrice,  $productQuantity, $imageLink, $productBrand, $shop_id);
+        $stmt->bind_param("sdssdddissi", $productName, $amount_per_stock, $productType, $product_measurement, $amount_per_stock,  $amount_per_price, $productPrice,  $productQuantity, $imageLink, $productBrand, $shop_id);
     
         // Execute the statement
         if ($stmt->execute()) {
@@ -179,6 +189,44 @@ if (isset($_GET['showLaundryProductList'])) {
     // Output data as json format 
     echo json_encode(SSP::simple($_GET, $dbDetails, $table, $primaryKey, $columns, $joinQuery, $where));
 }
+
+// Show the laundry shop Product List
+// Show the laundry shop Product List
+if (isset($_GET['showLaundryProductLogs'])) {
+    $shop_id = $_GET['shop_id'];
+
+    // DB table to use
+    $table = 'product_log';
+
+    // Table's primary key
+    $primaryKey = 'product_log_id';
+
+    // Array of database columns which should be read and sent back to DataTables.
+    $columns = array(
+        array('db' => 'product.product_name', 'dt' => 0, 'field' => 'product_name'), // Product name
+        array('db' => "CONCAT(user.first_name, ' ', user.last_name)", 'dt' => 1, 'field' => 'full_name', 'as' => 'full_name'), // User full name
+        array('db' => 'product_log.change_date', 'dt' => 2, 'field' => 'change_date'), // Log date
+        array('db' => 'product_log.changes_details', 'dt' => 3, 'field' => 'changes_details'), // Log details
+    );
+
+    // Include SQL query processing class
+    require 'ssp.class.php';
+
+    // Join query to combine data from related tables
+    $joinQuery = "
+        FROM `{$table}`
+        LEFT JOIN `product` ON `product_log`.`product_id` = `product`.`product_id`
+        LEFT JOIN `user` ON `product_log`.`user_id` = `user`.`user_id`
+    ";
+
+    // Where condition to filter logs by shop_id
+    $where = "product.shop_id = '$shop_id'";
+
+    // Output data as JSON format
+    echo json_encode(SSP::simple($_GET, $dbDetails, $table, $primaryKey, $columns, $joinQuery, $where));
+}
+
+
 
 
 ?>

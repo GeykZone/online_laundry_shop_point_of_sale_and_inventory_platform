@@ -28,6 +28,7 @@ let oldTransactionStatus;
 let oldTransaction = [];
 let transactionCustomerArr = [];
 let wholeTransactionInfo = [];
+let oldService = [];
 
 // Initialize Firebase
 if(typeof firebase !== 'undefined' && firebase.apps.length === 0){
@@ -177,8 +178,16 @@ dynamicConfirmationMessage(
         otherButtonId : 'change-confirm-transaction-now',
         otherButtonText : 'Cancel',
         hideCancelButton: true,
-        customBodyContent : `<div class=" d-flex flex-row gap-3 justify-content-center align-items-center">
-        <h5 id="transactionConfirmMessage" style="font-size: 17px;"></h5>
+        customBodyContent : `<div class=" d-flex flex-row flex-column gap-3 justify-content-center align-items-center">
+        <h6 id="transactionConfirmMessage" style="font-size: 17px;"></h6>
+        <textarea disabled class="border-0 shadow-sm w-100 bg-light p-3 text-secondary" name="" id="common-summary-message" cols="30" rows="10"></textarea>
+
+            <style>
+            textarea#summary-message {
+                min-height: 350px;
+                max-height: 500px;
+              }
+            </style>
         </div>`,
         customFooterContent: `<button type="button" id="change-confirm-transaction-update" data-coreui-dismiss="modal" class="btn btn-info text-white">Confirm Transaction Update</button>`
     }
@@ -589,22 +598,22 @@ const checkchangeConfirmTransactionUpdate = setInterval(() => {
 }, 100);
 
 // Interval variable to check if the nrate-shop exist
-const checkrateShop = setInterval(() => {
-    const rateShopBTNVAr = document.getElementById('rate-shop');
+// const checkrateShop = setInterval(() => {
+//     const rateShopBTNVAr = document.getElementById('rate-shop');
 
-    if(rateShopBTNVAr){
+//     if(rateShopBTNVAr){
 
-        clearInterval(checkrateShop);
-        rateShopBTNVAr.addEventListener('click', function(){
+//         clearInterval(checkrateShop);
+//         rateShopBTNVAr.addEventListener('click', function(){
 
-            $('#rateShop').modal('show');
-            $('#manageTransactionModal').modal('hide');
+//             $('#rateShop').modal('show');
+//             $('#manageTransactionModal').modal('hide');
            
-        })
-    }
+//         })
+//     }
 
 
-}, 100);
+// }, 100);
 
 // Interval variable to check if the mark-as-read-notification exist
 const checkmarkAsReadNotification = setInterval(() => {
@@ -695,8 +704,8 @@ const checratingInput = setInterval(() => {
                     rating_created_date: getPhilippineDateTime(),
                     rate: ratingInput.value,
                     comment: commentBoxForRating.value,
-                    shop_id: selectedTransactionShopId,
-                    user_id: userId
+                    shop_id: sessionStorage.getItem('service_more_shop_id'),
+                    user_id: sessionStorage.getItem('raterId')
                 };
 
                 console.log(data)
@@ -711,7 +720,7 @@ const checratingInput = setInterval(() => {
                         let message = details.message
                         dynamicAlertMessage(message, 'success', 3000);
                         setTimeout(function(){
-                            window.location.reload();
+                            window.location.href = 'customer-home.php';
                         },2000)
                     }
                     else{
@@ -847,7 +856,13 @@ function routePage() {
 
             const headerToggler = document.querySelector('.header-toggler');
             const headerNav =  document.querySelector('.profileAvatar');
-            const sideBarId =  document.getElementById('sidebar')
+            const sideBarId =  document.getElementById('sidebar');
+            
+           try {
+            document.getElementById('rate-shop').classList.remove('d-none')
+           } catch (error) {
+            
+           }
 
             if(headerToggler){
 
@@ -2490,7 +2505,7 @@ function notifTransationTable() {
                 }
             },
             order: [[8, 'desc']],
-            responsive: true,
+            responsive: false,
             fixedHeader: true,
             searching: true,
             dom: 'Blfrtip',
@@ -2521,7 +2536,8 @@ function notifTransationTable() {
                 {
                     targets: 0,
                     render: function (data, type, row) {
-                        return `<button type="button" onClick="manageTransactionModal('${row}',true)" class="btn btn-primary text-white">Manage</button>`;
+                        const serializedRow = encodeURIComponent(JSON.stringify(row));
+                        return `<button type="button" onClick="manageTransactionModal('${serializedRow}',true)" class="btn btn-primary text-white">Manage</button>`;
                     }
                 },
                 null,
@@ -2660,17 +2676,17 @@ function manageTransactionModal(row, fromNotif) {
     const markAsReadNotification = document.getElementById('mark-as-read-notification')
 
     // an event that convert the value of price input into a currency
-    notifyCheckoutInitialInput.addEventListener('blur', function(e){
-        if(e.target.value.length > 0){
-            e.target.value = formatToCurrency(e.target.value)
-        }
-    })
+    // notifyCheckoutInitialInput.addEventListener('blur', function(e){
+    //     if(e.target.value.length > 0){
+    //         e.target.value = formatToCurrency(e.target.value)
+    //     }
+    // })
 
     // Given string
     let str = row;
 
     // Split the string into an array
-    let values = str.split(",");
+    let values = JSON.parse(decodeURIComponent(row));
 
     // Define the keys for the JSON object
     let keys = ["id", "customer", "shop", "service", "payable_amount", "status", "transaction_date", "pickup_date"];
@@ -2703,10 +2719,11 @@ function manageTransactionModal(row, fromNotif) {
             const transaction = details.transaction;
             const userInfo = details.user;
             selectedTransactionShopId = transaction.shop_id;
-            oldTransactionStatus =transaction.transaction_status;
+            oldTransactionStatus = transaction.transaction_status;
             transactionCustomerArr = userInfo;
+            oldService = service;
             wholeTransactionInfo = details;
-            console.log(details)
+            // console.log(details)
 
             notifySelectedProductContainer.innerHTML = '';
             notifModaldiscountContainer.innerHTML = '';
@@ -2716,8 +2733,23 @@ function manageTransactionModal(row, fromNotif) {
             notifyCheckoutSelectedService.textContent = service.service_name
             notifySheckoutSelectedServiceDescription.textContent = service.service_description
             notifyCheckoutSelectedServicePrice.textContent = formatToCurrency(`${service.service_price}`)
-            notifyCheckoutClothesWeightInput.value = parseInt(transaction.clothes_weight);
-            notifyCheckoutInitialInput.value = formatToCurrency(`${transaction.initial}`);
+            if(service.service_unit_measurement == 'Kg'){
+                notifyCheckoutClothesWeightInput.value = currencyToNormalFormat(transaction.clothes_weight)
+            }
+            else{
+                notifyCheckoutClothesWeightInput.value = integerConverter(transaction.clothes_weight);
+            }
+
+            if(service.service_unit_measurement == 'Kg'){
+                document.getElementById('common-esitimated-clothes-weight-label').textContent = `Estimated Clothes Weight (Kg)`
+                notifyCheckoutClothesWeightInput.placeholder = `Estimated Clothes Weight (Kg)`
+            }
+            else{
+                document.getElementById('common-esitimated-clothes-weight-label').textContent = `Estimated Clothes Quantity`
+                notifyCheckoutClothesWeightInput.placeholder = `Estimated Clothes Quantity`
+            }
+
+            // notifyCheckoutInitialInput.value = formatToCurrency(`${transaction.initial}`);
             notifyCheckoutTotalInput.value = formatToCurrency(`${transaction.total}`);
             otherTransactionChangesDescription.textContent = transaction.transaction_changes_other_details
             defaultInitial = transaction.initial;
@@ -2726,19 +2758,19 @@ function manageTransactionModal(row, fromNotif) {
 
             if(userPosition == 'Customer'){
                 detailsTransactionStatus.disabled = true;
-                notifyCheckoutInitialInput.disabled = true;
+                // notifyCheckoutInitialInput.disabled = true;
                 otherTransactionChangesDescription.disabled = true;
 
                 if(detailsTransactionStatus.value != 'Pending'){
-                    changeServiceFromNotifBtn.classList.add('d-none')
-                    addMoreProduct.classList.add('d-none')
+                    // changeServiceFromNotifBtn.classList.add('d-none')
+                    // addMoreProduct.classList.add('d-none')
                     ThistransactionSubmitChanges.classList.add('d-none')
                     notifyCheckoutClothesWeightInput.disabled = true;
                     hideThisClass = 'd-none';
                 }
                 else{
-                    changeServiceFromNotifBtn.classList.remove('d-none')
-                    addMoreProduct.classList.remove('d-none')
+                    // changeServiceFromNotifBtn.classList.remove('d-none')
+                    // addMoreProduct.classList.remove('d-none')
                     ThistransactionSubmitChanges.classList.remove('d-none')
                     notifyCheckoutClothesWeightInput.disabled = false;
                 }
@@ -2776,12 +2808,12 @@ function manageTransactionModal(row, fromNotif) {
             }
 
             if (!isChangeServiceListenerAdded) {
-                changeServiceFromNotifBtn.addEventListener('click', function(){
-                    $('#changeService').modal('show');
-                    $('#manageTransactionModal').modal('hide');
-                    changeServiceShopId = transaction.shop_id;
-                    openChangeServiceModal();
-                });
+                // changeServiceFromNotifBtn.addEventListener('click', function(){
+                //     $('#changeService').modal('show');
+                //     $('#manageTransactionModal').modal('hide');
+                //     changeServiceShopId = transaction.shop_id;
+                //     openChangeServiceModal();
+                // });
                 isChangeServiceListenerAdded = true; // Mark listener as added
             }
 
@@ -2796,12 +2828,12 @@ function manageTransactionModal(row, fromNotif) {
 
             // Add event listener for addMoreProduct if not already added
             if (!isAddMoreProductListenerAdded) {
-                addMoreProduct.addEventListener('click', function() {
-                    $('#addMoreProductModal').modal('show');
-                    $('#manageTransactionModal').modal('hide');
-                    changeServiceShopId = transaction.shop_id;
-                    loadAndSelectAddMoreProduct(service);
-                });
+                // addMoreProduct.addEventListener('click', function() {
+                //     $('#addMoreProductModal').modal('show');
+                //     $('#manageTransactionModal').modal('hide');
+                //     changeServiceShopId = transaction.shop_id;
+                //     loadAndSelectAddMoreProduct(service);
+                // });
                 isAddMoreProductListenerAdded = true;
             }
 
@@ -2815,51 +2847,57 @@ function manageTransactionModal(row, fromNotif) {
             }
 
             //products
-            productList.forEach((product) => {
-                const productPrice = product.product_price;
-                const productBrand = product.product_brand;
-                const productImage = product.image_link;
-                const productName = product.product_name;
-                const productQuantity = product.item_quantity;
-                const productId = product.product_id;
-                defaultProducSelected.push(product);
-            
-                // Create the card HTML dynamically
-                const productCardHTML = `
-                <div class="col-12 col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            ${productName}
-                            <label class="btn btn-info ${hideThisClass} d-flex justify-content-center gap-2 text-white">
-                                <input class="form-check-input" type="checkbox" value="${productId}" 
-                                    id="selectedProductInput${product.order_product_id}" 
-                                    onclick='NotiftoggleProductSelection(${JSON.stringify(product)})'>
-                                <span id="NotifProductlabelText${product.order_product_id}">Mark to remove</span>
-                            </label>
-                        </div>
-                        <div class="card-body d-flex gap-3">
-                            <div class="rounded-3 overflow-hidden shadow" style="width: 100px;">
-                                <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+           
+            if(productList[0].product_id){
+
+                productList.forEach((product) => {
+                    const productPrice = product.product_price;
+                    const productBrand = product.product_brand;
+                    const productImage = product.image_link;
+                    const productName = product.product_name;
+                    const productQuantity = product.item_quantity;
+                    const productId = product.product_id;
+                    defaultProducSelected.push(product);
+                
+                    // Create the card HTML dynamically
+                    const productCardHTML = `
+                    <div class=" col-12 col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                ${productName}
                             </div>
-                            <div>
-                                <p>Brand: ${productBrand}</p>
-                                <p>Price: ${formatToCurrency(`${productPrice}`)}</p>
-                                <p>Selected Quantity: ${productQuantity}</p>
+                            <div class="card-body d-flex gap-3">
+                                <div class="rounded-3 overflow-hidden d-flex align-items-center shadow" style="width: 100px;">
+                                    <img src='${productImage}' alt="Image Preview" style="width: 100%; height: 100px; object-fit: cover;">
+                                </div>
+                                <div>
+                                    <p>Brand: ${productBrand}</p>
+                                    <p>Type: ${product.product_type}</p>
+                                    <p>Price: ${formatToCurrency(`${productPrice}`)} (${product.amount_per_price}${product.product_unit_measurement.toUpperCase()})</p>
+                                    <p>Ordered Amount: ${productQuantity} ${product.op_unit_measurement.toUpperCase()}</p> <!-- You can replace 1 with a dynamic value if needed -->
+                                    <p>Ordered Estimated Price: ${formatToCurrency(`${product.order_product_price}`)}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                `;
-            
-                // Insert the card into the notifySelectedProductContainer
-                notifySelectedProductContainer.innerHTML += productCardHTML;
-            });
-            
-            if(Object.keys(defaultProducSelected).length > 1){
-                notifyCheckoutProductContainerLabel.textContent = 'Selected Products'
+                    `;
+                
+                    // Insert the card into the notifySelectedProductContainer
+                    notifySelectedProductContainer.innerHTML += productCardHTML;
+                });
+
+                if(Object.keys(defaultProducSelected).length > 1){
+                    notifyCheckoutProductContainerLabel.textContent = 'Selected Products'
+                }
+                else{
+                    notifyCheckoutProductContainerLabel.textContent = 'Selected Product'
+                }
+
+                document.getElementById('notify-checkout-product-container-label').classList.remove('d-none')
+                
             }
             else{
-                notifyCheckoutProductContainerLabel.textContent = 'Selected Product'
+                document.getElementById('notify-checkout-product-container-label').classList.add('d-none')
             }
 
             //dicounts
@@ -3001,54 +3039,67 @@ function manageTransactionModal(row, fromNotif) {
     }
 }
 
+
 // function to formulate changes for trensaction
 function formulateChangesForTransaction() {
+    let selectedServiceGlobalVar = oldService;
     const notifyCheckoutTotalInput = document.getElementById('notify-checkout-total-input');
-    let changedTotal = currencyToNormalFormat(`${notifyCheckoutTotalInput.value}`)
-    const tobeRemoveOrderProduct = selectedProductToRemove;
-    const tobeAddedMoreProduct = selectedAddMoreProductIds;
+    let changedTotal = currencyToNormalFormat(`${notifyCheckoutTotalInput.value}`);
     let isValid = true;
     let changeAddMore = false;
-
     let isValiddetailsTransactionStatus = true;
-
     const notifyCheckoutClothesWeightInput = document.getElementById('notify-checkout-clothes-weight-input');
-    const notifyCheckoutInitialInput = document.getElementById('notify-checkout-initial-input');
     const detailsTransactionStatus = document.getElementById('details-transaction-status');
     const otherTransactionChangesDescription = document.getElementById('other-transaction-changes-description');
-    
-    if (changedServiceSelected){
-        if(Object.keys(changedServiceSelected).length > 0){
-            changeAddMore = true;
+    let summaryMessage = ``;
+
+    let clothesQuantityWeightVal = notifyCheckoutClothesWeightInput.value;
+
+    summaryMessage +=`Service Calculation Summary:\n`
+    summaryMessage += `${selectedServiceGlobalVar.service_name} (${selectedServiceGlobalVar.service_type}): ${formatToCurrency(`${selectedServiceGlobalVar.service_price}`)} (${currencyToNormalFormat(`${selectedServiceGlobalVar.service_load}`)}${selectedServiceGlobalVar.service_unit_measurement.toUpperCase()})\n`;
+    if(notifyCheckoutClothesWeightInput.value.length < 1){
+        if(selectedServiceGlobalVar.service_unit_measurement == 'Kg'){
+            clothesQuantityWeightVal = 1;
+        }
+        else{
+            clothesQuantityWeightVal = 10;
         }
     }
 
-    let singleItemPrice = currencyToNormalFormat(`${notifyCheckoutInitialInput.value}`);
-   
-    const totaldefaultProduct = defaultProducSelected.reduce((total, product) => {
-        return total + parseFloat(product.product_price) * parseInt(product.item_quantity, 10);
-    }, 0);
-
-    // Calculate subtotal
-    let subtotal = singleItemPrice + totaldefaultProduct;
-
-    const totalProductPrice = tobeRemoveOrderProduct.reduce((total, product) => {
-        return total + parseFloat(product.product_price) * parseInt(product.item_quantity, 10);
-    }, 0);
-
-    const totalAddMoreProducts = tobeAddedMoreProduct.reduce((total, product) => {
-        return total + parseFloat(product.price) * parseInt(product.quantity, 10);
-    }, 0);
-
-    if(totalAddMoreProducts > 0){
-        subtotal += totalAddMoreProducts;
-        changeAddMore = true;
+    if(selectedServiceGlobalVar.service_unit_measurement == 'Kg'){
+        summaryMessage += `${notifyCheckoutClothesWeightInput.placeholder}: ${currencyToNormalFormat(`${clothesQuantityWeightVal}`)}KG\n`;
+    }
+    else{
+        summaryMessage += `${notifyCheckoutClothesWeightInput.placeholder}: ${clothesQuantityWeightVal}PCS\n`;
     }
 
-    if(totalProductPrice > 0){
-        subtotal -= totalProductPrice;
-        changeAddMore = true;
-    }    
+    let totalServiceCost = calculatePricePerKg(selectedServiceGlobalVar.service_price, selectedServiceGlobalVar.service_load, clothesQuantityWeightVal);
+    summaryMessage += `Service Total Cost: ${formatToCurrency(`${totalServiceCost}`)}`;
+    
+    let singleItemPrice = totalServiceCost
+    let subtotal = singleItemPrice;
+
+    if(Object.keys(defaultProducSelected).length > 0){
+
+        summaryMessage += `\n\nProduct Calculation Summary: \n`;
+        const totaldefaultProduct = defaultProducSelected.reduce((total, product, index) => {
+            summaryMessage += `${product.product_name} ${formatToCurrency(`${product.order_product_price}`)}`;
+            // Add "+" only if it's not the last product
+            if (index < defaultProducSelected.length - 1) {
+                summaryMessage += " +\n";
+            }
+            return total + product.order_product_price;
+        }, 0);
+        summaryMessage += `\nTotal: ${formatToCurrency(`${totaldefaultProduct}`)}`;
+
+        // Calculate subtotal
+        subtotal = singleItemPrice + totaldefaultProduct;
+        summaryMessage += `\n\nService Total Cost: ${formatToCurrency(`${selectedServiceGlobalVar.service_price}`)} +\n`;
+        summaryMessage += `Product Total Cost: ${formatToCurrency(`${totaldefaultProduct}`)}`
+        summaryMessage += `\nTotal Cost (Without Discount): ${formatToCurrency(`${subtotal}`)}`;
+        subtotal = singleItemPrice + totaldefaultProduct;
+    }
+    
     
     if (Object.keys(changeableDiscount).length > 0) {
         // console.log('changeableDiscount = >' , changeableDiscount)
@@ -3060,45 +3111,24 @@ function formulateChangesForTransaction() {
         // Check if the first discount is present, else alert and stop
         if (discount3 ||discount4) {
 
-            // console.log("discount3 = " + discount3);
-            // Apply the first discount
+            summaryMessage += `\n\nDiscount Calculation Summary:\n`
             let afterFirstDiscount = subtotal * (1 - discount3);
-            subtotal = parseFloat(afterFirstDiscount.toFixed(2)); // Format with two decimal places
+            summaryMessage += `Discount 1: ${formatToCurrency(`${subtotal}`)} * (1 - ${discount3})\n`
+            subtotal = parseFloat(afterFirstDiscount.toFixed(2)); 
+            summaryMessage += `Total (Discount 1): ${formatToCurrency(`${subtotal}`)}`
     
             // Check if the second discount is present
             if (discount4) {
-                // console.log("discount4 = " + discount4);
-                // Apply the second discount to the result of the first discount
                 let finalPrice = afterFirstDiscount * (1 - discount4);
+                summaryMessage += `\nDiscount 2: ${formatToCurrency(`${subtotal}`)} * (1 - ${discount4})\n`
                 subtotal = parseFloat(finalPrice.toFixed(2)); // Format with two decimal places
+                summaryMessage += `Total (Discount 2): ${formatToCurrency(`${subtotal}`)}`
             }
         }
-
-        changeableDiscount.forEach(function(discount){
-
-            if(discount.olddiscounted_transaction_status != discount.discounted_transaction_status){
-                changeAddMore = true;
-            }
-
-        })
 
     }
 
     changedTotal = subtotal;
-
-    // validations
-    if(parseInt(Object.keys(tobeRemoveOrderProduct).length) == parseInt(Object.keys(defaultProducSelected).length) && parseInt(Object.keys(tobeAddedMoreProduct).length) < 1){
-        dynamicAlertMessage('You cannot remove all products without adding new one.', 'warning', 3000);
-        isValid = false;
-    }
-
-    // if(notifyCheckoutClothesWeightInput.value.length < 1){
-    //     isValid = false;
-    //     dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, 'Please input a valid clothes weight.');
-    // }
-    // else {
-    //     dynamicFieldErrorMessage(notifyCheckoutClothesWeightInput.id, '');
-    // }
 
     changeableDiscount.forEach((discount) => {
         const detailsDiscountID = document.getElementById(`details-discount-status-${discount.discount_id}`);
@@ -3134,22 +3164,6 @@ function formulateChangesForTransaction() {
         }
     }
 
-    if(notifyCheckoutInitialInput.value < 1){
-        isValid = false;
-        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, 'Please input a valid clothes weight.');
-    }    
-    else {
-        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, '');
-    }
-
-    if(notifyCheckoutInitialInput.value.length < 1 || !isValidCurrency(notifyCheckoutInitialInput.value)){
-        isValid = false;
-        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, 'Please input a valid intial amount.');
-    }
-    else {
-        dynamicFieldErrorMessage(notifyCheckoutInitialInput.id, '');
-    }
-
     if (oldTransactionStatus === 'Rejected') {
         dynamicAlertMessage('You cannot update a transaction that has already been rejected.', 'error', 3000);
         isValid = false;
@@ -3166,12 +3180,18 @@ function formulateChangesForTransaction() {
 
     // console.log("oldTransaction = > ", oldTransaction)
 
-    if((oldTransaction.clothes_weight != notifyCheckoutClothesWeightInput.value 
-      || formatToCurrency(`${oldTransaction.initial}`)  != notifyCheckoutInitialInput.value
-      || oldTransaction.transaction_changes_other_details != otherTransactionChangesDescription.value) 
-      && ['Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus))
-    {
-        dynamicAlertMessage('You cannot modify the Transaction fields once the transaction is being processed or rejected.', 'error', 3000);
+    // if((oldTransaction.clothes_weight != notifyCheckoutClothesWeightInput.value 
+    //   || oldTransaction.transaction_changes_other_details != otherTransactionChangesDescription.value) 
+    //   && ['Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected'].includes(oldTransactionStatus))
+    // {
+    //     dynamicAlertMessage('You cannot modify the Transaction fields once the transaction is being processed or rejected.', 'error', 3000);
+    //     isValid = false;
+    // }
+
+    console.log(oldTransactionStatus + " new value "+ detailsTransactionStatus.value)
+
+    if((['In-Progress', 'Ready-to-Pick-Up', 'Picked-Up'].includes(detailsTransactionStatus.value)) && oldTransactionStatus == 'Pending'){
+        dynamicAlertMessage(`You cannot modify the Transaction status to 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up', 'Rejected' once the transaction is not yet Approved.`, 'error', 3000);
         isValid = false;
     }
 
@@ -3206,6 +3226,11 @@ function formulateChangesForTransaction() {
     }
 
     if(isValid){
+
+        summaryMessage += `\n\nOverall Total Payable: ${formatToCurrency(`${subtotal}`)}`;
+        document.getElementById('common-summary-message').value = summaryMessage
+        console.log(summaryMessage);
+
         const changeConfirmTransactionBack = document.getElementById('change-confirm-transaction-now');
         const transactionConfirmMessage = document.getElementById('transactionConfirmMessage');
 
@@ -3239,15 +3264,14 @@ function formulateChangesForTransaction() {
         $('#manageTransactionModal').modal('hide');
 
         finalTransactionObject = {
-            transactionTotal: changedTotal,
+            transactionTotal: currencyToNormalFormat(`${changedTotal}`),
             clothesWeight: notifyCheckoutClothesWeightInput.value,
-            initial: currencyToNormalFormat(`${notifyCheckoutInitialInput.value}`),
             changesDescription: otherTransactionChangesDescription.value,
             transactionStatus: detailsTransactionStatus.value,
             oldTransactionId: defaultTrnsactionId,
-            newService: changedServiceSelected,
-            removedProduct: tobeRemoveOrderProduct,
-            moreProduct: tobeAddedMoreProduct,
+            summaryMessage: summaryMessage,
+            // removedProduct: tobeRemoveOrderProduct,
+            // moreProduct: tobeAddedMoreProduct,
             discountChanges: changeableDiscount
         }
     }
@@ -3264,6 +3288,7 @@ function updateTransaction() {
     const oldTransactionId = finalTransactionObject.oldTransactionId;
     const transactionStatus = finalTransactionObject.transactionStatus;
     const transactionTotal = finalTransactionObject.transactionTotal;
+    const summaryMessage = finalTransactionObject.summaryMessage;
     
 
     // insert transaction
@@ -3294,14 +3319,9 @@ function updateTransaction() {
             transaction_status: transactionStatus,
         };
     }
-    if (Object.keys(finalTransactionObject.newService).length > 0){
-        // console.log('new Service Update')
-        const newService = finalTransactionObject.newService;
-        const newServiceId = newService.service_id;
-        const transaction_name = `${transactionCustomer} - ${newService.service_name} - Transaction`;
-        data.service_id = newServiceId
-        data.transaction_name = transaction_name;
-    }
+
+
+
     if(transactionStatus == 'Picked-Up'){
         data.pick_up_date = getPhilippineDateTime();
     }
@@ -3326,191 +3346,6 @@ function updateTransaction() {
         // WaitigLoader(false)
         dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
         isSuccessful = false
-    }
-
-    // Remove Product
-    if (Object.keys(finalTransactionObject.removedProduct).length > 0 && transactionStatus != 'Rejected'){
-       
-        const removedProductFromTransaction = finalTransactionObject.removedProduct;
-        
-        removedProductFromTransaction.forEach((removedProduct) => {
-            const item_quantity = removedProduct.item_quantity;
-            const order_product_id = removedProduct.order_product_id;
-            const product_id = removedProduct.product_id;
-            let allProductRemoveSuccess = true;
-            // const product_price = removedProduct.product_id;
-
-            const url = "php-sql-controller/service-and-more-controller.php";
-            const data = {
-                isRemoveProduct: true,
-                insertOrderProduct: true,
-                order_products_id: order_product_id
-            };
-            const detailsList = dynamicSynchronousPostRequest(url, data);
-
-            if(isValidJSON(detailsList)){
-                const details = JSON.parse(detailsList);
-                // console.log('transaction => ', details)
-                let status = details.status;
-                if(status == 'success'){
-                    console.info(details.message);
-                }
-                else{
-                    let message = details.message
-                    dynamicAlertMessage(message, 'error', 3000);
-                    allProductRemoveSuccess = false;
-                    isSuccessful = false
-                }
-            }
-            else{
-                console.error(detailsList);
-                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
-                allProductRemoveSuccess = false;
-                isSuccessful = false
-            }
-
-            if(allProductRemoveSuccess){
-                const url = "php-sql-controller/manage-products-controller.php";
-                const data = {
-                    submitLaundryShopProduct: true,
-                    product_id: product_id,
-                    addQuantity: parseInt(item_quantity),
-                    shop_id:selectedTransactionShopId
-                };
-                const detailsList = dynamicSynchronousPostRequest(url, data);
-
-                if(isValidJSON(detailsList)){
-                    const details = JSON.parse(detailsList);
-                    if(details.message && details.message.length != 0){
-                        console.info(details.message);
-                    }
-                    else{
-                        let message = details.error; 
-                        dynamicAlertMessage(message, 'error', 3000);
-                        isSuccessful = false
-                    }
-                }
-                else{
-                    console.error(detailsList);
-                    dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
-                    isSuccessful = false
-                }
-            }
-        })
-    }
-
-    // Add More Product
-    if (Object.keys(finalTransactionObject.moreProduct).length > 0 && transactionStatus != 'Rejected'){
-        const addMoreProductToTransaction = finalTransactionObject.moreProduct;
-
-        addMoreProductToTransaction.forEach((product) => {
-            const productId = product.id;
-            let justUpdateOrderProduct = false;
-            let toUpdateOrders = [];
-
-            const url = "php-sql-controller/common-controller.php";
-            const data = {
-                orderProductsCommonDml: true,
-                queryDml: true,
-                transaction_id: oldTransactionId,
-                product_id: productId
-            };
-            const detailsList = dynamicSynchronousPostRequest(url, data);
-            if(isValidJSON(detailsList)){
-                const details = JSON.parse(detailsList);
-                // console.log('transaction => ', details)
-                let status = details.status;
-                if(status == 'query success'){
-                    console.info(details.message);
-                    const retrieved = details.data
-
-                    if(Object.keys(retrieved).length > 0){
-                        justUpdateOrderProduct = true;
-                        toUpdateOrders = retrieved
-                    }
-                    
-                }
-                else{
-                    let message = details.message
-                    dynamicAlertMessage(message, 'error', 3000);
-                    isSuccessful = false
-                }
-            }
-            else{
-                console.error(detailsList);
-                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
-                isSuccessful = false
-            }
-
-            if(justUpdateOrderProduct){
-
-                toUpdateOrders.forEach((order) => {
-                    const url = "php-sql-controller/common-controller.php";
-                    const data = {
-                        orderProductsCommonDml: true,
-                        updateDml: true,
-                        order_products_id: order.order_products_id,
-                        product_id: order.product_id,
-                        addQuantity: parseInt(product.quantity)
-                    };
-    
-                    const detailsList = dynamicSynchronousPostRequest(url, data);
-    
-                    if(isValidJSON(detailsList)){
-                        const details = JSON.parse(detailsList);
-                        // console.log('order => ', details)
-                        let status = details.status;
-                        if(status == 'success'){
-                            console.info(details.message);
-                        }
-                        else{
-                            let message = details.message
-                            dynamicAlertMessage(message, 'error', 3000);
-                            isSuccessful = false
-                        }
-                    }
-                    else{
-                        console.error(detailsList);
-                        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'warning', 3000);
-                        isSuccessful = false
-                    }
-                })
-            }
-            else{
-                const orderName = product.product_name + ' - ' + product.product_brand;
-                const url = "php-sql-controller/service-and-more-controller.php";
-                const data = {
-                    insertOrderProduct: true,
-                    order_name: orderName,
-                    transaction_id: oldTransactionId,
-                    product_id: productId,
-                    order_date: getPhilippineDateTime(),
-                    item_quantity: product.quantity
-                };
-
-                const detailsList = dynamicSynchronousPostRequest(url, data);
-
-                if(isValidJSON(detailsList)){
-                    const details = JSON.parse(detailsList);
-                    // console.log('order => ', details)
-                    let status = details.status;
-                    if(status == 'success'){
-                        console.info('More Product are added.');
-                    }
-                    else{
-                        let message = details.message
-                        dynamicAlertMessage(message, 'error', 3000);
-                         isSuccessful = false
-                    }
-                }
-                else{
-                    console.error(detailsList);
-                    dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
-                     isSuccessful = false
-                }
-            }
-
-        })
     }
 
     if (Object.keys(finalTransactionObject.discountChanges).length > 0 && transactionStatus != 'Rejected'){
@@ -3552,15 +3387,60 @@ function updateTransaction() {
         
     }
 
-    if(transactionStatus == 'Rejected' && Object.keys(defaultProducSelected).length > 0){
+    if(transactionStatus == 'Approved' && Object.keys(defaultProducSelected).length > 0){
 
         defaultProducSelected.forEach((orderProduct) => {
+            const productUnitType = orderProduct.product_unit_measurement;
+            const customerSelectedUnitType = orderProduct.op_unit_measurement;
+            let stockAmount = orderProduct.product_quantity;
+            let amountPerStock = orderProduct.product_amount_per_stock;
+            let orderedAmount = orderProduct.item_quantity;
+            let saveLog = false;
+            let saveLogDetails = `Changes detected:\n`;
+
+            if(customerSelectedUnitType == 'Cup' && productUnitType == 'Kg'){
+
+                orderedAmount = convertToKg({ cups: orderProduct.item_quantity }).kg; // Cups to Kg
+                console.log(orderedAmount);
+            }
+            else if(customerSelectedUnitType == 'Grams' && productUnitType == 'Kg'){
+
+                orderedAmount = convertToKg({ grams: orderProduct.item_quantity }).kg; // Grams to Kg
+                console.log(orderedAmount);
+            }
+            
+            let result = calculateStockAfterPurchase(stockAmount, amountPerStock, orderedAmount);
+
+            let new_amount_per_stock = result.remainingcustomerBuy;
+
+            if(new_amount_per_stock == 0 || new_amount_per_stock == '0'){
+                new_amount_per_stock = orderProduct.base_stock;
+            }
+
+            let new_product_overall_stock = result.updatedStock;
+            
+            if(stockAmount != new_product_overall_stock){
+                saveLog = true
+                saveLogDetails +=`Stock:\n`
+                saveLogDetails +=`Field old value: ${stockAmount}\n`
+                saveLogDetails +=`Field new value: ${new_product_overall_stock}\n\n`
+            }
+
+            if(amountPerStock != new_amount_per_stock){
+                saveLog = true
+                saveLogDetails +=`Amount per Stock:\n`
+                saveLogDetails +=`Field old value: ${amountPerStock}\n`
+                saveLogDetails +=`Field new value: ${new_amount_per_stock}\n`
+            }
+
             const url = "php-sql-controller/manage-products-controller.php";
             const data = {
                 submitLaundryShopProduct: true,
                 product_id: orderProduct.product_id,
-                addQuantity: parseInt(orderProduct.item_quantity),
-                shop_id:selectedTransactionShopId
+                amount_per_stock: new_amount_per_stock,
+                productQuantity: new_product_overall_stock,
+                shop_id:selectedTransactionShopId,
+                dontUpdateBaseStock: true
             };
             const detailsList = dynamicSynchronousPostRequest(url, data);
 
@@ -3580,14 +3460,46 @@ function updateTransaction() {
                 dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
                 isSuccessful = false
             }
-        })
+
+
+            if(saveLog){
+
+                const url = "php-sql-controller/common-controller.php";
+                let data = {
+                    saveLog: true,
+                    product_id: orderProduct.product_id,
+                    userid: userId,
+                    saveLogDetails: saveLogDetails,
+                };
+                const detailsList = dynamicSynchronousPostRequest(url, data);
+                if(isValidJSON(detailsList)){
+                    const details = JSON.parse(detailsList);
+                    // console.log('transaction => ', details)
+                    let status = details.status;
+                    if(status == 'success'){
+                        console.info(details.message);
+                    }
+                    else{
+                        let message = details.message
+                        // WaitigLoader(false)
+                        dynamicAlertMessage(message, 'error', 3000);
+                        isSuccessful = false
+                    }
+                }
+                else{
+                    console.error(detailsList);
+                    // WaitigLoader(false)
+                    dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                    isSuccessful = false
+                }
+    
+            }
+        })       
 
     }
 
     if(isSuccessful){
         $('#manageTransactionModal').modal('hide');
-
-        
 
         // using my custom js to post request to php 
         const url = "php-sql-controller/common-controller.php"; 
@@ -3613,69 +3525,25 @@ function updateTransaction() {
         const customerPhoneUsed = transactionCustomerArr.phone_number; 
         const cusomerIdUsed = transactionCustomerArr.user_id;
 
-        // Helper function to check if a value exists and is not blank
-        const isNotBlank = (value) => value !== null && value !== undefined && value !== '';
-
-        // Generate message for products if they exist
-        let productsMessageNL = '';
-        const productsMessage = wholeTransactionInfo.products.length > 0
-            ? wholeTransactionInfo.products.map(product => {
-                const details = [];
-                productsMessageNL = "\n\n\t\tSelected Products:\n\n\t\t";
-                if (isNotBlank(product.product_name)) details.push(`Name: ${product.product_name}`);
-                if (isNotBlank(product.item_quantity)) details.push(`Quantity: ${product.item_quantity}`);
-                if (isNotBlank(product.product_price)) details.push(`Price: ${formatToCurrency(`${product.product_price}`)}`);
-                if (isNotBlank(product.product_brand)) details.push(`Brand: ${product.product_brand}\n`);
-                return details.join(`\n\t\t- `);
-            }).join('\n\t\t')
-            : '';
-
-        // Generate message for discounts if they exist
-        let discountsMessageNL = ''
-        const discountsMessage = wholeTransactionInfo.discounts.length > 0
-            ? wholeTransactionInfo.discounts.map(discount => {
-                const details = [];
-                discountsMessageNL = "\n\n\t\tSelected Discounts:\n\n\t\t";
-                if (isNotBlank(discount.discount_name)) details.push(`Discount Name: ${discount.discount_name}`);
-                if (isNotBlank(discount.discount_percent)) details.push(`Percent: ${discount.discount_percent}%`);
-                if (isNotBlank(discount.discount_percent)) details.push(`Status: ${discount.discounted_transaction_status}`);
-                if (isNotBlank(discount.discount_description)) details.push(`Description: ${discount.discount_description}\n`);
-                return details.join('\n\t\t- ');
-            }).join('\n\t\t')
-            : '';
-
-        let otherMessage = '';
-        if( wholeTransactionInfo.transaction.transaction_changes_other_details){
-            otherMessage += `\n\t\tLaundry Shop Changes Message: ${ wholeTransactionInfo.transaction.transaction_changes_other_details}`
-        }
-
         // Generate the full notification message
-        const notifMessage = `
-        Hello ${customerFullName}, notice from ${sessionStorage.getItem('sessionShopName')}
-
-        Laundry Transaction Details:
-        Laundry Transaction Status: ${transactionStatus}${otherMessage}
-        Laundry Estimated Payable Amount: ${formatToCurrency(`${transactionTotal}`)}
-        Laundry Service: ${isNotBlank(wholeTransactionInfo.service.service_name) ? wholeTransactionInfo.service.service_name : 'Not specified'}${productsMessageNL+productsMessage}${discountsMessageNL+discountsMessage}
-
-        ${document.getElementById('footer-text').textContent}
+        const notifMessage = `Hello ${customerFullName}, notice from ${sessionStorage.getItem('sessionShopName')}\n\nLaundry Transaction Details:\nLaundry Transaction Status: ${transactionStatus}\n\n${summaryMessage}\n\n${document.getElementById('footer-text').textContent}
         `;
 
-        if(!dynamicEmailSend(notifMessage, customerFullName ,customerEmailUsed)){
-          WaitigLoader(false)
-          return;
-        }
+        // if(!dynamicEmailSend(notifMessage, customerFullName ,customerEmailUsed)){
+        //   WaitigLoader(false)
+        // }
 
-        if(!dynamicSendSMS(notifMessage, cusomerIdUsed)){
-          WaitigLoader(false)
-          return;
-        }
+        // if(!dynamicSendSMS(notifMessage, cusomerIdUsed)){
+        //   WaitigLoader(false)
+        // }
+
+        console.log(notifMessage)
 
         dynamicAlertMessage('Transaction is updated successfully.', 'success', 3000);
         
         setTimeout(function(){
-            WaitigLoader(false)
-            window.location.reload();
+            // WaitigLoader(false)
+            // window.location.reload();
         },2000)
        
        
@@ -4145,10 +4013,9 @@ function calculateCostKiloGramToGram(pricePerBaseKg, weightInGrams, baseKg) {
     return totalCost;
 }
 
-
 // Calculate cost based on custom base kilograms and cups
 function calculatCostKiloGramToCup(pricePerBaseKg, cups, baseKg) {
-    let gramsPerCup = 120; // Powdered Soap (Laundry Detergent): Typically ranges from 100-120 grams per cup, depending on the brand and granule density.
+    let gramsPerCup = 100; // Powdered Soap (Laundry Detergent): Typically ranges from 100-120 grams per cup, depending on the brand and granule density.
     
     console.log(`Price per ${baseKg} kilogram(s): ${formatToCurrency(`${pricePerBaseKg}`)}`);
     console.log(`Number of cups: ${cups}`);
@@ -4169,69 +4036,175 @@ function calculatCostKiloGramToCup(pricePerBaseKg, cups, baseKg) {
     return totalCost;
 }
 
+//calculate price per ml
+function calculatePricePerMl(pricePerSet, setMl, selectedMl) {
+    console.log(`Price for ${setMl} ml: ${pricePerSet}`);
+    console.log(`Selected ml: ${selectedMl}`);
+    
+    // Calculate the price per ml
+    const pricePerMl = pricePerSet / setMl;
+    console.log(`Price per ml: ${currencyToNormalFormat(`${pricePerMl}`)}`);
+    
+    // Calculate the total price for the selected ml
+    const totalPrice = pricePerMl * selectedMl;
+    console.log(`Total price for ${selectedMl} ml: ${formatToCurrency(`${totalPrice}`)}`);
+    
+    return totalPrice;
+}
 
-// Calculate KG stock after purchase
-function calculateStockAfterPurchase(stock, baseKg, customerBuyKg) {
-    console.log(`Initial stock (in ${baseKg} kg units): ${stock}`);
-    console.log(`Base unit weight: ${baseKg} kg`);
-    console.log(`Customer wants to buy: ${customerBuyKg} kg`);
+// Calculate price per kg
+function calculatePricePerKg(pricePerSet, setKg, selectedKg) {
+    console.log(`Price for ${setKg} kg: ${pricePerSet}`);
+    console.log(`Selected kg: ${selectedKg}`);
+    
+    // Calculate the price per kg
+    const pricePerKg = pricePerSet / setKg;
+    console.log(`Price per kg: ${currencyToNormalFormat(`${pricePerKg}`)}`);
+    
+    // Calculate the total price for the selected kg
+    const totalPrice = pricePerKg * selectedKg;
+    console.log(`Total price for ${selectedKg} kg: ${formatToCurrency(`${totalPrice}`)}`);
+    
+    return totalPrice;
+}
 
-    let remainingCustomerBuyKg = customerBuyKg; // Amount the customer still wants
-    let remainingStock = stock; // Remaining stock in baseKg units
+// Calculate price per sachet
+function calculatePricePerSachet(pricePerSet, setSachets, selectedSachets) {
+    console.log(`Price for ${setSachets} sachets: ${pricePerSet}`);
+    console.log(`Selected sachets: ${selectedSachets}`);
+    
+    // Calculate the price per sachet
+    const pricePerSachet = pricePerSet / setSachets;
+    console.log(`Price per sachet: ${pricePerSachet.toFixed(2)}`);
+    
+    // Calculate the total price for the selected sachets
+    const totalPrice = pricePerSachet * selectedSachets;
+    console.log(`Total price for ${selectedSachets} sachets: ${totalPrice.toFixed(2)}`);
+    
+    return totalPrice;
+}
+
+// Calculate price per gram
+function calculatePricePerGram(pricePerSet, setGrams, selectedGrams) {
+    console.log(`Price for ${setGrams} grams: ${pricePerSet}`);
+    console.log(`Selected grams: ${selectedGrams}`);
+    
+    // Calculate the price per gram
+    const pricePerGram = pricePerSet / setGrams;
+    console.log(`Price per gram: ${pricePerGram.toFixed(2)}`);
+    
+    // Calculate the total price for the selected grams
+    const totalPrice = pricePerGram * selectedGrams;
+    console.log(`Total price for ${selectedGrams} grams: ${totalPrice.toFixed(2)}`);
+    
+    return totalPrice;
+}
+
+// Calculate price per cup
+function calculatePricePerCup(pricePerSet, setCups, selectedCups) {
+    console.log(`Price for ${setCups} cups: ${pricePerSet}`);
+    console.log(`Selected cups: ${selectedCups}`);
+    
+    // Calculate the price per cup
+    const pricePerCup = pricePerSet / setCups;
+    console.log(`Price per cup: ${pricePerCup.toFixed(2)}`);
+    
+    // Calculate the total price for the selected cups
+    const totalPrice = pricePerCup * selectedCups;
+    console.log(`Total price for ${selectedCups} cups: ${totalPrice.toFixed(2)}`);
+    
+    return totalPrice;
+}
+
+// Convert Kg to Grams or Cup
+function convertKgToGramsAndCups(kg) {
+    // Conversion constants
+    const gramsPerKg = 1000; // 1 kg = 1000 grams
+    const gramsPerCup = 100; // 1 cup = 100 grams
+
+    // Convert kg to grams
+    const grams = kg * gramsPerKg;
+
+    // Convert grams to cups
+    const cups = grams / gramsPerCup;
+
+    console.log(`${kg} kg is equal to:`);
+    console.log(`${grams} grams`);
+    console.log(`${currencyToNormalFormat(`${cups}`)} cups (based on 100 grams per cup)`);
+
+    return {
+        grams: grams,
+        cups: currencyToNormalFormat(`${cups}`), // Rounded to 2 decimal places
+    };
+}
+
+// Calculate Unit stock after purchase
+function calculateStockAfterPurchase(stock, base, customerBuy) {
+    console.log(`Initial stock (in ${base} units): ${stock}`);
+    console.log(`Base unit weight: ${base} units`);
+    console.log(`Customer wants to buy: ${customerBuy} units`);
+
+    let remainingcustomerBuy = customerBuy; // Amount the customer still wants
+    let remainingStock = stock; // Remaining stock in base units
 
     // Process the purchase
-    while (remainingCustomerBuyKg > 0 && remainingStock > 0) {
-        if (remainingCustomerBuyKg >= baseKg) {
+    while (remainingcustomerBuy > 0 && remainingStock > 0) {
+        if (remainingcustomerBuy >= base) {
             // If customer needs a full unit or more
-            remainingCustomerBuyKg -= baseKg;
+            remainingcustomerBuy -= base;
             remainingStock -= 1; // Reduce one stock unit
         } else {
             // If customer needs less than one stock unit
             // No full stock unit is consumed, so we break here
-            break;
+            remainingcustomerBuy -= base;
+            
         }
-        console.log(`Remaining customer buy: ${remainingCustomerBuyKg} kg, Remaining stock: ${remainingStock} units`);
+        console.log(`Remaining customer buy: ${remainingcustomerBuy} units, Remaining stock: ${remainingStock} units`);
     }
 
     return {
         updatedStock: remainingStock,
-        remainingCustomerBuyKg: remainingCustomerBuyKg, // Return any unfulfilled amount
+        remainingcustomerBuy: Math.abs(remainingcustomerBuy), // Return any unfulfilled amount
     };
 }
-//ex: let result = calculateStockAfterPurchase(99, 0.5, 3);
-//ex: console.log(`Updated stock: ${result.updatedStock} units`);
-//ex: console.log(`Unfulfilled customer buy: ${result.remainingCustomerBuyKg} kg`);
-
-
-// Calculate G stock after purchase
-function calculateStockAfterPurchaseInGrams(stock, baseGrams, customerBuyGrams) {
-    console.log(`Initial stock (in ${baseGrams} grams units): ${stock}`);
-    console.log(`Base unit weight: ${baseGrams} grams`);
-    console.log(`Customer wants to buy: ${customerBuyGrams} grams`);
-
-    let remainingCustomerBuyGrams = customerBuyGrams; // Amount the customer still wants in grams
-    let remainingStock = stock; // Remaining stock in baseGrams units
-
-    // Process the purchase
-    while (remainingCustomerBuyGrams > 0 && remainingStock > 0) {
-        if (remainingCustomerBuyGrams >= baseGrams) {
-            // If customer needs a full unit or more
-            remainingCustomerBuyGrams -= baseGrams;
-            remainingStock -= 1; // Reduce one stock unit
-        } else {
-            break;
-        }
-        console.log(`Remaining customer buy: ${remainingCustomerBuyGrams} grams, Remaining stock: ${remainingStock} units`);
-    }
-
-    return {
-        updatedStock: remainingStock,
-        remainingCustomerBuyGrams: remainingCustomerBuyGrams, // Return any unfulfilled amount
-    };
-}
-// let result = calculateStockAfterPurchaseInGrams(100, 1000, 3000); // 100 units, each 2000 grams, customer wants 1500 grams
+// let result = calculateStockAfterPurchase(100, 3, 3);
 // console.log(`Updated stock: ${result.updatedStock} units`);
-// console.log(`Unfulfilled customer buy: ${result.remainingCustomerBuyGrams} grams`)
+// console.log(`Unfulfilled customer buy: ${result.remainingcustomerBuy} units`);
+
+
+// Convert Grams or Cups to Kg
+function convertToKg({ grams = 0, cups = 0 }) {
+    // Conversion constants
+    const gramsPerKg = 1000; // 1 kg = 1000 grams
+    const gramsPerCup = 100; // 1 cup = 100 grams
+
+    let totalKg = 0;
+
+    if (grams > 0) {
+        // Convert grams to kilograms
+        totalKg = grams / gramsPerKg;
+        console.log(`${grams} grams is equal to ${totalKg.toFixed(2)} kilograms`);
+    } else if (cups > 0) {
+        // Convert cups to grams, then to kilograms
+        const totalGrams = cups * gramsPerCup;
+        totalKg = totalGrams / gramsPerKg;
+        console.log(`${cups} cups is equal to ${totalKg.toFixed(2)} kilograms`);
+    } else {
+        console.log("No valid input provided. Please provide either grams or cups.");
+    }
+
+    return {
+        kg: totalKg.toFixed(2), // Return kilograms rounded to 2 decimal places
+    };
+}
+// // Example usage
+// const resultFromGrams = convertToKg({ grams: 1500 }); // Grams to Kg
+// console.log(resultFromGrams);
+
+// const resultFromCups = convertToKg({ cups: 5 }); // Cups to Kg
+// console.log(resultFromCups);
+
+
 
 
 

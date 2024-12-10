@@ -21,7 +21,10 @@ let product_measurement = document.getElementById('product_measurement');
 let amount_per_stock = document.getElementById('amount_per_stock');
 let amount_per_price = document.getElementById('amount_per_price');
 let productListTable = document.getElementById('product-list-table');
+let productLogsContainerField = document.getElementById('product-logs-table-container');
 let productListTableVar;
+let productLogsTable = document.getElementById('product-logs-table');
+let productLogsTableVar;
 manageServiceMoreSessionStorage(false, false);
 
 
@@ -110,6 +113,8 @@ createLaundryShopProductBtn.addEventListener('click', function(){
 
     }
 
+    productQuantity.disabled = false;
+
     if(submitLaundryShopProductBtn.classList.contains('d-none')){
         submitLaundryShopProductBtn.classList.remove('d-none');
     }
@@ -167,7 +172,7 @@ submitLaundryShopProductBtn.addEventListener('click', function(){
         dynamicFieldErrorMessage(productImageUpload.id, '');
     }
 
-    if((productType.value == 'Powder' && product_measurement.value != 'Kg' && product_measurement.value != 'Gram' && product_measurement.value != 'Cup') || 
+    if((productType.value == 'Powder' && product_measurement.value != 'Kg' && product_measurement.value != 'Grams' && product_measurement.value != 'Cup') || 
     (productType.value == 'Liquid' && product_measurement.value != 'Ml' && product_measurement.value != 'Sachet')){
         isValid = false;
         dynamicFieldErrorMessage(product_measurement.id,  `Invalid unit measurement for ${productType.value} type.`);
@@ -224,6 +229,15 @@ submitLaundryShopProductBtn.addEventListener('click', function(){
                             shop_id: sessionStorage.getItem('sessionShopId'),
                             submitLaundryShopProduct: true,
                         };
+
+                        let logMessage = `Product Nam: ${productName.value}`;
+                            logMessage += `\nProduct Brand: ${productBrand.value}`;
+                            logMessage += `\nProduct Type: ${productType.value}`;
+                            logMessage += `\nProduct Unit of Measurement: ${product_measurement.value}`;
+                            logMessage += `\nProduct Amount per Stock: ${amount_per_stock.value}`;
+                            logMessage += `\nProduct Amount per Price: ${amount_per_price.value}`;
+                            logMessage += `\nProduct Price: ${formatToCurrency(productPrice.value)}`;
+                            logMessage += `\nProduct Stock: ${productQuantity.value}`;
                     
                         const queriedList = dynamicSynchronousPostRequest(url, data);
 
@@ -231,24 +245,59 @@ submitLaundryShopProductBtn.addEventListener('click', function(){
                             let jsonQueriedValue = JSON.parse(queriedList)
 
                             if(jsonQueriedValue.insert_id && jsonQueriedValue.insert_id.length != 0){
-                                // let service_id = jsonQueriedValue.insert_id
-                                dynamicAlertMessage('A Product has been successfully added.', 'success', 3000);
-                                $('#addLaundryShopProduct').modal('hide');
+                                
+                                const url = "php-sql-controller/common-controller.php";
+                                let data = {
+                                    saveLog: true,
+                                    product_id: jsonQueriedValue.insert_id,
+                                    userid: userId,
+                                    saveLogDetails: `New Product Inserted:\n` + logMessage,
+                                };
+                                const detailsList = dynamicSynchronousPostRequest(url, data);
+                                if(isValidJSON(detailsList)){
+                                    const details = JSON.parse(detailsList);
+                                    // console.log('transaction => ', details)
+                                    let status = details.status;
+                                    if(status == 'success'){
+                                        
+                                        // let service_id = jsonQueriedValue.insert_id
+                                        dynamicAlertMessage('A Product has been successfully added.', 'success', 3000);
+                                        $('#addLaundryShopProduct').modal('hide');
 
-                                productName.value = '';
-                                productBrand.value = '';
-                                productPrice.value = '';
-                                productQuantity.value = '';
-                                productImageUpload.value = '';
-                                productImagePreview.src = '';
-                                productImagePreview.style.display = 'none';
-                                productImageRemoveBtn.style.display = 'none';
+                                        productName.value = '';
+                                        productBrand.value = '';
+                                        productPrice.value = '';
+                                        productQuantity.value = '';
+                                        productImageUpload.value = '';
+                                        productImagePreview.src = '';
+                                        productImagePreview.style.display = 'none';
+                                        productImageRemoveBtn.style.display = 'none';
 
-                                WaitigLoader(false)
+                                        WaitigLoader(false)
 
-                                if(productListTableVar){
-                                    productListTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
+                                        if(productListTableVar){
+                                            productListTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
+                                        }
+
+                                        if(productLogsTableVar){
+                                            productLogsTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
+                                        }
+
+                                    }
+                                    else{
+                                        let message = details.message
+                                        // WaitigLoader(false)
+                                        dynamicAlertMessage(message, 'error', 3000);
+                                        WaitigLoader(false)
+                                    }
                                 }
+                                else{
+                                    console.error(detailsList);
+                                    // WaitigLoader(false)
+                                    dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                                    WaitigLoader(false)
+                                }
+
                             }
                             else{
                                 WaitigLoader(false)
@@ -284,7 +333,7 @@ productPrice.addEventListener('blur', function(e){
 // conver to float
 amount_per_stock.addEventListener('blur', function(e){
 
-    if(e.target.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+    if(e.target.value.length > 0 && product_measurement.value != 'Sachet'){
         e.target.value =  currencyToNormalFormat(e.target.value)
     }
     else{
@@ -296,7 +345,7 @@ amount_per_stock.addEventListener('blur', function(e){
 // conver to float
 amount_per_price.addEventListener('blur', function(e){
 
-    if(e.target.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+    if(e.target.value.length > 0 && product_measurement.value != 'Sachet'){
         e.target.value =  currencyToNormalFormat(e.target.value)
     }
     else{
@@ -317,7 +366,7 @@ productQuantity.addEventListener('blur', function(e){
 // product measurement field event change
 product_measurement.addEventListener('change', function(e){
 
-    if(amount_per_stock.value.length > 0 && e.target.value != 'Cup' && e.target.value != 'Sachet'){
+    if(amount_per_stock.value.length > 0 && e.target.value != 'Sachet'){
         amount_per_stock.value =  currencyToNormalFormat(amount_per_stock.value)
     }
     else{
@@ -325,7 +374,7 @@ product_measurement.addEventListener('change', function(e){
     }
 
 
-    if(amount_per_price.value.length > 0 && e.target.value != 'Cup' && e.target.value != 'Sachet'){
+    if(amount_per_price.value.length > 0 && e.target.value != 'Sachet'){
         amount_per_price.value =  currencyToNormalFormat(amount_per_price.value)
     }
     else{
@@ -366,7 +415,7 @@ if(productListTable){
             fixedHeader: true,
             searching: true, // Disable default server-side search
             dom: 'Blfrtip',
-            pageLength : 10,
+            pageLength : 5,
             buttons: [
                 {
                     extend: 'excel',
@@ -429,7 +478,7 @@ if(productListTable){
               {
                 "render": function ( data, type, row, meta ) {
 
-                    if(row[5] != 'Cup' && row[5] != 'Sachet'){
+                    if( row[5] != 'Sachet'){
                         return currencyToNormalFormat(`${data}`); 
                     }
                     else{
@@ -460,7 +509,7 @@ if(productListTable){
               {
                 "render": function ( data, type, row, meta ) {
 
-                    if(row[5] != 'Cup' && row[5] != 'Sachet'){
+                    if( row[5] != 'Sachet'){
                         return currencyToNormalFormat(`${data}`); 
                     }
                     else{
@@ -540,6 +589,170 @@ if(productListTable){
 
 }
 
+if(productLogsTable){
+    function productLogsTableTable(){
+
+        var ajax_url = "php-sql-controller/manage-products-controller.php";
+        let tableParamValue = {
+            shop_id: sessionStorage.getItem('sessionShopId'),
+            showLaundryProductLogs: true
+        }
+
+
+        if ( ! $.fn.DataTable.isDataTable(`#${productLogsTable.id}`) ) { // check if data table is already exist
+        
+            productLogsTableVar = $(`#${productLogsTable.id}`).DataTable({
+      
+            
+            "deferRender": true,
+            "serverSide": true,
+            "ajax": {
+                url: ajax_url,
+                data: tableParamValue,
+                "dataSrc": function ( json ) {
+                return json.data;
+              }      
+              
+            },
+            order: [[2,'desc']],
+            
+            responsive: false,
+            fixedHeader: true,
+            searching: true, // Disable default server-side search
+            dom: 'Blfrtip',
+            pageLength : 5,
+            buttons: [
+                {
+                    extend: 'excel',
+                    text: 'Export Excel',
+                    className: 'export-excel-btn',
+                    title: 'Laundry Shop Product Logs',
+                    exportOptions: {
+                        // Specify columns to be included (0 to 8 in this case)
+                        columns: function (idx, data, node) {
+                            // Include columns 0 to 8
+                            return idx >= 0  && idx <= 3;
+                        }
+                      }
+                  }
+              ],
+
+            "lengthMenu": [[5, 10, 20, 50, 100], [5, 10, 20, 50, 100]],
+        
+            //disable the sorting of colomn
+              "columnDefs": [ {
+              "targets": 0,
+              "orderable": false
+              } ],
+        
+              "language": {
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoFiltered":""
+              },
+        
+            "columns": [
+                null,
+                null,
+                null,
+                {
+                    "render": function ( data, type, row, meta ) {
+    
+                        return `<textarea disabled class="border-0 shadow-sm w-100 bg-light p-3 text-secondary" name="" id="summary-message">${data}</textarea>
+
+                        <style>
+                        textarea#summary-message {
+                            min-height: 150px;
+                            max-height: 500px;
+                          }
+                        </style>`
+                                
+                    },
+                }
+            ],
+          });    
+        }
+
+    }
+    productLogsTableTable();
+
+
+    if(productLogsContainerField){
+        let navBtnContainer = document.getElementById('xnav-btn-container');
+        let dataTableButtons = productLogsContainerField.querySelector('.dt-buttons');
+        let navfilterContainer = document.getElementById('xnav-search-container');
+        let dataTablefilter = productLogsContainerField.querySelector('.dataTables_filter');
+        let dataTableInfo = productLogsContainerField.querySelector('.dataTables_info');
+        let dataTablePaginate = productLogsContainerField.querySelector('.dataTables_paginate');
+        let dataTableLength = productLogsContainerField.querySelector('.dataTables_length');
+        let navFooterContainer = document.getElementById('xnav-footer-container');
+
+        if (navBtnContainer && dataTableButtons) {
+            navBtnContainer.appendChild(dataTableButtons);
+            let excelBtn = dataTableButtons.querySelector('.buttons-excel');
+            excelBtn.classList.add('btn','btn-primary', 'd-flex', 'justify-content-center', 'align-items-center', 'gap-2');
+            if(excelBtn.classList.contains('dt-button')){
+                excelBtn.classList.remove('dt-button');
+            }
+        }
+
+        if (dataTablefilter && navfilterContainer && dataTableLength) {
+            navfilterContainer.appendChild(dataTableLength);
+            navfilterContainer.appendChild(dataTablefilter);
+            
+            let dataTablefilterLabel = dataTablefilter.querySelector('label');
+            if(dataTablefilterLabel){
+                let searchInput = dataTablefilterLabel.querySelector('input');
+                searchInput.classList.add('form-control');
+                searchInput.placeholder = 'Search';
+    
+                dataTablefilterLabel.childNodes.forEach(child => {
+                    if (child.nodeType === Node.TEXT_NODE && child.nodeValue.includes('Search:')) {
+                        child.remove();
+                    }
+                });
+            }
+    
+    
+            // Select the label element
+            let labelElement = dataTableLength.querySelector('label');
+    
+            // If the label element exists, loop through its child nodes
+            if (labelElement) {
+                labelElement.querySelector('select').classList.add('form-select')
+                labelElement.childNodes.forEach(child => {
+                    // Check if it's a text node and if it contains 'Show' or 'entries'
+                    if (child.nodeType === Node.TEXT_NODE && (child.nodeValue.includes('Show') || child.nodeValue.includes('entries'))) {
+                        child.remove();  // Remove the text node
+                    }
+                });
+            }
+        }
+
+        if (navFooterContainer && dataTableInfo && dataTablePaginate) {
+            navFooterContainer.appendChild(dataTableInfo);
+            navFooterContainer.appendChild(dataTablePaginate);
+        }
+        
+
+    }
+
+}
+
+function addStock() {
+    const stockField = document.getElementById("product-quantity");
+
+    // Parse the value as a number, default to 0 if it's not a valid number
+    let currentStock = parseInt(stockField.value, 10) || 0;
+
+    // Increment the stock value by 1
+    currentStock += 1;
+
+    // Update the input field value
+    stockField.value = currentStock;
+}
+
+document.getElementById("add-stock").addEventListener("click", addStock);
+
 // to show more details of laundry shop
 function updateLaundryProduct(row) { 
     
@@ -547,6 +760,8 @@ function updateLaundryProduct(row) {
     let str = row;
 
     productImageUpload.value = '';
+
+    productQuantity.disabled = true;
 
     // Split the string into an array
     let values = JSON.parse(decodeURIComponent(row));
@@ -572,6 +787,20 @@ function updateLaundryProduct(row) {
     const amount_per_stock_field = jsonObj.amount_per_stock
     const amount_per_price_field = jsonObj.amount_per_price
 
+     // Old values
+     let oldValues = {
+         image: jsonObj.image_link,
+         productName: jsonObj.product_name,
+         brand: jsonObj.product_brand,
+         type: jsonObj.product_type,
+         unitMeasurement: jsonObj.unit_measurement,
+         amountPerStock: jsonObj.amount_per_stock,
+         quantity: jsonObj.quantity,
+         price: jsonObj.price,
+         amountPerPrice: jsonObj.amount_per_price,
+         productStatus: jsonObj.product_status,
+     };
+
     productName.value = product_name;
     productBrand.value = product_brand;
     productPrice.value = price;
@@ -585,14 +814,14 @@ function updateLaundryProduct(row) {
     amount_per_stock.value = amount_per_stock_field
     amount_per_price.value = amount_per_price_field
 
-    if(amount_per_stock.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+    if(amount_per_stock.value.length > 0 && product_measurement.value != 'Sachet'){
         amount_per_stock.value =  currencyToNormalFormat(amount_per_stock.value)
     }
     else{
         amount_per_stock.value = integerConverter(amount_per_stock.value)
     }
 
-    if(amount_per_price.value.length > 0 && product_measurement.value != 'Cup' && product_measurement.value != 'Sachet'){
+    if(amount_per_price.value.length > 0 && product_measurement.value != 'Sachet'){
         amount_per_price.value =  currencyToNormalFormat(amount_per_price.value)
     }
     else{
@@ -670,7 +899,7 @@ function updateLaundryProduct(row) {
                 dynamicFieldErrorMessage(productStatus.id, '');
             }
 
-            if((productType.value == 'Powder' && product_measurement.value != 'Kg' && product_measurement.value != 'Gram' && product_measurement.value != 'Cup') || 
+            if((productType.value == 'Powder' && product_measurement.value != 'Kg' && product_measurement.value != 'Grams' && product_measurement.value != 'Cup') || 
             (productType.value == 'Liquid' && product_measurement.value != 'Ml' && product_measurement.value != 'Sachet')){
                 isValid = false;
                 dynamicFieldErrorMessage(product_measurement.id,  `Invalid unit measurement for ${productType.value} type.`);
@@ -769,6 +998,96 @@ function updateLaundryProduct(row) {
                                     let jsonQueriedValue = JSON.parse(queriedList)
 
                                     if(jsonQueriedValue.message && jsonQueriedValue.message.length != 0){
+
+                                        if(productListTableVar){
+                                            productListTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
+                                        }
+
+                                        if(productLogsTableVar){
+                                            productLogsTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
+                                        }
+
+                                        // New values
+                                        const newValues = {
+                                            image: imageLink,
+                                            productName: productName.value,
+                                            brand: productBrand.value,
+                                            type: productType.value,
+                                            unitMeasurement: product_measurement.value,
+                                            amountPerStock: amount_per_stock.value,
+                                            quantity: productQuantity.value,
+                                            price: productPrice.value,
+                                            amountPerPrice: amount_per_price.value,
+                                            productStatus: productStatus.value,
+                                        };
+
+                                        // Labels for changes
+                                        const labels = {
+                                            image: "Image",
+                                            productName: "Product Name",
+                                            brand: "Brand",
+                                            type: "Type",
+                                            unitMeasurement: "Unit of Measurement",
+                                            amountPerStock: "Amount per Stock",
+                                            quantity: "Stock",
+                                            price: "Price",
+                                            amountPerPrice: "Amount per Price",
+                                            productStatus: "Product Status",
+                                        };
+
+                                        // String to store the changes in receipt-like format
+                                        let changeDetail = "";
+
+                                        // Compare old and new values
+                                        Object.keys(oldValues).forEach((key) => {
+                                            if (newValues[key] !== "") {
+                                                const oldValue = oldValues[key];
+                                                const newValue = newValues[key];
+                                        
+                                                // Handle numeric comparison
+                                                const isNumber = !isNaN(oldValue) && !isNaN(newValue);
+                                                const valuesAreEqual = isNumber
+                                                    ? parseFloat(oldValue) === parseFloat(newValue)
+                                                    : oldValue === newValue;
+                                        
+                                                if (!valuesAreEqual) {
+                                                    // Add change detail with explicit control of formatting
+                                                    changeDetail += `${labels[key]}:\n`;
+                                                    changeDetail += `Old Value: ${oldValue.trim()}\n`;
+                                                    changeDetail += `New Value: ${newValue.trim()}\n\n`;
+                                                }
+                                            }
+                                        });
+                                        
+
+                                        const url = "php-sql-controller/common-controller.php";
+                                        let data = {
+                                            saveLog: true,
+                                            product_id: product_id,
+                                            userid: userId,
+                                            saveLogDetails: "Changes detected:\n" + changeDetail,
+                                        };
+                                        const detailsList = dynamicSynchronousPostRequest(url, data);
+                                        if(isValidJSON(detailsList)){
+                                            const details = JSON.parse(detailsList);
+                                            // console.log('transaction => ', details)
+                                            let status = details.status;
+                                            if(status == 'success'){
+                                                console.info(details.message);
+                                            }
+                                            else{
+                                                let message = details.message
+                                                // WaitigLoader(false)
+                                                dynamicAlertMessage(message, 'error', 3000);
+                                            }
+                                        }
+                                        else{
+                                            console.error(detailsList);
+                                            // WaitigLoader(false)
+                                            dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                                        }
+
+
                                         dynamicAlertMessage(jsonQueriedValue.message, 'success', 3000);
                                         $('#addLaundryShopProduct').modal('hide');
 
@@ -787,9 +1106,7 @@ function updateLaundryProduct(row) {
 
                                         WaitigLoader(false)
 
-                                        if(productListTableVar){
-                                            productListTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
-                                        }
+
                                     }
                                     else{
                                         WaitigLoader(false)
@@ -818,6 +1135,100 @@ function updateLaundryProduct(row) {
                             dynamicAlertMessage(jsonQueriedValue.message, 'success', 3000);
                             $('#addLaundryShopProduct').modal('hide');
 
+                            oldValues = {
+                                productName: jsonObj.product_name,
+                                brand: jsonObj.product_brand,
+                                type: jsonObj.product_type,
+                                unitMeasurement: jsonObj.unit_measurement,
+                                amountPerStock: jsonObj.amount_per_stock,
+                                quantity: jsonObj.quantity,
+                                price: jsonObj.price,
+                                amountPerPrice: jsonObj.amount_per_price,
+                                productStatus: jsonObj.product_status,
+                            };
+
+
+                            // New values
+                            const newValues = {
+                                productName: productName.value,
+                                brand: productBrand.value,
+                                type: productType.value,
+                                unitMeasurement: product_measurement.value,
+                                amountPerStock: amount_per_stock.value,
+                                quantity: productQuantity.value,
+                                price: productPrice.value,
+                                amountPerPrice: amount_per_price.value,
+                                productStatus: productStatus.value,
+                            };
+
+                            // Labels for changes
+                            const labels = {
+                                image: "Image",
+                                productName: "Product Name",
+                                brand: "Brand",
+                                type: "Type",
+                                unitMeasurement: "Unit of Measurement",
+                                amountPerStock: "Amount per Stock",
+                                quantity: "Stock",
+                                price: "Price",
+                                amountPerPrice: "Amount per Price",
+                                productStatus: "Product Status",
+                            };
+
+                            // String to store the changes in receipt-like format
+                            let changeDetail = "";
+
+                            console.log(newValues)
+
+                            Object.keys(oldValues).forEach((key) => {
+                                if (newValues[key] !== "") {
+                                    const oldValue = oldValues[key];
+                                    const newValue = newValues[key];
+                            
+                                    // Handle numeric comparison
+                                    const isNumber = !isNaN(oldValue) && !isNaN(newValue);
+                                    const valuesAreEqual = isNumber
+                                        ? parseFloat(oldValue) === parseFloat(newValue)
+                                        : oldValue === newValue;
+                            
+                                    if (!valuesAreEqual) {
+                                        // Add change detail with explicit control of formatting
+                                        changeDetail += `${labels[key]}:\n`;
+                                        changeDetail += `Old Value: ${oldValue.trim()}\n`;
+                                        changeDetail += `New Value: ${newValue.trim()}\n\n`;
+                                    }
+                                }
+                            });
+                            
+
+                            const url = "php-sql-controller/common-controller.php";
+                            let data = {
+                                saveLog: true,
+                                product_id: product_id,
+                                userid: userId,
+                                saveLogDetails: "Changes detected:\n" + changeDetail,
+                            };
+                            const detailsList = dynamicSynchronousPostRequest(url, data);
+                            if(isValidJSON(detailsList)){
+                                const details = JSON.parse(detailsList);
+                                // console.log('transaction => ', details)
+                                let status = details.status;
+                                if(status == 'success'){
+                                    console.info(details.message);
+                                }
+                                else{
+                                    let message = details.message
+                                    // WaitigLoader(false)
+                                    dynamicAlertMessage(message, 'error', 3000);
+                                }
+                            }
+                            else{
+                                console.error(detailsList);
+                                // WaitigLoader(false)
+                                dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+                            }
+
+
                             productName.value = '';
                             productBrand.value = '';
                             productPrice.value = '';
@@ -835,6 +1246,11 @@ function updateLaundryProduct(row) {
                             if(productListTableVar){
                                 productListTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
                             }
+
+                            if(productLogsTableVar){
+                                productLogsTableVar.ajax.reload(null, false); // `null, false` ensures that the current page is not reset
+                            }
+
                         }
                         else{
                             WaitigLoader(false)

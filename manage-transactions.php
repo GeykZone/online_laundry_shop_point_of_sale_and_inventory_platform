@@ -55,7 +55,6 @@
                         <th scope="col" id="tableHeader-1">Date</th>
                         <th scope="col">Total Revenue</th>
                         <th scope="col">Number of Transactions</th>
-                        <th scope="col">Average Transaction Value</th>
                       </tr>
                     </thead>
                     <tbody class="table-group-divider">

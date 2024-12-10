@@ -174,7 +174,7 @@
                 <div id="add-laundry-shop-requirements-form-container" class="row g-3 mb-3 needs-validation">
                   <!-- Clothes Weight -->
                   <div class="col-12">
-                    <label for="clothes-weight-input" class="form-label">Estimated Clothes Weight (Kg)</label>
+                    <label for="clothes-weight-input" id="esitimated-clothes-weight-label" class="form-label">Estimated Clothes Weight (Kg)</label>
                     <input type="text" placeholder="Estimated Clothes Weight Optional" maxlength="50" class="form-control" id="clothes-weight-input" required>
                     <div id="clothes-weight-input-error-feedback" class="invalid-feedback">
                     </div>
@@ -182,14 +182,14 @@
                 </div>
 
  
-                <h4 id="selected-product-container-label">Selected Product</h4>
+                <h4 id="selected-product-container-label" class="d-none">Selected Product</h4>
                 <div  class=" overflow-y-hidden rounded-3 mt-3 mb-3 px-3" >
                   <div id="selected-products-container" class="row overflow-y-scroll g-3" style="max-height: 500px;">
 
                   </div>
                 </div>
 
-                <h4 id="selected-product-container-label">Discount List</h4>
+                <h4 id="">Discount List</h4>
                 <div  class=" overflow-y-hidden rounded-3 mt-3 mb-3 px-3" >
                   <div id="checkout-discount-container" class=" overflow-y-scroll g-3" style="max-height: 500px;">
                   </div>
@@ -197,6 +197,7 @@
                 
               </div>
               <div class="modal-footer">
+                <button id="back-to-service-list-np" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Back to Service List</button>
                 <button id="back-to-product-modal-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Back to Products</button>
                 <button id="finalize-transaction-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center ">Finalize Transaction</button>
               </div>
@@ -240,6 +241,7 @@
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                   <button id="open-transaction-creation-modal" class="btn btn-primary me-md-2  d-none customer" data-coreui-toggle="modal" data-coreui-target="#addCustomerModal" type="button">Create Transaction <span class="fa-solid fa-money-check ms-2"></span></button>
+                  <button id="rate-shop" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Rate Shop</button>
                 </div>
 
               </div>

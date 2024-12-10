@@ -226,27 +226,27 @@
                     </div>
                 </div>
 
-                <div class=" d-flex mt-3 mb-4 gap-2">
+                <!-- <div class=" d-flex mt-3 mb-4 gap-2">
                         <button id="change-service-from-notif-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center">Change Service</button>
-                </div>
+                </div> -->
 
                 <div class="row g-3 mb-3 needs-validation">
                     <div class="col-12">
-                        <label for="notify-checkout-clothes-weight-input" class="form-label">Estimated Clothes Weight (Kg)</label>
+                        <label for="notify-checkout-clothes-weight-input" id="common-esitimated-clothes-weight-label" class="form-label">Estimated Clothes Weight (Kg)</label>
                         <input type="text" placeholder="Estimated Clothes Weight (Optional)" maxlength="50" class="form-control" id="notify-checkout-clothes-weight-input" required>
                         <div id="notify-checkout-clothes-weight-input-error-feedback" class="invalid-feedback">
                         </div>
                     </div>
                 </div>
 
-                <div class="row g-3 mb-3 needs-validation">
+                <!-- <div class="row g-3 mb-3 needs-validation">
                     <div class="col-12">
                         <label for="notify-checkout-initial-input" class="form-label">Initial</label>
                         <input type="text" placeholder="Clothes Weight" maxlength="50" class="form-control" id="notify-checkout-initial-input" required>
                         <div id="notify-checkout-initial-input-error-feedback" class="invalid-feedback">
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <div class="row g-3 mb-3 needs-validation">
                     <div class="col-12">
@@ -332,9 +332,9 @@
                     <div id="notify-checkout-product-container" class="row overflow-y-scroll g-3" style="max-height: 500px;">
                     </div>
 
-                    <div class=" d-flex mt-3 gap-2">
+                    <!-- <div class=" d-flex mt-3 gap-2">
                         <button id="add-more-product" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center">More Products</button>
-                    </div>
+                    </div> -->
                 </div>
 
                 <h4 id="notify-checkout-more-product-container-label" class="added-more-product d-none">Added Product</h4>
@@ -354,7 +354,6 @@
 
                 </div>                
                 <div class="modal-footer">
-                     <button id="rate-shop" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Rate Shop</button>
                      <button id="mark-as-read-notification" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Mark as Read</button>
                      <button id="back-to-notification-list" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Back</button>
                      <button id="transaction-submit-changes" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center">Submit</button>

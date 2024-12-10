@@ -76,7 +76,7 @@ if(customerTransactionTable){
             },
             order: [[8,'desc']],
             
-            responsive: true,
+            responsive: false,
             fixedHeader: true,
             searching: true, // Disable default server-side search
             dom: 'Blfrtip',
@@ -115,7 +115,10 @@ if(customerTransactionTable){
                 "render": function ( data, type, row, meta ) {
 
                     let actionButton;
-                    actionButton = `<button type="button" onClick="manageTransactionModal('${row}',false)" class="btn btn-primary text-white" >Manage</button> `
+                    // Serialize the row object to JSON and escape it for HTML
+                    const serializedRow = encodeURIComponent(JSON.stringify(row));
+
+                    actionButton = `<button type="button" onClick="manageTransactionModal('${serializedRow}',false)" class="btn btn-primary text-white" >Manage</button> `
                     return actionButton;
                             
                 },
@@ -277,7 +280,7 @@ function generateSales(SalesType) {
                 title: `${SalesType} Sales Report`,
                 exportOptions: {
                     columns: function(idx, data, node) {
-                        return idx >= 0 && idx <= 3;
+                        return idx >= 0 && idx <= 2;
                     }
                 }
             }
@@ -299,13 +302,7 @@ function generateSales(SalesType) {
                     return formatToCurrency(`${data}`);
                 },
               },
-            null,
-            {
-                "targets": 3,
-                "render": function ( data, type, row, meta ) {
-                    return formatToCurrency(`${data}`);
-                },
-            },
+            null
         ]
     });
 

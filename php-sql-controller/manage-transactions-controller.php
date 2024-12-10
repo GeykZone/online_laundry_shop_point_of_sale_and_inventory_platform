@@ -122,7 +122,6 @@ if (isset($_GET['showTransactionReport'])) {
             $row['period'],               // Grouped period (formatted date)
             $row['total_sum'],            // Sum of total
             $row['transaction_count'],    // Count of transactions
-            $row['average_total']         // Average of total
         );
     }
 

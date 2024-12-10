@@ -40,7 +40,7 @@ if (isset($inputData['queryServices']) && $inputData['queryServices'] == true) {
 // query  products with pagination
 if (isset($inputData['queryProducts']) && $inputData['queryProducts'] == true) {
     $page = isset($inputData['currentPage']) ? intval($inputData['currentPage']) : 1;
-    $limit = 2; // Number of products per page
+    $limit = 6; // Number of products per page
     $offset = ($page - 1) * $limit;
     $shop_id = $inputData['shop_id'];
 
@@ -228,23 +228,20 @@ if(isset($inputData['insertTransaction']) ){
     echo json_encode($response);
 }
 
-// Check if order_products_id is provided and determine if it's an update, delete, or insert operation
 if (isset($inputData['insertOrderProduct']) && $inputData['insertOrderProduct'] === true) {
     $orderProductsId = $inputData['order_products_id'] ?? null;
     $isRemoveProduct = $inputData['isRemoveProduct'] ?? false;
 
-    // Prepare common parameters
-    $orderName = $inputData['order_name'] ?? null;
-    $transactionId = $inputData['transaction_id'] ?? null;
-    $productId = $inputData['product_id'] ?? null;
-    $orderDate = $inputData['order_date'] ?? null;
-    $itemQuantity = $inputData['item_quantity'] ?? null;
+    // Prepare response variable
+    $response = [];
 
     if ($isRemoveProduct && $orderProductsId) {
         // Delete operation
-        $deleteSql = "DELETE FROM `order_products` WHERE `order_products_id` = '$orderProductsId'";
+        $deleteSql = "DELETE FROM `order_products` WHERE `order_products_id` = ?";
+        $stmt = $conn->prepare($deleteSql);
+        $stmt->bind_param("i", $orderProductsId);
 
-        if ($conn->query($deleteSql) === TRUE) {
+        if ($stmt->execute()) {
             $response = [
                 'status' => 'success',
                 'message' => 'Product successfully removed.'
@@ -252,57 +249,146 @@ if (isset($inputData['insertOrderProduct']) && $inputData['insertOrderProduct'] 
         } else {
             $response = [
                 'status' => 'error',
-                'message' => 'Deletion failed: ' . $conn->error
+                'message' => 'Deletion failed: ' . $stmt->error
             ];
         }
-
     } elseif ($orderProductsId) {
-        // Update operation
-        $updateSql = "UPDATE `order_products` 
-                      SET `order_name` = '$orderName', `transaction_id` = '$transactionId', `product_id` = '$productId', 
-                          `order_date` = '$orderDate', `item_quantity` = '$itemQuantity'
-                      WHERE `order_products_id` = '$orderProductsId'";
+        // Update operation: Build the query dynamically
+        $fieldsToUpdate = [];
+        $params = [];
+        $types = "";
 
-        if ($conn->query($updateSql) === TRUE) {
-            $response = [
-                'status' => 'success',
-                'message' => 'Product updated successfully.'
-            ];
-        } else {
-            $response = [
-                'status' => 'error',
-                'message' => 'Update failed: ' . $conn->error
-            ];
+        if (isset($inputData['order_name'])) {
+            $fieldsToUpdate[] = "`order_name` = ?";
+            $params[] = $inputData['order_name'];
+            $types .= "s";
+        }
+        if (isset($inputData['transaction_id'])) {
+            $fieldsToUpdate[] = "`transaction_id` = ?";
+            $params[] = $inputData['transaction_id'];
+            $types .= "s";
+        }
+        if (isset($inputData['product_id'])) {
+            $fieldsToUpdate[] = "`product_id` = ?";
+            $params[] = $inputData['product_id'];
+            $types .= "i";
+        }
+        if (isset($inputData['order_date'])) {
+            $fieldsToUpdate[] = "`order_date` = ?";
+            $params[] = $inputData['order_date'];
+            $types .= "s";
+        }
+        if (isset($inputData['item_quantity'])) {
+            $fieldsToUpdate[] = "`item_quantity` = ?";
+            $params[] = $inputData['item_quantity'];
+            $types .= "d";
+        }
+        if (isset($inputData['estimatedPrice'])) {
+            $fieldsToUpdate[] = "`order_product_price` = ?";
+            $params[] = $inputData['estimatedPrice'];
+            $types .= "d";
+        }
+        if (isset($inputData['unit_measurement'])) {
+            $fieldsToUpdate[] = "`unit_measurement` = ?";
+            $params[] = $inputData['unit_measurement'];
+            $types .= "s";
         }
 
-    } else {
-        // Insert operation
-        $insertSql = "INSERT INTO `order_products` (`order_name`, `transaction_id`, `product_id`, `order_date`, `item_quantity`) 
-                      VALUES ('$orderName', '$transactionId', '$productId', '$orderDate', '$itemQuantity')";
+        if (!empty($fieldsToUpdate)) {
+            $updateSql = "UPDATE `order_products` SET " . implode(", ", $fieldsToUpdate) . " WHERE `order_products_id` = ?";
+            $params[] = $orderProductsId;
+            $types .= "i";
 
-        if ($conn->query($insertSql) === TRUE) {
-            $newOrderProductId = $conn->insert_id;
+            $stmt = $conn->prepare($updateSql);
+            $stmt->bind_param($types, ...$params);
 
-            // Update product quantity in the product table
-            $updateQuantitySql = "UPDATE `product` 
-                                  SET `quantity` = `quantity` - $itemQuantity 
-                                  WHERE `product_id` = '$productId'";
-
-            if ($conn->query($updateQuantitySql) === TRUE) {
+            if ($stmt->execute()) {
                 $response = [
                     'status' => 'success',
-                    'order_products_id' => $newOrderProductId
+                    'message' => 'Product updated successfully.'
                 ];
             } else {
                 $response = [
                     'status' => 'error',
-                    'message' => 'Quantity update failed: ' . $conn->error
+                    'message' => 'Update failed: ' . $stmt->error
                 ];
             }
         } else {
             $response = [
                 'status' => 'error',
-                'message' => 'Insertion failed: ' . $conn->error
+                'message' => 'No fields provided for update.'
+            ];
+        }
+    } else {
+        // Insert operation: Build the query dynamically
+        $fields = [];
+        $placeholders = [];
+        $params = [];
+        $types = "";
+
+        if (isset($inputData['order_name'])) {
+            $fields[] = "`order_name`";
+            $placeholders[] = "?";
+            $params[] = $inputData['order_name'];
+            $types .= "s";
+        }
+        if (isset($inputData['transaction_id'])) {
+            $fields[] = "`transaction_id`";
+            $placeholders[] = "?";
+            $params[] = $inputData['transaction_id'];
+            $types .= "s";
+        }
+        if (isset($inputData['product_id'])) {
+            $fields[] = "`product_id`";
+            $placeholders[] = "?";
+            $params[] = $inputData['product_id'];
+            $types .= "i";
+        }
+        if (isset($inputData['order_date'])) {
+            $fields[] = "`order_date`";
+            $placeholders[] = "?";
+            $params[] = $inputData['order_date'];
+            $types .= "s";
+        }
+        if (isset($inputData['item_quantity'])) {
+            $fields[] = "`item_quantity`";
+            $placeholders[] = "?";
+            $params[] = $inputData['item_quantity'];
+            $types .= "d";
+        }
+        if (isset($inputData['estimatedPrice'])) {
+            $fields[] = "`order_product_price`";
+            $placeholders[] = "?";
+            $params[] = $inputData['estimatedPrice'];
+            $types .= "d";
+        }
+        if (isset($inputData['unit_measurement'])) {
+            $fields[] = "`unit_measurement`";
+            $placeholders[] = "?";
+            $params[] = $inputData['unit_measurement'];
+            $types .= "s";
+        }
+
+        if (!empty($fields)) {
+            $insertSql = "INSERT INTO `order_products` (" . implode(", ", $fields) . ") VALUES (" . implode(", ", $placeholders) . ")";
+            $stmt = $conn->prepare($insertSql);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                $response = [
+                    'status' => 'success',
+                    'order_products_id' => $conn->insert_id
+                ];
+            } else {
+                $response = [
+                    'status' => 'error',
+                    'message' => 'Insertion failed: ' . $stmt->error
+                ];
+            }
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'No fields provided for insertion.'
             ];
         }
     }
@@ -370,28 +456,37 @@ if (isset($inputData['queryRatingFromShop']) && $inputData['queryRatingFromShop'
     $page = isset($inputData['page']) ? (int)$inputData['page'] : 1;
     $limit = isset($inputData['limit']) ? (int)$inputData['limit'] : 10; // Number of comments per request
     $offset = ($page - 1) * $limit;
-
-    // Query to fetch ratings with pagination
-    $sql = "SELECT shop_rating_id, shop_id, user_id, rate, comment, rating_created_date 
+    
+    // Query to fetch ratings with pagination, joined with the user table
+    $sql = "SELECT 
+                shop_rating.shop_rating_id, 
+                shop_rating.shop_id, 
+                shop_rating.user_id, 
+                shop_rating.rate, 
+                shop_rating.comment, 
+                shop_rating.rating_created_date, 
+                CONCAT(user.first_name, ' ', user.last_name) AS user_name 
             FROM shop_rating 
-            WHERE shop_id = ? 
-            ORDER BY rating_created_date DESC 
+            LEFT JOIN user ON shop_rating.user_id = user.user_id
+            WHERE shop_rating.shop_id = ? 
+            ORDER BY shop_rating.rating_created_date DESC 
             LIMIT ? OFFSET ?";
     
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("iii", $shopId, $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
-
+    
     // Fetch results as an associative array
     $ratings = [];
     while ($row = $result->fetch_assoc()) {
         $ratings[] = $row;
     }
-
+    
     // Output ratings as JSON
     echo json_encode($ratings);
     exit;
+    
 }
 
 

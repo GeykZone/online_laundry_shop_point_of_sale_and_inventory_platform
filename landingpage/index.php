@@ -38,7 +38,8 @@
                                 <div class="hero__caption">
                                     <h1 data-animation="fadeInLeft" data-delay="0.2s">Welcome to Your Trusted Partner in Online Laundry Management and POS Services</h1>
                                     <p data-animation="fadeInLeft" data-delay="0.4s">Streamline Your Laundry Business with Cutting-Edge Management and POS Solutions</p>
-                                    <a href="../login.php" class="btn hero-btn" data-animation="fadeInLeft" data-delay="0.7s">Get Started</a>
+                                    <a href="../login.php" class="btn hero-btn" data-animation="fadeInLeft" data-delay="0.7s">Get Started as Admin</a>
+                                    <a href="../home.php" class="btn hero-btn" data-animation="fadeInLeft" data-delay="0.7s">Find Laundry Shop</a>
                                 </div>
                             </div>
                         </div>
