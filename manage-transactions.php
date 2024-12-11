@@ -53,8 +53,20 @@
                     <thead class=" table-dark">
                       <tr>
                         <th scope="col" id="tableHeader-1">Date</th>
-                        <th scope="col">Total Revenue</th>
-                        <th scope="col">Number of Transactions</th>
+                        <th scope="col">Transaction Name</th>
+                        <th scope="col">Ordered Product Name</th>
+                        <th scope="col">Ordered Product Brand</th>
+                        <th scope="col">Ordered Product Price</th>
+                        <th scope="col">Ordered Product Count</th>
+                        <th scope="col">Ordered Product Total Sales</th>
+                        <th scope="col">Service Name</th>
+                        <th scope="col">Service Type</th>
+                        <th scope="col">Service Price</th>
+                        <th scope="col">Service Count</th>
+                        <th scope="col">Service Total Sales</th>
+                        <th scope="col">Transaction Count</th>
+                        <th scope="col">Applied Discount Percent</th>
+                        <th scope="col">Transaction Total Sales</th>
                       </tr>
                     </thead>
                     <tbody class="table-group-divider">

@@ -100,16 +100,40 @@ if (isset($_GET['showTransactionReport'])) {
     // SQL query to fetch data with dynamic grouping
     $sql = "
         SELECT 
-            DATE_FORMAT(transaction_date, '$dateFormat') AS period,
-            SUM(total) AS total_sum,
-            COUNT(transaction_id) AS transaction_count,
-            AVG(total) AS average_total
-        FROM transactions
-        WHERE YEAR(transaction_date) = $reportYear
-        AND shop_id = $shop_id
-        AND transaction_status IN ('Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up') 
-        GROUP BY $groupBy
-        ORDER BY period
+            DATE_FORMAT(t.transaction_date, '$dateFormat') AS period,
+            t.transaction_name,
+            p.product_name,
+            p.product_brand,
+            p.price AS product_price,
+            s.service_name,
+            s.service_type,
+            COUNT(op.order_products_id) AS total_product_quantity,
+            SUM(op.order_product_price) AS total_product_sales,
+            s.price AS service_price,
+            COUNT(s.service_id) AS total_service_quantity,
+            SUM(CASE WHEN s.service_name IS NOT NULL THEN s.price ELSE 0 END) AS total_service_sales,
+            COUNT(DISTINCT t.transaction_id) AS transaction_count,
+            -- Apply total discount percent based on discounted transactions
+            COALESCE(SUM(d.discount_percent), 0) AS total_discount_percent,
+            SUM(t.total) AS total_sales
+        FROM transactions t
+        LEFT JOIN order_products op ON t.transaction_id = op.transaction_id
+        LEFT JOIN product p ON op.product_id = p.product_id
+        LEFT JOIN services s ON t.service_id = s.service_id
+        LEFT JOIN discounted_transactions dt ON t.transaction_id = dt.transaction_id
+        LEFT JOIN discount d ON dt.discount_id = d.discount_id AND dt.discounted_transaction_status = 'Approved'
+        WHERE YEAR(t.transaction_date) = $reportYear
+          AND t.shop_id = $shop_id
+          AND t.transaction_status IN ('Approved', 'In-Progress', 'Ready-to-Pick-Up', 'Picked-Up')
+        GROUP BY 
+            period, 
+            p.product_name, 
+            p.product_brand, 
+            s.service_name, 
+            s.service_type
+        ORDER BY 
+            period, 
+            total_sales DESC
     ";
 
     // Executing the SQL query
@@ -120,8 +144,20 @@ if (isset($_GET['showTransactionReport'])) {
     while ($row = $result->fetch_assoc()) {
         $data[] = array(
             $row['period'],               // Grouped period (formatted date)
-            $row['total_sum'],            // Sum of total
-            $row['transaction_count'],    // Count of transactions
+            $row['transaction_name'],     // Transaction name
+            $row['product_name'],         // Product name
+            $row['product_brand'],        // Product brand
+            $row['product_price'],        // Product price
+            $row['total_product_quantity'], // Total product quantity
+            $row['total_product_sales'],    // Total product sales
+            $row['service_name'],         // Service name
+            $row['service_type'],         // Service type
+            $row['service_price'],    // service price
+            $row['total_service_quantity'], // Total service quantity
+            $row['total_service_sales'],    // Total service sales
+            $row['transaction_count'],      // Transaction count
+            $row['total_discount_percent'], // Total discount percent
+            $row['total_sales']             // Total sales
         );
     }
 
@@ -136,6 +172,7 @@ if (isset($_GET['showTransactionReport'])) {
     // Close the database connection
     $mysqli->close();
 }
+
 
 
 ?>

@@ -267,7 +267,7 @@ function generateSales(SalesType) {
             }
         },
         order: [[0, 'desc']],
-        responsive: true,
+        responsive: false,
         fixedHeader: true,
         searching: true,
         dom: 'Blfrtip',
@@ -280,7 +280,7 @@ function generateSales(SalesType) {
                 title: `${SalesType} Sales Report`,
                 exportOptions: {
                     columns: function(idx, data, node) {
-                        return idx >= 0 && idx <= 2;
+                        return idx >= 0 && idx <= 14;
                     }
                 }
             }
@@ -296,13 +296,40 @@ function generateSales(SalesType) {
         },
         "columns": [
             null,
+            null,
+            null,
+            null,
             {
-                "targets": 1,
                 "render": function ( data, type, row, meta ) {
                     return formatToCurrency(`${data}`);
                 },
-              },
-            null
+            },
+            null,
+            {
+                "render": function ( data, type, row, meta ) {
+                    return formatToCurrency(`${data}`);
+                },
+            },
+            null,
+            null,
+            {
+                "render": function ( data, type, row, meta ) {
+                    return formatToCurrency(`${data}`);
+                },
+            },
+            null,
+            {
+                "render": function ( data, type, row, meta ) {
+                    return formatToCurrency(`${data}`);
+                },
+            },
+            null,
+            null,
+            {
+                "render": function ( data, type, row, meta ) {
+                    return formatToCurrency(`${data}`);
+                },
+            },
         ]
     });
 
