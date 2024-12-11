@@ -148,7 +148,7 @@ if (sessionStorage.getItem('service_more_shop_id')) {
             <div class="card-body">
                 <h5 class="card-title">${ratingData.comment}</h5>
                 <h6 class="Stars" style="--rating: ${ratingData.rate};" aria-label="Rating: ${ratingData.rate} out of 5 stars"></h6>
-                <h6>${ratingData.rate}</h6>
+                <h6>${currencyToNormalFormat(`${ratingData.rate}`)}</h6>
                 <p>${new Date(ratingData.rating_created_date).toLocaleString()}</p>
             </div>
         `;

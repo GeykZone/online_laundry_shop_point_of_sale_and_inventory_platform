@@ -86,7 +86,8 @@ function loadMoreShops() {
                                 <span class="card-text opacity-75">- Days Open: ${shop.days_open}</span>
                                 ${additionalScheduleDetails}
                             </div>
-                            <h6 class="mt-3">${parseFloat(shop.overall_rating)}</h6>
+                            <h6 class="Stars mt-3" style="--rating: ${shop.overall_rating};" aria-label="Rating: ${shop.overall_rating} out of 5 stars"></h6>
+                            <h6 class="">${currencyToNormalFormat(`${shop.overall_rating}`)}</h6>
                             <div class="d-grid mt-3 gap-2">
                                 <a id="service-and-more-btn-${shop.shop_id}" class="btn btn-primary shadow-sm">Service and more</a>
                             </div>
