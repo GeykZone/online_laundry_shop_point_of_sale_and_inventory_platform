@@ -132,6 +132,7 @@
             
 
             <div class="modal-footer">
+              <button id="subtract-stock" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Subtract Stock -1</button>
               <button id="add-stock" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center">Add Stock +1</button>
               <button id="submit-laundry-shop-product-btn" class="btn btn-primary text-white d-flex flex-row gap-2 align-items-center d-none">Submit Product</button>
               <div id="submit-laundry-shop-product-update-container"></div>

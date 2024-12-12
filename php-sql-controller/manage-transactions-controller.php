@@ -128,6 +128,7 @@ if (isset($_GET['showTransactionReport'])) {
         GROUP BY 
             period, 
             p.product_name, 
+            t.transaction_name,
             p.product_brand, 
             s.service_name, 
             s.service_type

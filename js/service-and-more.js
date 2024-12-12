@@ -597,12 +597,18 @@ const confirmTransactionCheck = setInterval(() => {
             const discount = selectedDiscounts;
             let transactionId;
 
+            console.log(selectedServiceGlobalVar.unit_measurement)
+
             const service = selectedServiceGlobalVar;
-            const clothsWeight = clothesWeightInput.value;
+            const clothsWeight = currencyToNormalFormat(`${clothesWeightInput.value}`);
             const payable = estimatedPayable;
             const shop_id = sessionStorage.getItem('service_more_shop_id');
             const user_id = globalNewCustomerId;
-            const transaction_name = `${laundrycustomerFirstName.value}-${laundrycustomerLastName.value}-${service.service_name}-Transaction`;
+            let transaction_name = `${laundrycustomerFirstName.value} ${laundrycustomerLastName.value}-${service.service_name}-Transaction`;
+
+            if((service.unit_measurement == 'Kg' || service.unit_measurement == 'Pcs') && clothesWeightInput.value.length > 0){
+                transaction_name = `${laundrycustomerFirstName.value} ${laundrycustomerLastName.value}-${service.service_name}-Transaction (${currencyToNormalFormat(`${clothesWeightInput.value}`)}${service.unit_measurement})`;
+            }
 
             // insert transaction
             const url = "php-sql-controller/service-and-more-controller.php";

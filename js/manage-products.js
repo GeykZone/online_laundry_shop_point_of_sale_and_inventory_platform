@@ -81,6 +81,10 @@ productImagePreviewContainer.addEventListener('mouseout', function() {
 // event for opening modal of laundry shop creation
 createLaundryShopProductBtn.addEventListener('click', function(){
 
+    if(!document.getElementById('subtract-stock').classList.contains('d-none')){
+        document.getElementById('subtract-stock').classList.add('d-none')
+    }
+
     // Select the container where the button will be added
     const container = document.getElementById('submit-laundry-shop-product-update-container');
     container.innerHTML = '';
@@ -753,8 +757,16 @@ function addStock() {
 
 document.getElementById("add-stock").addEventListener("click", addStock);
 
+let subtractStockEvent = false;
+
 // to show more details of laundry shop
 function updateLaundryProduct(row) { 
+
+    if(document.getElementById('subtract-stock').classList.contains('d-none')){
+        document.getElementById('subtract-stock').classList.remove('d-none')
+    }
+
+
     
     // Given string
     let str = row;
@@ -785,7 +797,28 @@ function updateLaundryProduct(row) {
     const product_type = jsonObj.product_type
     const unit_measurement = jsonObj.unit_measurement
     const amount_per_stock_field = jsonObj.amount_per_stock
-    const amount_per_price_field = jsonObj.amount_per_price
+    const amount_per_price_field = jsonObj.amount_per_price;
+    const stockField = document.getElementById("product-quantity");
+    if(!subtractStockEvent){
+      
+
+        document.getElementById('subtract-stock').addEventListener('click', function(e){
+            if(parseInt(stockField.value) > parseInt(quantity)){
+
+                // Parse the value as a number, default to 0 if it's not a valid number
+                let currentStock = parseInt(stockField.value, 10) || 0;
+            
+                // Increment the stock value by 1
+                currentStock -= 1;
+            
+                // Update the input field value
+                stockField.value = currentStock;
+
+            }
+        })
+
+        subtractStockEvent = true;
+    }
 
      // Old values
      let oldValues = {

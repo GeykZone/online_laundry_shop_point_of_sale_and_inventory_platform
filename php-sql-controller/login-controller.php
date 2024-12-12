@@ -108,6 +108,55 @@ if(isset($inputData['addNewLaundryOwner'])){
 
         if($isForCustomer){
             $position = 'Customer';
+
+
+            // Check for existing customer based on first name, last name, and either email or phone
+                $checkQuery = "
+                SELECT user_id 
+                FROM user 
+                WHERE first_name = '$firstName' 
+                AND last_name = '$lastName' 
+                AND (email = '$email' OR phone_number = '$phoneNumber')
+            ";
+            $result = $conn->query($checkQuery);
+
+            if ($result && $result->num_rows > 0) {
+                // Existing customer found, get the user_id
+                $row = $result->fetch_assoc();
+                $existingUserId = $row['user_id'];
+
+                // Update only the fields that are different
+                $updateClauses = [];
+                if ($phoneNumber !== null) {
+                    $updateClauses[] = "phone_number = '$phoneNumber'";
+                }
+                if ($email !== null) {
+                    $updateClauses[] = "email = '$email'";
+                }
+                if ($address !== null) {
+                    $updateClauses[] = "address = '$address'";
+                }
+
+                if (!empty($updateClauses)) {
+                    $updateQuery = "
+                        UPDATE user 
+                        SET " . implode(", ", $updateClauses) . " 
+                        WHERE user_id = $existingUserId
+                    ";
+                    $conn->query($updateQuery);
+                }
+
+                $response = "Existing customer updated successfully.";
+
+                $response = [
+                    'message' => "New Laundry Owner added successfully.",
+                    'newRecordId' => $existingUserId
+                ];
+                echo json_encode($response);
+
+                return;
+            }
+
         }
 
         // Hash the password securely if it's provided

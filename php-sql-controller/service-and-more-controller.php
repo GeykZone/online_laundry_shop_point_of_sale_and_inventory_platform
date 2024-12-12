@@ -490,4 +490,56 @@ if (isset($inputData['queryRatingFromShop']) && $inputData['queryRatingFromShop'
 }
 
 
+if (isset($inputData['queryUserDetailsFromTransaction']) && $inputData['queryUserDetailsFromTransaction'] === true) {
+    // Get the transaction ID from POST data
+    $transaction_id = isset($inputData['transaction_id']) ? intval($inputData['transaction_id']) : 0;
+
+    // Check if transaction ID is valid
+    if ($transaction_id > 0) {
+
+        // Prepare the SQL query
+        $sql = "
+            SELECT 
+                t.transaction_id,
+                u.user_id,
+                u.first_name,
+                u.last_name
+            FROM transactions t
+            LEFT JOIN user u ON t.user_id = u.user_id
+            WHERE t.transaction_id = $transaction_id
+        ";
+
+        $result = $conn->query($sql);
+
+        // Check if query was successful
+        if ($result && $result->num_rows > 0) {
+            $data = $result->fetch_assoc();
+            echo json_encode([
+                "status" => "success",
+                "data" => [
+                    "user_id" => $data['user_id'],
+                    "first_name" => $data['first_name'],
+                    "last_name" => $data['last_name']
+                ]
+            ]);
+        } else {
+            // Transaction not found
+            echo json_encode([
+                "status" => "error",
+                "message" => "No user details found for the given transaction ID."
+            ]);
+        }
+
+        // Close the connection
+        $conn->close();
+    } else {
+        // Invalid transaction ID
+        echo json_encode([
+            "status" => "error",
+            "message" => "Invalid transaction ID provided."
+        ]);
+    }
+}
+
+
 ?>

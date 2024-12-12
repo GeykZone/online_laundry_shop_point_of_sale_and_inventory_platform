@@ -2686,7 +2686,7 @@ function manageTransactionModal(row, fromNotif) {
             notifySheckoutSelectedServiceDescription.textContent = service.service_description
             notifyCheckoutSelectedServicePrice.textContent = formatToCurrency(`${service.service_price}`)
             if(service.service_unit_measurement == 'Kg'){
-                notifyCheckoutClothesWeightInput.value = currencyToNormalFormat(transaction.clothes_weight)
+                notifyCheckoutClothesWeightInput.value = currencyToNormalFormat(`${transaction.clothes_weight}`)
             }
             else{
                 notifyCheckoutClothesWeightInput.value = integerConverter(transaction.clothes_weight);
@@ -3251,14 +3251,54 @@ function updateTransaction() {
     const transactionStatus = finalTransactionObject.transactionStatus;
     const transactionTotal = finalTransactionObject.transactionTotal;
     const summaryMessage = finalTransactionObject.summaryMessage;
+
     
+    const queryIdurl = "php-sql-controller/service-and-more-controller.php";
+    let queryIdData = {
+        transaction_id: oldTransactionId,
+        queryUserDetailsFromTransaction: true
+    };
+    
+    let userId;
+    let firstName;
+    let lastName;
+    const queryIdDetails = dynamicSynchronousPostRequest(queryIdurl, queryIdData);
+    if (isValidJSON(queryIdDetails)) {
+        const details = JSON.parse(queryIdDetails);
+        if (details.status === 'success') {
+             userId = details.data.user_id;
+             firstName = details.data.first_name;
+             lastName = details.data.last_name;
+
+            // Use the first name and last name
+            console.log(`User ID: ${userId}, Name: ${firstName} ${lastName}`);
+        } else {
+            let message = details.message;
+            dynamicAlertMessage(message, 'error', 3000);
+            isSuccessful = false;
+        }
+    } else {
+        console.error(queryIdDetails);
+        dynamicAlertMessage('Something went wrong. Please see the error logs for additional information.', 'error', 3000);
+        isSuccessful = false;
+    }
+
+    console.log(oldService)
+    console.log(finalTransactionObject.clothesWeight.length)
+
+    let transaction_name = `${firstName} ${lastName}-${oldService.service_name}-Transaction`;
+
+    if((oldService.service_unit_measurement == 'Kg' || oldService.service_unit_measurement == 'Pcs') && finalTransactionObject.clothesWeight.length > 0){
+        transaction_name = `${firstName} ${lastName}-${oldService.service_name}-Transaction (${currencyToNormalFormat(`${finalTransactionObject.clothesWeight}`)}${oldService.service_unit_measurement})`;
+    }
 
     // insert transaction
     const url = "php-sql-controller/service-and-more-controller.php";
     let data = {
         insertTransaction: true,
+        transaction_name: transaction_name,
         transaction_id: oldTransactionId,
-        clothes_weight: clothesWeight,
+        clothes_weight: currencyToNormalFormat(`${clothesWeight}`),
         total: transactionTotal,
         last_update_date: getPhilippineDateTime(),
         notification_is_read: 'False',
