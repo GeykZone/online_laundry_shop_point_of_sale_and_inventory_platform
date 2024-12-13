@@ -656,7 +656,7 @@ const confirmTransactionCheck = setInterval(() => {
 
                 products.forEach((product) => {
                     const productId = product.id;
-                    const orderName = product.product_name + ` (${formatToCurrency(`${product.price}`)})`;
+                    const orderName = `${product.product_name}-${product.product_brand} (${formatToCurrency(`${product.price}`)})`;
 
                     const url = "php-sql-controller/service-and-more-controller.php";
                     const data = {
