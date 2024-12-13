@@ -299,11 +299,7 @@ function generateSales(SalesType) {
             null,
             null,
             null,
-            {
-                "render": function ( data, type, row, meta ) {
-                    return formatToCurrency(`${data}`);
-                },
-            },
+            null,
             null,
             {
                 "render": function ( data, type, row, meta ) {

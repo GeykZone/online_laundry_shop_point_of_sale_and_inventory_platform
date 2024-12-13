@@ -597,6 +597,8 @@ const confirmTransactionCheck = setInterval(() => {
             const discount = selectedDiscounts;
             let transactionId;
 
+            console.log(products)
+
             console.log(selectedServiceGlobalVar.unit_measurement)
 
             const service = selectedServiceGlobalVar;
@@ -654,7 +656,7 @@ const confirmTransactionCheck = setInterval(() => {
 
                 products.forEach((product) => {
                     const productId = product.id;
-                    const orderName = product.product_name + ' - ' + product.product_brand;
+                    const orderName = product.product_name + ` (${formatToCurrency(`${product.price}`)})`;
 
                     const url = "php-sql-controller/service-and-more-controller.php";
                     const data = {
